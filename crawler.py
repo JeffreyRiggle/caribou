@@ -21,6 +21,8 @@ rootPages = map(lambda p: page.Page(helpers.domainToFullURL(p)), crawlPages)
 
 for pg in rootPages:
     pg.load()
+    db.add_resource(pg.url, pg.content, "TODO")
+    db.add_metadata(pg.url, pg.jsBytes, pg.htmlBytes, pg.cssBytes, pg.compression != None)
     print(f"Page: {pg.url} resulted in html bytes: {pg.htmlBytes}, js bytes: {pg.jsBytes}, css bytes {pg.cssBytes}, and compression {pg.compression}")
 
 # TODO build pages from crawl root
