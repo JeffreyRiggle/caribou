@@ -21,7 +21,7 @@ rootPages = map(lambda p: page.Page(helpers.domainToFullURL(p)), crawlPages)
 
 for pg in rootPages:
     pg.load()
-    print(f"Page: {pg.url} resulted in content: {pg.content}")
+    print(f"Page: {pg.url} resulted in html bytes: {pg.htmlBytes}, js bytes: {pg.jsBytes}, css bytes {pg.cssBytes}, and compression {pg.compression}")
 
 # TODO build pages from crawl root
 # TODO traverse pages checking policy
