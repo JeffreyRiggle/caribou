@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib.request
 import brotli
+import re
 
 class Page:
     def __init__(self, url):
@@ -51,3 +52,16 @@ class Page:
 
         return (content, len(raw), compression)
 
+    def get_links(self):
+        return list(set(map(self.process_link, self.interactiveContent.select('a'))))
+
+    def process_link(self, el):
+        link = el.get('href')
+
+        if link == None:
+            return None
+
+        if re.match(r'^https?://', link) != None:
+            return Page(link)
+
+        return Page(self.url + link)
