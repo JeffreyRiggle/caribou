@@ -22,8 +22,12 @@ class Page:
         jsBytes = 0
 
         for script in scripts:
-            print(f"Processing script {script.get('src')}")
-            result = self.get_content(script.get('src'))
+            scriptSrc = script.get('src')
+            if scriptSrc == None:
+                print(f"Not processing script {script}")
+                continue
+
+            result = self.get_content(scriptSrc)
             jsBytes += result[1]
 
         return jsBytes
@@ -33,24 +37,31 @@ class Page:
         styleBytes = 0
 
         for style in styles:
-            print(f"Processing script {style.get('href')}")
-            result = self.get_content(style.get('href'))
+            styleSrc = style.get('href')
+            if styleSrc == None:
+                print(f"Not processing style {style}")
+                continue
+
+            result = self.get_content(styleSrc)
             styleBytes += result[1]
 
         return styleBytes
 
     def get_content(self, url):
-        req = urllib.request.Request(url)
-        req.add_header('Accept-Encoding', 'gzip, deflate, br')
-        response = urllib.request.urlopen(req)
-        raw = response.read()
-        compression = response.getheader('Content-Encoding')
-        if compression == 'br':
-            content = brotli.decompress(raw)
-        else:
-            content = response.read()
+        try:
+            req = urllib.request.Request(url)
+            req.add_header('Accept-Encoding', 'gzip, deflate, br')
+            response = urllib.request.urlopen(req)
+            raw = response.read()
+            compression = response.getheader('Content-Encoding')
+            if compression == 'br':
+                content = brotli.decompress(raw)
+            else:
+                content = response.read()
 
-        return (content, len(raw), compression)
+            return (content, len(raw), compression)
+        except Exception as ex:
+            print(f"Failed to load {url} {ex}")
 
     def get_links(self):
         return list(set(map(self.process_link, self.interactiveContent.select('a'))))

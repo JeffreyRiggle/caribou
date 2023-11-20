@@ -14,7 +14,6 @@ class PolicyManager:
 
     def should_crawl_url(self, url):
         domain = self.get_domain(url)
-        print(f"Processing domain {domain}")
         result = self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
         
         if len(result) < 1:
