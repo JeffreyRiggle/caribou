@@ -9,7 +9,7 @@ class PolicyManager:
         return list(map(lambda r: r[0], result.fetchall()))
 
     def add_crawl_domain(self, domain):
-        self.connection.execute("INSERT INTO domains VALUES (?, ?);", (domain, "Crawl"))
+        self.connection.execute("INSERT INTO domains VALUES (?, ?, ?);", (domain, "Crawl", ""))
         self.connection.commit()
 
     def should_crawl_url(self, url):

@@ -22,7 +22,11 @@ while len(pendingPages) > 0:
     relevantChildPages = []
     for pg in pendingPages:
         pgStart = time.time()
-        pg.load()
+        networkTime = pg.load()
+        
+        if pg.failed == True:
+            continue
+
         db.add_resource(pg.url, pg.content, "TODO")
         db.add_metadata(pg.url, pg.jsBytes, pg.htmlBytes, pg.cssBytes, pg.compression != None)
         pages = pg.get_links()
@@ -43,9 +47,11 @@ while len(pendingPages) > 0:
 
             relevantChildPages.append(p)
 
+        db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime)
         print(f"Processing {pg.url} took {time.time() - pgStart}")
 
     pendingPages = relevantChildPages
 
+print(f"Operation finished in {time.time() - startTime}")
 # TODO build pages from crawl root
 # TODO traverse pages checking policy
