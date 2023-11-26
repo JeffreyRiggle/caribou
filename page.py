@@ -3,6 +3,7 @@ import urllib.request
 import brotli
 import re
 import time
+import helpers
 
 class Page:
     def __init__(self, url):
@@ -98,4 +99,8 @@ class Page:
         if re.match(r'^https?://', link) != None:
             return Page(link)
 
-        return Page(self.url + link)
+        # Do not include self references
+        if link.startswith("#"):
+            return None
+
+        return Page(f"https://{helpers.get_domain(self.url)}{link}")

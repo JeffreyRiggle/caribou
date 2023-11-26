@@ -3,9 +3,11 @@ import policy
 import page
 import helpers
 import time
+from status import ResourceStatus
 
 startTime = time.time()
 db = dbaccess.DBAccess()
+processed = set()
 
 db.setup()
 policyManager = policy.PolicyManager()
@@ -16,7 +18,7 @@ if (len(crawlPages) < 1):
     policyManager.add_crawl_domain(domain)
     crawlPages.append(domain)
     
-pendingPages = list(map(lambda p: page.Page(helpers.domainToFullURL(p)), crawlPages))
+pendingPages = list(map(lambda p: page.Page(helpers.domain_to_full_url(p)), crawlPages))
 
 while len(pendingPages) > 0:
     relevantChildPages = []
@@ -25,23 +27,26 @@ while len(pendingPages) > 0:
         networkTime = pg.load()
         
         if pg.failed == True:
+            db.add_resource(pg.url, "", ResourceStatus.Failed.value)
+            processed.add(pg.url)
             continue
 
-        db.add_resource(pg.url, pg.content, "TODO")
+        dir_path = f"contents/{helpers.get_domain(pg.url)}"
+        file_name = f"{len(processed)}.html"
+        helpers.write_file(dir_path, file_name, pg.content)
+        db.add_resource(pg.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value)
         db.add_metadata(pg.url, pg.jsBytes, pg.htmlBytes, pg.cssBytes, pg.compression != None)
         pages = pg.get_links()
         for p in pages:
             if p == None:
                 continue
 
-            if db.get_resource_last_edit(p.url) > startTime:
-                print(f"Page: {p.url} has already been processed not processing again")
+            if pg.url in processed or db.get_resource_last_edit(p.url) > startTime:
                 continue
 
             shouldCrawl = policyManager.should_crawl_url(p.url)
 
             if shouldCrawl[0] == False:
-                print(f"Page: {p.url} is not allowed for crawling deferring crawl")
                 db.add_resource(p.url, "", shouldCrawl[1])
                 continue
 
@@ -49,6 +54,7 @@ while len(pendingPages) > 0:
 
         db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime)
         print(f"Processing {pg.url} took {time.time() - pgStart}")
+        processed.add(pg.url)
 
     pendingPages = relevantChildPages
 

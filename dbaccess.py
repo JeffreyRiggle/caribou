@@ -6,15 +6,15 @@ class DBAccess:
 
     def setup(self):
         cursor = self.connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, content TEXT, lastIndex NUM, summary TEXT, status TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, lastIndex NUM, summary TEXT, status TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT, downloadAssets TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlByes NUM, cssBytes NUM, compressed TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
         cursor.connection.commit()
 
-    def add_resource(self, url, content, status):
+    def add_resource(self, url, path, status):
         cursor = self.connection.cursor()
-        cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?)", (url, content, time.time(), "", status))
+        cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?)", (url, path, time.time(), "", status))
         cursor.connection.commit()
 
     def get_resource_last_edit(self, url):
