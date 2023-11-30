@@ -1,30 +1,39 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use rusqlite::{Connection};
+use actix_web::{get, App, web, Result, HttpServer, Responder};
+use rusqlite::Connection;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct DomainData {
     domain: String,
     status: String,
-    downloadAssets: String,
+    download_assets: String,
+}
+
+#[derive(Serialize)]
+struct DomainsResponse {
+    domains: Vec<DomainData>
 }
 
 #[get("/domains")]
-async fn get_domains() -> impl Responder {
+async fn get_domains() -> Result<impl Responder> {
     let conn = Connection::open("../grepper.db").unwrap();
     let mut stmt = conn.prepare("SELECT * from domains").unwrap();
-    let result = stmt.query_map([], |row| {
+    let rows = stmt.query_map([], |row| {
         Ok(DomainData {
             domain: row.get(0)?,
             status: row.get(1)?,
-            downloadAssets: row.get(2)?
+            download_assets: row.get(2)?
         })
     }).unwrap();
 
-    let mut result_str: String = "".to_owned();
-    for domain in result {
-        result_str.push_str(format!("{:?}", domain.unwrap()).as_str())
+    let mut result = Vec::new();
+    for domain_result in rows {
+        result.push(domain_result.unwrap());
     }
-    HttpResponse::Ok().body(result_str)
+
+    Ok(web::Json(DomainsResponse {
+        domains: result
+    }))
 }
 
 #[actix_web::main]
