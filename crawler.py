@@ -12,6 +12,22 @@ processed = set()
 db.setup()
 policyManager = policy.PolicyManager()
 
+def record_page(page):
+    networkTime = page.load()
+    failed = page.failed == True 
+    if failed:
+        db.add_resource(page.url, "", ResourceStatus.Failed.value)
+        processed.add(page.url)
+        return (failed, networkTime, []) 
+
+    dir_path = f"contents/{helpers.get_domain(page.url)}"
+    file_name = f"{len(processed)}.html"
+    helpers.write_file(dir_path, file_name, page.content)
+    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value)
+    db.add_metadata(page.url, page.jsBytes, page.htmlBytes, page.cssBytes, page.compression != None)
+    return (failed, networkTime, page.get_links())
+
+
 crawlPages = policyManager.get_crawl_pages()
 if (len(crawlPages) < 1):
     domain = input("No crawl pages set select a starting domain: ")
@@ -22,26 +38,26 @@ pendingPages = list(map(lambda p: page.Page(helpers.domain_to_full_url(p)), craw
 
 while len(pendingPages) > 0:
     relevantChildPages = []
+    dowloadChildPages = []
+
     for pg in pendingPages:
         pgStart = time.time()
-        networkTime = pg.load()
-        
-        if pg.failed == True:
-            db.add_resource(pg.url, "", ResourceStatus.Failed.value)
-            processed.add(pg.url)
-            continue
+        loadPageResult = record_page(pg)
+        networkTime = loadPageResult[1] 
 
-        dir_path = f"contents/{helpers.get_domain(pg.url)}"
-        file_name = f"{len(processed)}.html"
-        helpers.write_file(dir_path, file_name, pg.content)
-        db.add_resource(pg.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value)
-        db.add_metadata(pg.url, pg.jsBytes, pg.htmlBytes, pg.cssBytes, pg.compression != None)
-        pages = pg.get_links()
+        if loadPageResult[0]:
+            continue
+        
+        pages = loadPageResult[2] 
         for p in pages:
             if p == None:
                 continue
 
-            if pg.url in processed or db.get_resource_last_edit(p.url) > startTime:
+            if p.url in processed or db.get_resource_last_edit(p.url) > startTime:
+                continue
+
+            if policyManager.should_download_url(p.url):
+                dowloadChildPages.append(p)
                 continue
 
             shouldCrawl = policyManager.should_crawl_url(p.url)
@@ -54,10 +70,19 @@ while len(pendingPages) > 0:
 
         db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime)
         print(f"Processing {pg.url} took {time.time() - pgStart}")
+
+        for dpg in dowloadChildPages:
+            dpgStart = time.time()
+
+            if dpg.url in processed or db.get_resource_last_edit(dpg.url) > startTime:
+                continue
+
+            dpgResult = record_page(dpg)
+            db.track_performance(dpg.url, time.time() - dpgStart - dpgResult[1], dpgResult[1])
+            print(f"Dowloading {dpg.url} took {time.time() - dpgStart}")
+
         processed.add(pg.url)
 
     pendingPages = relevantChildPages
 
 print(f"Operation finished in {time.time() - startTime}")
-# TODO build pages from crawl root
-# TODO traverse pages checking policy

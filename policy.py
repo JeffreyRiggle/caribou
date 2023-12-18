@@ -16,7 +16,14 @@ class PolicyManager:
         self.connection.execute("INSERT INTO domains VALUES (?, ?, ?);", (domain, status, ""))
         self.connection.commit()
 
+    def should_download_url(self, url):
+        domain = get_domain(url)
+        result = self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
 
+        if len(result) < 1:
+            return False
+
+        return result[0][0] == DomainStatus.Read.value
 
     def should_crawl_url(self, url):
         domain = get_domain(url)
