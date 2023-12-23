@@ -34,8 +34,13 @@ class Page:
         for script in scripts:
             scriptSrc = script.get('src')
             if scriptSrc == None:
-                print(f"Not processing script {script}")
+                inlineScriptSize = len(script.encode_contents())
+                jsBytes += inlineScriptSize
+                self.htmlBytes -= inlineScriptSize
                 continue
+
+            if self.is_absolute_url(scriptSrc) == False:
+                scriptSrc = f"https://{helpers.get_domain(self.url)}{scriptSrc}"
 
             result = self.get_content(scriptSrc)
             
@@ -55,8 +60,13 @@ class Page:
         for style in styles:
             styleSrc = style.get('href')
             if styleSrc == None:
-                print(f"Not processing style {style}")
+                inlineStyleSize = len(style.encode_contents())
+                styleBytes += inlineStyleSize
+                self.htmlBytes -= inlineStyleSize
                 continue
+
+            if self.is_absolute_url(styleSrc) == False:
+                styleSrc = f"https://{helpers.get_domain(self.url)}{styleSrc}"
 
             result = self.get_content(styleSrc)
             
@@ -96,7 +106,7 @@ class Page:
         if link == None:
             return None
 
-        if re.match(r'^https?://', link) != None:
+        if self.is_absolute_url(link):
             return Page(link)
 
         # Do not include self references
@@ -104,3 +114,7 @@ class Page:
             return None
 
         return Page(f"https://{helpers.get_domain(self.url)}{link}")
+
+    def is_absolute_url(self, url):
+        return re.match(r'^https?://', url) != None
+

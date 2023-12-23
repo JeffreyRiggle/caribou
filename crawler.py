@@ -69,7 +69,6 @@ while len(pendingPages) > 0:
             relevantChildPages.append(p)
 
         db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime)
-        print(f"Processing {pg.url} took {time.time() - pgStart}")
 
         for dpg in dowloadChildPages:
             dpgStart = time.time()
@@ -79,7 +78,6 @@ while len(pendingPages) > 0:
 
             dpgResult = record_page(dpg)
             db.track_performance(dpg.url, time.time() - dpgStart - dpgResult[1], dpgResult[1])
-            print(f"Dowloading {dpg.url} took {time.time() - dpgStart}")
 
         processed.add(pg.url)
 
