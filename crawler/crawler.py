@@ -16,14 +16,14 @@ def record_page(page):
     networkTime = page.load()
     failed = page.failed == True 
     if failed:
-        db.add_resource(page.url, "", ResourceStatus.Failed.value)
+        db.add_resource(page.url, "", ResourceStatus.Failed.value, "")
         processed.add(page.url)
         return (failed, networkTime, []) 
 
     dir_path = f"contents/{helpers.get_domain(page.url)}"
     file_name = f"{len(processed)}.html"
     helpers.write_file(dir_path, file_name, page.content)
-    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value)
+    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text)
     db.add_metadata(page.url, page.jsBytes, page.htmlBytes, page.cssBytes, page.compression != None)
     return (failed, networkTime, page.get_links())
 
@@ -63,7 +63,7 @@ while len(pendingPages) > 0:
             shouldCrawl = policyManager.should_crawl_url(p.url)
 
             if shouldCrawl[0] == False:
-                db.add_resource(p.url, "", shouldCrawl[1])
+                db.add_resource(p.url, "", shouldCrawl[1], "")
                 continue
 
             relevantChildPages.append(p)

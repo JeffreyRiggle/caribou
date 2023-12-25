@@ -4,3 +4,4 @@ __pycache__
 contents/**
 *.zip
 admin/target/**
+crawler/contents/**

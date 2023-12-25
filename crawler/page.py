@@ -20,6 +20,7 @@ class Page:
         self.htmlBytes = result[1]
         self.compression = result[2]
         self.interactiveContent = BeautifulSoup(self.content)
+        self.text = self.interactiveContent.text
         jsResult = self.get_js_bytes()
         self.jsBytes = jsResult[0] 
         cssResult = self.get_css_bytes()
@@ -36,7 +37,6 @@ class Page:
             if scriptSrc == None:
                 inlineScriptSize = len(script.encode_contents())
                 jsBytes += inlineScriptSize
-                self.htmlBytes -= inlineScriptSize
                 continue
 
             if self.is_absolute_url(scriptSrc) == False:
@@ -62,7 +62,6 @@ class Page:
             if styleSrc == None:
                 inlineStyleSize = len(style.encode_contents())
                 styleBytes += inlineStyleSize
-                self.htmlBytes -= inlineStyleSize
                 continue
 
             if self.is_absolute_url(styleSrc) == False:

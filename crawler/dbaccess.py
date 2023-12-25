@@ -2,7 +2,7 @@ import sqlite3
 import time
 
 class DBAccess:
-    connection = sqlite3.connect("grepper.db")
+    connection = sqlite3.connect("../grepper.db")
 
     def setup(self):
         cursor = self.connection.cursor()
@@ -12,9 +12,9 @@ class DBAccess:
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
         cursor.connection.commit()
 
-    def add_resource(self, url, path, status):
+    def add_resource(self, url, path, status, summary):
         cursor = self.connection.cursor()
-        cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?)", (url, path, time.time(), "", status))
+        cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?)", (url, path, time.time(), summary, status))
         cursor.connection.commit()
 
     def get_resource_last_edit(self, url):
