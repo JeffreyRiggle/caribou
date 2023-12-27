@@ -20,7 +20,7 @@ def record_page(page):
         processed.add(page.url)
         return (failed, networkTime, []) 
 
-    dir_path = f"contents/{helpers.get_domain(page.url)}"
+    dir_path = f"../contents/{helpers.get_domain(page.url)}"
     file_name = f"{len(processed)}.html"
     helpers.write_file(dir_path, file_name, page.content)
     db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text)
