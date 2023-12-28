@@ -1,9 +1,9 @@
-import sqlite3
 from status import DomainStatus
 from helpers import get_domain
 
 class PolicyManager:
-    connection = sqlite3.connect("../grepper.db")
+    def __init__(self, connection):
+        self.connection = connection
 
     def get_crawl_pages(self):
         result = self.connection.execute("SELECT domain from domains WHERE Status = ?", (DomainStatus.Crawl.value, ))

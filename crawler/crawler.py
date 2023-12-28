@@ -3,30 +3,59 @@ import policy
 import page
 import helpers
 import time
+import sqlite3
 from status import ResourceStatus
 
+conn = sqlite3.connect("../grepper.db")
 startTime = time.time()
-db = dbaccess.DBAccess()
+db = dbaccess.DBAccess(conn)
 processed = set()
 
 db.setup()
-policyManager = policy.PolicyManager()
+policyManager = policy.PolicyManager(conn)
 
-def record_page(page):
+def record_page(page, transaction):
     networkTime = page.load()
     failed = page.failed == True 
     if failed:
-        db.add_resource(page.url, "", ResourceStatus.Failed.value, "")
+        db.add_resource(page.url, "", ResourceStatus.Failed.value, "", transaction)
         processed.add(page.url)
-        return (failed, networkTime, []) 
+        return (failed, networkTime, [])
 
     dir_path = f"../contents/{helpers.get_domain(page.url)}"
     file_name = f"{len(processed)}.html"
     helpers.write_file(dir_path, file_name, page.content)
-    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text)
-    db.add_metadata(page.url, page.jsBytes, page.htmlBytes, page.cssBytes, page.compression != None)
+    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text, transaction)
+    db.add_metadata(page.url, page.jsBytes, page.htmlBytes, page.cssBytes, page.compression != None, transaction)
     return (failed, networkTime, page.get_links())
 
+def process_child_page(page, download_child_pages, relevant_child_pages, transaction):
+    if page == None:
+        return
+
+    if page.url in processed or db.get_resource_last_edit(page.url) > startTime:
+        return 
+
+    if policyManager.should_download_url(page.url):
+        download_child_pages.append(page)
+        return 
+
+    shouldCrawl = policyManager.should_crawl_url(page.url)
+
+    if shouldCrawl[0] == False:
+        db.add_resource(page.url, "", shouldCrawl[1], "", transaction)
+        return 
+
+    relevant_child_pages.append(page)
+
+def download_child_page(page, transaction):
+    dpgStart = time.time()
+
+    if page.url in processed or db.get_resource_last_edit(page.url) > startTime:
+        return 
+
+    dpgResult = record_page(page, transaction)
+    db.track_performance(page.url, time.time() - dpgStart - dpgResult[1], dpgResult[1], transaction)
 
 crawlPages = policyManager.get_crawl_pages()
 if (len(crawlPages) < 1):
@@ -38,48 +67,27 @@ pendingPages = list(map(lambda p: page.Page(helpers.domain_to_full_url(p)), craw
 
 while len(pendingPages) > 0:
     relevantChildPages = []
-    dowloadChildPages = []
 
-    for pg in pendingPages:
-        pgStart = time.time()
-        loadPageResult = record_page(pg)
-        networkTime = loadPageResult[1] 
+    with db.build_transaction() as transaction:
+        for pg in pendingPages:
+            downloadChildPages = []
+            pgStart = time.time()
+            loadPageResult = record_page(pg, transaction)
+            networkTime = loadPageResult[1] 
 
-        if loadPageResult[0]:
-            continue
-        
-        pages = loadPageResult[2] 
-        for p in pages:
-            if p == None:
+            if loadPageResult[0]:
                 continue
+            
+            pages = loadPageResult[2] 
+            for p in pages:
+                process_child_page(p, downloadChildPages, relevantChildPages, transaction)
 
-            if p.url in processed or db.get_resource_last_edit(p.url) > startTime:
-                continue
+            db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime, transaction)
 
-            if policyManager.should_download_url(p.url):
-                dowloadChildPages.append(p)
-                continue
+            for dpg in downloadChildPages:
+                download_child_page(dpg, transaction)
 
-            shouldCrawl = policyManager.should_crawl_url(p.url)
-
-            if shouldCrawl[0] == False:
-                db.add_resource(p.url, "", shouldCrawl[1], "")
-                continue
-
-            relevantChildPages.append(p)
-
-        db.track_performance(pg.url, time.time() - pgStart - networkTime, networkTime)
-
-        for dpg in dowloadChildPages:
-            dpgStart = time.time()
-
-            if dpg.url in processed or db.get_resource_last_edit(dpg.url) > startTime:
-                continue
-
-            dpgResult = record_page(dpg)
-            db.track_performance(dpg.url, time.time() - dpgStart - dpgResult[1], dpgResult[1])
-
-        processed.add(pg.url)
+            processed.add(pg.url)
 
     pendingPages = relevantChildPages
 
