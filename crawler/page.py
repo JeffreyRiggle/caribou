@@ -82,16 +82,16 @@ class Page:
             startTime = time.time()
             req = urllib.request.Request(url)
             req.add_header('Accept-Encoding', 'gzip, deflate, br')
-            response = urllib.request.urlopen(req)
-            raw = response.read()
-            compression = response.getheader('Content-Encoding')
-            if compression == 'br':
-                content = brotli.decompress(raw)
-            else:
-                content = response.read()
+            with urllib.request.urlopen(req) as response:
+                raw = response.read()
+                compression = response.getheader('Content-Encoding')
+                if compression == 'br':
+                    content = brotli.decompress(raw)
+                else:
+                    content = response.read()
 
-            totalTime = time.time() - startTime
-            return (content, len(raw), compression, totalTime)
+                totalTime = time.time() - startTime
+                return (content, len(raw), compression, totalTime)
         except Exception as ex:
             print(f"Failed to load {url} {ex}")
             return None 

@@ -89,6 +89,7 @@ while len(pendingPages) > 0:
 
             processed.add(pg.url)
 
+
     pendingPages = relevantChildPages
 
 print(f"Operation finished in {time.time() - startTime}")
