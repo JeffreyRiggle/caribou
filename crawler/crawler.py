@@ -69,13 +69,20 @@ while len(pendingPages) > 0:
     relevantChildPages = []
 
     with db.build_transaction() as transaction:
-        for pg in pendingPages:
+        # Traverse the pages by cleaning them as we go.
+        # Interating all pages causes memory to pile up like crazy
+        pg = pendingPages.pop()
+        while pg:
             downloadChildPages = []
             pgStart = time.time()
             loadPageResult = record_page(pg, transaction)
             networkTime = loadPageResult[1] 
 
             if loadPageResult[0]:
+                if pendingPages:
+                    pg = pendingPages.pop()
+                else:
+                    pg = None
                 continue
             
             pages = loadPageResult[2] 
@@ -88,7 +95,10 @@ while len(pendingPages) > 0:
                 download_child_page(dpg, transaction)
 
             processed.add(pg.url)
-
+            if pendingPages:
+                pg = pendingPages.pop()
+            else:
+                pg = None
 
     pendingPages = relevantChildPages
 
