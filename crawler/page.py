@@ -4,11 +4,15 @@ import brotli
 import re
 import time
 import helpers
+import concurrent.futures
 
 class Page:
     def __init__(self, url):
         self.url = url
         self.failed = False
+        self.jsBytes = 0
+        self.networkTime = 0
+        self.cssBytes = 0
 
     def load(self):
         result = self.get_content(self.url)
@@ -19,63 +23,65 @@ class Page:
         self.content = result[0]
         self.htmlBytes = result[1]
         self.compression = result[2]
+        self.networkTime += result[3]
         self.interactiveContent = BeautifulSoup(self.content)
         self.text = self.interactiveContent.text
-        jsResult = self.get_js_bytes()
-        self.jsBytes = jsResult[0] 
-        cssResult = self.get_css_bytes()
-        self.cssBytes = cssResult[0]
-        return result[3] + jsResult[1] + cssResult[1]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            jsFutures = []
+            cssFutures = []
+            self.get_js_bytes(executor, jsFutures)
+            self.get_css_bytes(executor, cssFutures)
+
+            for future in concurrent.futures.as_completed(jsFutures):
+                jsRes = future.result()
+                self.jsBytes += jsRes[0]
+                self.networkTime += jsRes[1]
+
+            for future in concurrent.futures.as_completed(cssFutures):
+                cssRes = future.result()
+                self.cssBytes += cssRes[0]
+                self.networkTime += cssRes[1]
+
+        return self.networkTime
         
-    def get_js_bytes(self):
+    def get_js_bytes(self, executor, jsFutures):
         scripts = self.interactiveContent.select("script")
-        networkTime = 0
-        jsBytes = 0
 
         for script in scripts:
             scriptSrc = script.get('src')
             if scriptSrc == None:
                 inlineScriptSize = len(script.encode_contents())
-                jsBytes += inlineScriptSize
+                self.jsBytes += inlineScriptSize
                 continue
 
             if self.is_absolute_url(scriptSrc) == False:
                 scriptSrc = f"https://{helpers.get_domain(self.url)}{scriptSrc}"
 
-            result = self.get_content(scriptSrc)
-            
-            if result == None:
-                continue
-            
-            jsBytes += result[1]
-            networkTime += result[3]
+            jsFutures.append(executor.submit(self.download_and_process_static_content, url=scriptSrc))
 
-        return (jsBytes, networkTime)
-
-    def get_css_bytes(self):
+    def get_css_bytes(self, executor, cssFutures):
         styles = self.interactiveContent.select('link[rel="stylesheet"]')
-        networkTime = 0
-        styleBytes = 0
 
         for style in styles:
             styleSrc = style.get('href')
             if styleSrc == None:
                 inlineStyleSize = len(style.encode_contents())
-                styleBytes += inlineStyleSize
+                self.cssBytes += inlineStyleSize
                 continue
 
             if self.is_absolute_url(styleSrc) == False:
                 styleSrc = f"https://{helpers.get_domain(self.url)}{styleSrc}"
 
-            result = self.get_content(styleSrc)
-            
-            if result == None:
-                continue
+            cssFutures.append(executor.submit(self.download_and_process_static_content, url=styleSrc))
 
-            styleBytes += result[1]
-            networkTime += result[3]
+    def download_and_process_static_content(self, url):
+        result = self.get_content(url)
 
-        return (styleBytes, networkTime)
+        if result == None:
+            return
+
+        return (result[1], result[3])
 
     def get_content(self, url):
         try:
