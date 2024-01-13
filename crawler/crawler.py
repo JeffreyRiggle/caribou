@@ -18,14 +18,14 @@ def record_page(page, transaction):
     networkTime = page.load()
     failed = page.failed == True 
     if failed:
-        db.add_resource(page.url, "", ResourceStatus.Failed.value, "", transaction)
+        db.add_resource(page.url, "", ResourceStatus.Failed.value, "", "", transaction)
         processed.add(page.url)
         return (failed, networkTime, [])
 
     dir_path = f"../contents/{helpers.get_domain(page.url)}"
     file_name = f"{len(processed)}.html"
     helpers.write_file(dir_path, file_name, page.content)
-    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text, transaction)
+    db.add_resource(page.url, f"{dir_path}/{file_name}", ResourceStatus.Processed.value, page.text, page.description, transaction)
     db.add_metadata(page.url, page.jsBytes, page.htmlBytes, page.cssBytes, page.compression != None, transaction)
     return (failed, networkTime, page.get_links())
 
@@ -43,7 +43,7 @@ def process_child_page(page, download_child_pages, relevant_child_pages, transac
     shouldCrawl = policyManager.should_crawl_url(page.url)
 
     if shouldCrawl[0] == False:
-        db.add_resource(page.url, "", shouldCrawl[1], "", transaction)
+        db.add_resource(page.url, "", shouldCrawl[1], "", "", transaction)
         return 
 
     relevant_child_pages.append(page)

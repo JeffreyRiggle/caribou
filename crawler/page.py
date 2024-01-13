@@ -26,6 +26,7 @@ class Page:
         self.networkTime += result[3]
         self.interactiveContent = BeautifulSoup(self.content)
         self.text = self.interactiveContent.text
+        self.get_description()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             jsFutures = []
@@ -45,6 +46,14 @@ class Page:
 
         return self.networkTime
         
+    def get_description(self):
+        metaTag = self.interactiveContent.select_one("meta[name='description']")
+        if metaTag == None:
+            self.description = ''
+            return
+
+        self.description = metaTag.get('content')
+
     def get_js_bytes(self, executor, jsFutures):
         scripts = self.interactiveContent.select("script")
 
@@ -79,7 +88,7 @@ class Page:
         result = self.get_content(url)
 
         if result == None:
-            return
+            return (0, 0)
 
         return (result[1], result[3])
 
