@@ -14,4 +14,4 @@ def write_file(file_path, file_name, contents):
         fHandle.write(contents)
 
 def get_domain(url):
-    return re.search(r'^https?:\/\/([^\/]+)', url).group(1)
+    return re.search(r'^https?:\/\/([^\/]+)|^[^.]+\.([^\/]+)', url).group(1)
