@@ -130,5 +130,5 @@ class Page:
         return Page(f"https://{helpers.get_domain(self.url)}{link}")
 
     def is_absolute_url(self, url):
-        return re.match(r'^https?://', url) != None
+        return re.match(r'^(https?://)|^([^.]+\.)', url) != None
 
