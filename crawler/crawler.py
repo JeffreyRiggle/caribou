@@ -1,18 +1,20 @@
-import dbaccess
-import policy
-import page
+from dbaccess import DBAccess
+from policy import PolicyManager
+from page import Page
 import helpers
 import time
 import sqlite3
+from asset_repo import AssetRespositoy
 from status import ResourceStatus
 
 class Crawler:
     def __init__(self):
         self.conn = sqlite3.connect("../grepper.db")
-        self.db = dbaccess.DBAccess(self.conn)
+        self.db = DBAccess(self.conn)
         self.db.setup()
-        self.policyManager = policy.PolicyManager(self.conn)
+        self.policyManager = PolicyManager(self.conn)
         self.processed = set()
+        self.asset_respository = AssetRespositoy()
 
     def load(self):
         crawlPages = self.policyManager.get_crawl_pages()
@@ -22,7 +24,7 @@ class Crawler:
             self.policyManager.add_crawl_domain(domain)
             crawlPages.append(domain)
          
-        self.pendingPages = list(map(lambda p: page.Page(helpers.domain_to_full_url(p)), crawlPages))
+        self.pendingPages = list(map(lambda p: Page(helpers.domain_to_full_url(p), self.asset_respository), crawlPages))
 
     def crawl(self):
         while len(self.pendingPages) > 0:

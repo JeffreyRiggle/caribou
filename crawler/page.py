@@ -7,8 +7,9 @@ import helpers
 import concurrent.futures
 
 class Page:
-    def __init__(self, url):
+    def __init__(self, url, asset_respository):
         self.url = url
+        self.asset_respository = asset_respository
         self.failed = False
         self.jsBytes = 0
         self.networkTime = 0
@@ -85,11 +86,17 @@ class Page:
             cssFutures.append(executor.submit(self.download_and_process_static_content, url=styleSrc))
 
     def download_and_process_static_content(self, url):
-        result = self.get_content(url)
+        cache_size = self.asset_respository.get_asset_size(url)
 
+        if cache_size != None:
+            return (cache_size, 0)
+
+        result = self.get_content(url)
         if result == None:
+            self.asset_respository.set_asset_bytes(url, 0)
             return (0, 0)
 
+        self.asset_respository.set_asset_bytes(url, result[1])
         return (result[1], result[3])
 
     def get_content(self, url):
@@ -121,13 +128,13 @@ class Page:
             return None
 
         if self.is_absolute_url(link):
-            return Page(link)
+            return Page(link, self.asset_respository)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Page(f"https://{helpers.get_domain(self.url)}{link}")
+        return Page(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository)
 
     def is_absolute_url(self, url):
         return re.match(r'^(https?://)|^([^.]+\.)', url) != None
