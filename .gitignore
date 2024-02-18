@@ -5,3 +5,5 @@ contents/**
 *.zip
 admin/target/**
 crawler/contents/**
+crawler/.crawlerenv
+.DS_Store
