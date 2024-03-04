@@ -7,5 +7,7 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
+lazy_static = "1.4.0"
 rusqlite = { version = "0.30.0", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
+tera = "1.19.1"

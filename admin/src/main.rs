@@ -1,6 +1,8 @@
-use actix_web::{get, put, App, web, Result, HttpServer, Responder};
+use actix_web::{get, put, web, App, HttpResponse, HttpServer, Responder, Result};
 use rusqlite::{Connection};
 use serde::{Serialize, Deserialize};
+use tera::{Context, Tera};
+use lazy_static::lazy_static;
 
 #[derive(Debug, Serialize)]
 struct DomainData {
@@ -17,6 +19,37 @@ struct DomainStatus {
 #[derive(Serialize)]
 struct DomainsResponse {
     domains: Vec<DomainData>
+}
+
+lazy_static! {
+    pub static ref TEMPLATES: Tera = {
+         let tera = match Tera::new("templates/**/*") {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error {}!", e);
+                ::std::process::exit(1);
+            }
+        };
+        tera
+    };
+}
+
+#[get("/")]
+async fn get_page() -> HttpResponse {
+    let mut context = Context::new();
+    context.insert("test", "value");
+
+    let page = match TEMPLATES.render("index.html", &context) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load page {}", e);
+            "<html><body><h1>Internal Server Error</h1></body></html>".to_string()
+        }
+    };
+
+    HttpResponse::Ok()
+       .content_type("text/html; charset=utf-8")
+       .body(page)
 }
 
 #[get("/domains")]
@@ -59,6 +92,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(get_domains)
             .service(update_domain_status)
+            .service(get_page)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
