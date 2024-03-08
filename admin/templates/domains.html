@@ -3,8 +3,31 @@
 		<title>Domain Management</title>
 		<style>
 			body {
+				font-family: 'Arial';
 				display: grid;
 				grid-template-columns: 25% 75%;
+			}
+
+			ul {
+				list-style: none;
+			}
+
+			main ul {
+				padding: 0;
+			}
+
+			.domain-card {
+				padding: 8px;
+				border-radius: 2px;
+				width: 95%;
+				border: 1px solid black;
+				margin-bottom: 4px;
+			}
+
+			label {
+				display: block;
+				font-weight: bold;
+				margin-bottom: 2px;
 			}
 		</style>
 	</head>
@@ -20,7 +43,15 @@
 			<div>
 				<ul>
 					{% for domain in domains %}
-					<li>Domain: {{domain.domain}}, Status: {{domain.status}}</li>
+						<li class="domain-card">
+							<label>{{domain.domain}}</label>
+							<select>
+								<option value="Read" {% if domain.status == "Read" %} selected="true" {% endif %}>Read</option>
+								<option value="Crawl" {% if domain.status == "Crawl" %} selected="true" {% endif %}>Crawl</option>
+								<option value="Block" {% if domain.status == "Block" %} selected="true" {% endif %}>Block</option>
+								<option value="NeedsStatus" {% if domain.status == "NeedsStatus" %} selected="true" {% endif %}>Needs Status</option>
+							</select>
+						</li>
 					{% endfor %}
 				</ul>
 			</div>
