@@ -1,23 +1,11 @@
 use actix_web::{get, put, web, Responder, Result};
 use rusqlite::Connection;
+use super::domain::get_domains;
 use super::models::{DomainData, DomainStatus, DomainsResponse};
 
 #[get("/domains")]
-async fn get_domains() -> Result<impl Responder> {
-    let conn = Connection::open("../grepper.db").unwrap();
-    let mut stmt = conn.prepare("SELECT * from domains").unwrap();
-    let rows = stmt.query_map([], |row| {
-        Ok(DomainData {
-            domain: row.get(0)?,
-            status: row.get(1)?,
-            downloadAssets: row.get(2)?
-        })
-    }).unwrap();
-
-    let mut result = Vec::new();
-    for domain_result in rows {
-        result.push(domain_result.unwrap());
-    }
+async fn handle_get_domains() -> Result<impl Responder> {
+   let result = get_domains();
 
     Ok(web::Json(DomainsResponse {
         domains: result

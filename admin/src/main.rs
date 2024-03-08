@@ -3,12 +3,13 @@ use actix_web::{App, HttpServer};
 mod views;
 mod api;
 mod models;
+mod domain;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(api::get_domains)
+            .service(api::handle_get_domains)
             .service(api::update_domain_status)
             .service(views::get_page)
             .service(views::get_domain_management_page)

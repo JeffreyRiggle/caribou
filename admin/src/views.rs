@@ -1,6 +1,7 @@
 use actix_web::{get, HttpResponse};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
+use super::domain::get_domains;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -32,7 +33,10 @@ async fn get_page() -> HttpResponse {
 
 #[get("/domain-management")]
 async fn get_domain_management_page() -> HttpResponse {
-    let page = match TEMPLATES.render("domains.html", &Context::new()) {
+    let mut context = Context::new();
+    context.insert("domains", &get_domains());
+
+    let page = match TEMPLATES.render("domains.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
             println!("Failed to load page {}", e);

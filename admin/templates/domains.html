@@ -1,13 +1,29 @@
 <html>
+	<head>
+		<title>Domain Management</title>
+		<style>
+			body {
+				display: grid;
+				grid-template-columns: 25% 75%;
+			}
+		</style>
+	</head>
 	<body>
+		<nav>
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="performance">Performance Statistics</a></li>
+			</ul>
+		</nav>
 		<main>
 			<h1>Domain Management</h1>
-			<nav>
+			<div>
 				<ul>
-					<li><a href="/">Home</a></li>
-					<li><a href="performance">Performance Statistics</a></li>
+					{% for domain in domains %}
+					<li>Domain: {{domain.domain}}, Status: {{domain.status}}</li>
+					{% endfor %}
 				</ul>
-			</nav>
+			</div>
 		<main>
 	</body>
 </html>
