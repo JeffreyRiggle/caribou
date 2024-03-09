@@ -2,6 +2,7 @@ use actix_web::{get, HttpResponse};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 use super::domain::get_domains;
+use super::performance::get_total_pages;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -51,7 +52,10 @@ async fn get_domain_management_page() -> HttpResponse {
 
 #[get("/performance")]
 async fn get_performance_page() -> HttpResponse {
-    let page = match TEMPLATES.render("performance.html", &Context::new()) {
+    let mut context = Context::new();
+    context.insert("totalPages", &get_total_pages().unwrap());
+
+    let page = match TEMPLATES.render("performance.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
             println!("Failed to load page {}", e);

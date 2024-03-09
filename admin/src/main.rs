@@ -4,6 +4,7 @@ mod views;
 mod api;
 mod models;
 mod domain;
+mod performance;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

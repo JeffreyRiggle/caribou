@@ -1,13 +1,36 @@
 <html>
+	<head>
+		<title>Performance Statistics</title>
+		<style>
+			body {
+				font-family: 'Arial';
+				display: grid;
+				grid-template-columns: 25% 75%;
+			}
+
+			ul {
+				list-style: none;
+			}
+		</style>
+	</head>
 	<body>
+		<nav>
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="domain-management">Domain Management</a></li>
+			</ul>
+		</nav>
 		<main>
 			<h1>Performance Statistics</h1>
-			<nav>
-				<ul>
-					<li><a href="/">Home</a></li>
-					<li><a href="domain-management">Domain Management</a></li>
-				</ul>
-			</nav>
+			<p>Total Pages Found {{totalPages}}</p>
+			<p>Total Pages Processed X</p>
+			<p>Last Run Time X</p>
+			<p>Max Javascript Usage on Page X:Amount, X:PageName</p>
+			<p>Average Javascript Usage on Page X</p>
+			<p>Max CSS Usage on Page X:Amount, X:PageName</p>
+			<p>Average CSS Usage X</p>
+			<p>Max HTML document size X:Amount, X:PageName</p>
+			<p>Average HTML document size X</p>
 		<main>
 	</body>
 </html>
