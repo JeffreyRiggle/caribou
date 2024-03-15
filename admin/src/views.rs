@@ -1,7 +1,7 @@
 use actix_web::{get, HttpResponse};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
-use crate::performance::{get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages};
+use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages};
 
 use super::domain::get_domains;
 
@@ -57,19 +57,13 @@ async fn get_performance_page() -> HttpResponse {
     context.insert("totalPages", &get_total_pages().unwrap());
     context.insert("processedPages", &get_total_processed_pages().unwrap());
     context.insert("lastRun", &get_last_run_time().unwrap());
-    let max_js_result = get_max_js().unwrap();
-    context.insert("maxJsSize", &bytes_to_display(max_js_result.bytes as f64));
-    context.insert("maxJsResource", &max_js_result.url);
+    context.insert("maxJs", &get_max_js().unwrap());
     context.insert("averageJs", &bytes_to_display(get_average_js().unwrap()));
     
-    let max_css_result = get_max_css().unwrap();
-    context.insert("maxCssSize", &bytes_to_display(max_css_result.bytes as f64));
-    context.insert("maxCssResource", &max_css_result.url);
+    context.insert("maxCss", &get_max_css().unwrap());
     context.insert("averageCss", &bytes_to_display(get_average_css().unwrap()));
 
-    let max_html_result = get_max_html().unwrap();
-    context.insert("maxHtmlSize", &bytes_to_display(max_html_result.bytes as f64));
-    context.insert("maxHtmlResource", &max_html_result.url);
+    context.insert("maxHtml", &get_max_html().unwrap());
     context.insert("averageHtml", &bytes_to_display(get_average_html().unwrap()));
 
     let page = match TEMPLATES.render("performance.html", &context) {
@@ -83,20 +77,4 @@ async fn get_performance_page() -> HttpResponse {
     HttpResponse::Ok()
        .content_type("text/html; charset=utf-8")
        .body(page)
-}
-
-fn bytes_to_display(bytes: f64) -> String {
-    if bytes < 1000f64 {
-        return bytes.to_string() + "B";
-    }
-
-    if bytes < 1000000f64 {
-        return (bytes / 1000f64).to_string() + "Kb";
-    }
-
-    if bytes < 1000000000f64 {
-        return (bytes / 1000000f64).to_string() + "Mb";
-    }
-
-    (bytes / 1000000000f64).to_string() + "Gb"
 }

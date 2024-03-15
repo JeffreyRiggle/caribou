@@ -25,11 +25,11 @@
 			<p>Total Pages Found {{totalPages}}</p>
 			<p>Total Pages Processed {{processedPages}}</p>
 			<p>Last Run Time {{lastRun}}</p>
-			<p>Max Javascript Usage on Page {{maxJsSize}}, <a href="{{maxJsResource}}">{{maxJsResource}}</a></p>
+			<p>Max Javascript Usage on Page {{maxJs.display_bytes}}, <a href="{{maxJs.url}}">{{maxJs.url}}</a></p>
 			<p>Average Javascript Usage on Page {{averageJs}}</p>
-			<p>Max CSS Usage on Page {{maxCssSize}}, <a href="{{maxCssResource}}">{{maxCssResource}}</a></p>
+			<p>Max CSS Usage on Page {{maxCss.display_bytes}}, <a href="{{maxCss.url}}">{{maxCss.url}}</a></p>
 			<p>Average CSS Usage {{averageCss}}</p>
-			<p>Max HTML document size {{maxHtmlSize}}, <a href="{{maxHtmlResource}}">{{maxHtmlResource}}</a></p>
+			<p>Max HTML document size {{maxHtml.display_bytes}}, <a href="{{maxHtml.url}}">{{maxHtml.url}}</a></p>
 			<p>Average HTML document size {{averageHtml}}</p>
 		<main>
 	</body>
