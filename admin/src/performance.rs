@@ -1,5 +1,8 @@
+use std::time::{Duration , UNIX_EPOCH};
 use serde::Serialize;
 use rusqlite::{Connection, Error};
+use chrono::prelude::DateTime;
+use chrono::Utc;
 
 #[derive(Debug, Serialize)]
 pub struct PerformancePageResult {
@@ -32,7 +35,7 @@ pub fn get_total_processed_pages() -> Result<u32, Error> {
     stmt.query_row([], |row| row.get(0))
 }
 
-pub fn get_last_run_time() -> Result<f64, Error> {
+pub fn get_last_run_time() -> Result<String, Error> {
     let conn = match Connection::open("../grepper.db") {
         Ok(c) => c,
         Err(e) => {
@@ -41,7 +44,7 @@ pub fn get_last_run_time() -> Result<f64, Error> {
         }
     };
     let mut stmt = conn.prepare("SELECT MIN(lastIndex) from resources").unwrap();
-    stmt.query_row([], |row| row.get(0))
+    stmt.query_row([], |row| Ok(format_time(row.get(0).unwrap())))
 }
 
 pub fn get_max_js() -> Result<PerformancePageResult, Error> {
@@ -118,4 +121,10 @@ pub fn bytes_to_display(bytes: f64) -> String {
     }
 
     (bytes / 1000000000f64).to_string() + "Gb"
+}
+
+fn format_time(time: f64) -> String {
+    let date = UNIX_EPOCH + Duration::from_secs_f64(time);
+    let date_time = DateTime::<Utc>::from(date);
+    date_time.format("%m-%d-%Y %H:%M:%S").to_string()
 }
