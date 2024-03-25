@@ -29,7 +29,31 @@
 				font-weight: bold;
 				margin-bottom: 2px;
 			}
+
+			li span {
+				margin-left: 4px;
+			}
+
+		    .domain-card:has(.htmx-request) {
+				animation: loading 250ms ease infinite;
+			}
+
+			@keyframes loading {
+				0% {
+				    background: linear-gradient(90deg, blue 0%, transparent 25%);
+				}
+				25% {
+				    background: linear-gradient(90deg, transparent 0%, blue 25%, transparent 50%);
+				}
+				50% {
+				    background: linear-gradient(90deg, transparent 40%, blue 65%, transparent 85%);
+				}
+				100% {
+				    background: linear-gradient(90deg, transparent 75%, blue 100%);
+				}
+			}
 		</style>
+		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 	</head>
 	<body>
 		<nav>
@@ -45,12 +69,13 @@
 					{% for domain in domains %}
 						<li class="domain-card">
 							<label>{{domain.domain}}</label>
-							<select>
+							<select name="status" hx-put="/view/domains/{{domain.domain}}/status" hx-target="#domain-status-{{loop.index}}">
 								<option value="Read" {% if domain.status == "Read" %} selected="true" {% endif %}>Read</option>
 								<option value="Crawl" {% if domain.status == "Crawl" %} selected="true" {% endif %}>Crawl</option>
 								<option value="Block" {% if domain.status == "Block" %} selected="true" {% endif %}>Block</option>
 								<option value="NeedsStatus" {% if domain.status == "NeedsStatus" %} selected="true" {% endif %}>Needs Status</option>
 							</select>
+							<span id="domain-status-{{loop.index}}"></span>
 						</li>
 					{% endfor %}
 				</ul>

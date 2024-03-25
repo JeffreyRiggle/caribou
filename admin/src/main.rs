@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::get_page)
             .service(views::get_domain_management_page)
             .service(views::get_performance_page)
+            .service(views::update_domain_status)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

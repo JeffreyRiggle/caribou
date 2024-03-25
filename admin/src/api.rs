@@ -24,4 +24,3 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Json<Domai
     }))
 }
 
-
