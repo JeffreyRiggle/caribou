@@ -4,6 +4,7 @@ __pycache__
 contents/**
 *.zip
 admin/target/**
+grepper/target/**
 crawler/contents/**
 crawler/.crawlerenv
 .DS_Store

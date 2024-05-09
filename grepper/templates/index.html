@@ -1,0 +1,11 @@
+<html>
+		<head>
+				<title>Grepper</title>
+				<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+		</head>
+		</body>
+				<h1>Grepper</h1>
+				<input type="text" hx-get="/query" hx-trigger="keyup[key=='Enter']" hx-target="#results" hx-swap="innerHtml">
+				<div id="results"></div>
+		</body>
+</html>
