@@ -35,8 +35,17 @@ async fn get_page() -> HttpResponse {
 #[get("/query")]
 async fn query_data() -> HttpResponse {
     let results = get_results(String::from("Test"));
+    let mut context = Context::new();
+    context.insert("results", &results.results);
+    let page = match TEMPLATES.render("result-list.html", &context) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load result list {}", e);
+            "Failed to load".to_string()
+        }
+    };
 
     HttpResponse::Ok()
        .content_type("text/html; charset=utf-8")
-       .body(format!("Results {}", results.results.len()))
+       .body(page)
 }

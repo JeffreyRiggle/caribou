@@ -1,0 +1,9 @@
+<ul>
+	{% for result in results %}
+		<li>
+		  <a href="{{result.url}}" target="_blank">View</a>
+		  <p>{{result.summary}}</p>
+		  <p>{{result.description}}</p>
+		</li>
+	{% endfor %}
+</ul>
