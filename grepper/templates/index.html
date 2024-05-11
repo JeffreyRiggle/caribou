@@ -2,10 +2,32 @@
 		<head>
 				<title>Grepper</title>
 				<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+				<style>
+				  .header {
+				    text-align: center;
+				  }
+
+				  .card {
+				    padding: 4px;
+					margin-bottom: 8px;
+				  }
+
+				  .card p {
+				    max-height: 3.5em;
+					text-overflow: ellipsis;
+					overflow: hidden;
+				  }
+
+				  li {
+				    list-style: none;
+				  }
+				</style>
 		</head>
 		</body>
-				<h1>Grepper</h1>
-				<input type="text" hx-get="/query" name="q" hx-trigger="keyup[key=='Enter']" hx-target="#results" hx-swap="innerHtml">
+				<div class="header">
+						<h1>Grepper</h1>
+						<input type="text" hx-get="/query" name="q" hx-trigger="keyup[key=='Enter']" hx-target="#results" hx-swap="innerHtml">
+				</div>
 				<div id="results"></div>
 		</body>
 </html>
