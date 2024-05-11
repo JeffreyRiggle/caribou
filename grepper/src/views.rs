@@ -1,8 +1,8 @@
-use actix_web::{get, HttpResponse};
+use actix_web::{get, web, HttpResponse};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::api::get_results;
+use crate::{api::get_results, models::QueryRequest};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -33,8 +33,8 @@ async fn get_page() -> HttpResponse {
 }
 
 #[get("/query")]
-async fn query_data() -> HttpResponse {
-    let results = get_results(String::from("Test"));
+async fn query_data(q: web::Query<QueryRequest>) -> HttpResponse {
+    let results = get_results(q.into_inner().q);
     let mut context = Context::new();
     context.insert("results", &results.results);
     let page = match TEMPLATES.render("result-list.html", &context) {
