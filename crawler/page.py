@@ -14,6 +14,7 @@ class Page:
         self.jsBytes = 0
         self.networkTime = 0
         self.cssBytes = 0
+        self.title = url
 
     def load(self):
         result = self.get_content(self.url)
@@ -28,6 +29,7 @@ class Page:
         self.interactiveContent = BeautifulSoup(self.content)
         self.text = self.interactiveContent.text
         self.get_description()
+        self.get_title()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             jsFutures = []
@@ -47,6 +49,17 @@ class Page:
 
         return self.networkTime
         
+    def get_title(self):
+        titleTag = self.interactiveContent.select_one('title')
+        if titleTag != None:
+            self.title = titleTag.text
+            return
+        titleTag = self.interactiveContent.select_one('h1')
+
+        if titleTag != None:
+            self.title = titleTag.text
+            return
+
     def get_description(self):
         metaTag = self.interactiveContent.select_one("meta[name='description']")
         if metaTag == None:

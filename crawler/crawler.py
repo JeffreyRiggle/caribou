@@ -44,7 +44,7 @@ class Crawler:
 
             while pgs:
                 nextPgs = []
-                with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     futures = []
                     for pg in pgs:
                         futures.append(executor.submit(self.process_page, pg, relevantChildPages))
@@ -61,7 +61,7 @@ class Crawler:
 
             with self.db.build_transaction() as transaction:
                 for res in self.pending_resouce_entries:
-                    self.db.add_resource(res['url'], res['file'], res['status'], res['text'], res['description'], transaction)
+                    self.db.add_resource(res['url'], res['file'], res['status'], res['title'], res['text'], res['description'], transaction)
 
                 for metadata in self.pending_metadata_entries:
                     self.db.add_metadata(metadata['url'], metadata['jsBytes'], metadata['htmlBytes'], metadata['cssBytes'], metadata['compressed'], transaction)
@@ -107,14 +107,14 @@ class Crawler:
         networkTime = page.load()
         failed = page.failed == True 
         if failed:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "" })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "" })
             self.processed.add(page.url)
             return (failed, networkTime, [])
 
         dir_path = f"../contents/{helpers.get_domain(page.url)}"
         file_name = f"{len(self.processed)}.html"
         helpers.write_file(dir_path, file_name, page.content)
-        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description })
+        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title })
         self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.jsBytes, 'htmlBytes': page.htmlBytes, 'cssBytes': page.cssBytes, 'compressed': page.compression != None })
         return (failed, networkTime, page.get_links())
 
@@ -132,7 +132,7 @@ class Crawler:
         shouldCrawl = self.policyManager.should_crawl_url(page.url)
 
         if shouldCrawl[0] == False:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "" })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "" })
             return 
 
         relevant_child_pages.append(page)
