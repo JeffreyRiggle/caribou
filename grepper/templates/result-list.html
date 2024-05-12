@@ -1,7 +1,7 @@
 <ul>
 	{% for result in results %}
 		<li class="card">
-		  <a href="{{result.url}}" target="_blank">View</a>
+		  <a href="{{result.url}}" target="_blank">{{result.title}}</a>
 		  <p>{{result.summary}}</p>
 		  <p>{{result.description}}</p>
 		</li>

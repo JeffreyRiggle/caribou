@@ -5,6 +5,7 @@ pub struct ResultData {
     pub url: String,
     pub description: String,
     pub summary: String,
+    pub title: String,
 }
 
 #[derive(Debug, Serialize)]

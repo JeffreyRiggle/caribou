@@ -9,12 +9,13 @@ pub fn get_results(query: String) -> ResultsResponse {
             panic!("Failed to connect to database")
         }
     };
-    let mut stmt = conn.prepare(format!("SELECT url, summary, description FROM resources WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%')", query, query).as_str()).unwrap();
+    let mut stmt = conn.prepare(format!("SELECT url, title, summary, description FROM resources WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%')", query, query).as_str()).unwrap();
     let rows = stmt.query_map([], |row| {
         Ok(ResultData {
             url: row.get(0)?,
-            description: row.get(1)?,
-            summary: row.get(2)?
+            title: row.get(1)?,
+            description: row.get(2)?,
+            summary: row.get(3)?
         })
     }).unwrap();
 
