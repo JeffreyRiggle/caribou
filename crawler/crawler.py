@@ -7,13 +7,16 @@ import sqlite3
 import concurrent.futures
 from asset_repo import AssetRespositoy
 from status import ResourceStatus
+from uuid import uuid4
+import faulthandler
 
+faulthandler.enable()
 class Crawler:
     def __init__(self):
         self.conn = sqlite3.connect("../grepper.db", check_same_thread=False)
         self.db = DBAccess(self.conn)
         self.db.setup()
-        self.policyManager = PolicyManager(self.conn)
+        self.policyManager = PolicyManager(self.db)
         self.processed = set()
         self.asset_respository = AssetRespositoy()
         self.pending_resouce_entries = []
@@ -44,7 +47,7 @@ class Crawler:
 
             while pgs:
                 nextPgs = []
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
                     for pg in pgs:
                         futures.append(executor.submit(self.process_page, pg, relevantChildPages))
@@ -112,7 +115,8 @@ class Crawler:
             return (failed, networkTime, [])
 
         dir_path = f"../contents/{helpers.get_domain(page.url)}"
-        file_name = f"{len(self.processed)}.html"
+        file_id = str(uuid4())
+        file_name = f"{file_id}.html"
         helpers.write_file(dir_path, file_name, page.content)
         self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title })
         self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.jsBytes, 'htmlBytes': page.htmlBytes, 'cssBytes': page.cssBytes, 'compressed': page.compression != None })

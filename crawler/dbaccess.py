@@ -1,9 +1,11 @@
 import time
 import transactions
+import threading
 
 class DBAccess:
     def __init__(self, connection):
         self.connection = connection
+        self.lock = threading.Lock()
 
     def setup(self):
         cursor = self.connection.cursor()
@@ -17,32 +19,53 @@ class DBAccess:
         return transactions.DBTransaction(self.connection)
 
     def add_resource(self, url, path, status, title, summary, description, transaction):
-        cursor = self.connection.cursor()
-        cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?)", (url, path, time.time(), title, summary, description, status))
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?)", (url, path, time.time(), title, summary, description, status))
 
-        if transaction == None:
-            cursor.connection.commit()
+            if transaction == None:
+                cursor.connection.commit()
 
     def get_resource_last_edit(self, url):
-        cursor = self.connection.cursor()
-        cursor.execute("SELECT lastIndex FROM resources WHERE url = ?", (url,))
-        result = list(map(lambda r: r[0], cursor.fetchall()))
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT lastIndex FROM resources WHERE url = ?", (url,))
+            result = list(map(lambda r: r[0], cursor.fetchall()))
 
-        if len(result) < 1:
-            return 0
+            if len(result) < 1:
+                return 0
 
-        return result[0]
+            return result[0]
 
     def add_metadata(self, url, jsBytes, htmlBytes, cssBytes, compressed, transaction):
-        cursor = self.connection.cursor()
-        cursor.execute("INSERT OR REPLACE INTO metadata VALUES (?, ?, ?, ?, ?)", (url, jsBytes, htmlBytes, cssBytes, compressed))
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT OR REPLACE INTO metadata VALUES (?, ?, ?, ?, ?)", (url, jsBytes, htmlBytes, cssBytes, compressed))
 
-        if transaction == None:
-            cursor.connection.commit()
+            if transaction == None:
+                cursor.connection.commit()
 
     def track_performance(self, url, appTime, networkTime, transaction):
-        cursor = self.connection.cursor()
-        cursor.execute("INSERT INTO perf VALUES (?, ?, ?)", (url, appTime, networkTime))
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT INTO perf VALUES (?, ?, ?)", (url, appTime, networkTime))
 
-        if transaction == None:
-            cursor.connection.commit()
+            if transaction == None:
+                cursor.connection.commit()
+
+    def get_pages_by_status(self, status):
+        with self.lock:
+            result = self.connection.execute("SELECT domain from domains WHERE Status = ?", (status, ))
+            return list(map(lambda r: r[0], result.fetchall()))
+
+    def add_domain(self, domain, status, transaction=None):
+        with self.lock:
+            self.connection.execute("INSERT INTO domains VALUES (?, ?, ?);", (domain, status, ""))
+            
+            if transaction == None:
+                self.connection.commit()
+
+    def get_domain_status(self, domain):
+        with self.lock:
+            return self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
+

@@ -2,26 +2,22 @@ from status import DomainStatus
 from helpers import get_domain
 
 class PolicyManager:
-    def __init__(self, connection):
-        self.connection = connection 
+    def __init__(self, dbaccess):
         self.pending_domains = set()
+        self.dbaccess = dbaccess
 
     def get_crawl_pages(self):
-        result = self.connection.execute("SELECT domain from domains WHERE Status = ?", (DomainStatus.Crawl.value, ))
-        return list(map(lambda r: r[0], result.fetchall()))
+        return self.dbaccess.get_pages_by_status(DomainStatus.Crawl.value)
 
     def add_crawl_domain(self, domain):
         self.add_domain(domain, DomainStatus.Crawl.value)
 
-    def add_domain(self, domain, status, doCommit=True):
-        self.connection.execute("INSERT INTO domains VALUES (?, ?, ?);", (domain, status, ""))
-        
-        if doCommit == True:
-            self.connection.commit()
+    def add_domain(self, domain, status, transaction=None):
+        self.dbaccess.add_domain(domain, status, transaction)
 
     def should_download_url(self, url):
         domain = get_domain(url)
-        result = self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
+        result = self.dbaccess.get_domain_status(domain)
 
         if len(result) < 1:
             return False
@@ -34,7 +30,8 @@ class PolicyManager:
         if domain in self.pending_domains:
             return (False, DomainStatus.NeedsStatus.value)
 
-        result = self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
+
+        result = self.dbaccess.get_domain_status(domain)
         
         if len(result) < 1:
             self.pending_domains.add(domain)
@@ -47,8 +44,8 @@ class PolicyManager:
         return (False, status)
 
     def flush_pending_domains(self):
-        for domain in self.pending_domains:
-            self.add_domain(domain, DomainStatus.NeedsStatus.value, False)
+        with self.dbaccess.build_transaction() as transaction:
+            for domain in self.pending_domains:
+                self.add_domain(domain, DomainStatus.NeedsStatus.value, transaction)
 
-        self.connection.commit()
         self.pending_domains.clear()
