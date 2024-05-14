@@ -8,9 +8,7 @@ import concurrent.futures
 from asset_repo import AssetRespositoy
 from status import ResourceStatus
 from uuid import uuid4
-import faulthandler
 
-faulthandler.enable()
 class Crawler:
     def __init__(self):
         self.conn = sqlite3.connect("../grepper.db", check_same_thread=False)
