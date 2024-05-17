@@ -9,6 +9,8 @@ page_references = dict()
 rankings = dict()
 conn = sqlite3.connect("../grepper.db")
 
+conn.cursor().execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
+conn.commit()
 pages = conn.cursor().execute("SELECT url, path FROM resources where status = 'Processed'").fetchall()
 
 # Copied from crawler find a way to share code
@@ -63,9 +65,8 @@ while converged != True:
 
         rankings[page] = newValue
 
-total_ranked = 0
 for rank in rankings:
-    print(f"Page {rank} has a rank of {rankings[rank]}")
-    total_ranked += rankings[rank]
+    conn.cursor().execute("INSERT OR REPLACE INTO rank VALUES (?, ?)", (rank, rankings[rank]))
 
-print(f"Cumulative rank {total_ranked} after {iterations} iterations")
+conn.commit()
+print(f"Completed after {iterations} iterations")
