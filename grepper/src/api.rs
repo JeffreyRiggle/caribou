@@ -9,7 +9,8 @@ pub fn get_results(query: String) -> ResultsResponse {
             panic!("Failed to connect to database")
         }
     };
-    let mut stmt = conn.prepare(format!("SELECT url, title, summary, description FROM resources WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%')", query, query).as_str()).unwrap();
+    
+    let mut stmt = conn.prepare(format!("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%') ORDER BY pageRank DESC) SELECT url, title, summary, description FROM res", query, query).as_str()).unwrap();
     let rows = stmt.query_map([], |row| {
         Ok(ResultData {
             url: row.get(0)?,
