@@ -1,8 +1,8 @@
-use actix_web::{get, web, HttpResponse};
+use actix_web::{get, web, HttpResponse, Result, Responder};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::{api::get_results, models::QueryRequest};
+use crate::{api::{get_graph_results, get_results}, models::QueryRequest};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -32,6 +32,21 @@ async fn get_page() -> HttpResponse {
        .body(page)
 }
 
+#[get("/graph")]
+async fn get_graph_page() -> HttpResponse {
+    let page = match TEMPLATES.render("graph.html", &Context::new()) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load page {}", e);
+            "<html><body><h1>Internal Server Error</h1></body></html>".to_string()
+        }
+    };
+
+    HttpResponse::Ok()
+       .content_type("text/html; charset=utf-8")
+       .body(page)
+}
+
 #[get("/query")]
 async fn query_data(q: web::Query<QueryRequest>) -> HttpResponse {
     let results = get_results(q.into_inner().q);
@@ -49,3 +64,11 @@ async fn query_data(q: web::Query<QueryRequest>) -> HttpResponse {
        .content_type("text/html; charset=utf-8")
        .body(page)
 }
+
+#[get("/query-graph")]
+async fn query_graph_data(q: web::Query<QueryRequest>) -> Result<impl Responder> {
+    let results = get_graph_results(q.into_inner().q);
+
+    Ok(web::Json(results))
+}
+

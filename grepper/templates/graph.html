@@ -1,0 +1,81 @@
+<html>
+		<head>
+				<title>Grepper</title>
+				<style>
+				  .header {
+				    text-align: center;
+				  }
+
+				  .card {
+				    padding: 4px;
+					margin-bottom: 8px;
+				  }
+
+				  .card p {
+				    max-height: 3.5em;
+					text-overflow: ellipsis;
+					overflow: hidden;
+				  }
+
+				  li {
+				    list-style: none;
+				  }
+
+				  canvas {
+						margin: auto;
+						display: block;
+				  }
+				</style>
+				<script>
+						function handleChange(e) {
+						  fetch('/query-graph?q=' + e.target.value).then(res => {
+								  return res.json().then(j => drawResults(j.results));
+						  });
+						}
+
+						addEventListener('load', () => {
+								const input = document.getElementById('search');
+								input.addEventListener('change', handleChange);
+						});
+
+						function getRelativeSize(items) {
+								return Math.max(...items.map(i => i.rank));
+						}
+
+						function drawResults(results) {
+								const canvas = document.getElementById('result-view');
+								const context = canvas.getContext('2d');
+								
+								context.clearRect(0, 0, canvas.width, canvas.height);
+								const maxRelativeSize = getRelativeSize(results);
+								const centerX = canvas.width / 2;
+								const centerY = canvas.height / 2;
+								const maxRadius = 100;
+
+								results.forEach((result, index) => {
+										const relativeRadius = (result.rank / maxRelativeSize) * maxRadius;
+										const angle = (index / results.length) * (2 * Math.PI);
+
+										const x = centerX + (Math.cos(angle) * (centerX - maxRadius));
+										const y = centerY + (Math.sin(angle) * (centerY - maxRadius));
+
+										context.beginPath();
+										context.arc(x, y, relativeRadius, 0, 2 * Math.PI);
+										context.stroke();
+
+										context.fillText(result.title, x - context.measureText(result.title).width / 2, y + 3);
+								});
+						}
+
+				</script>
+		</head>
+		</body>
+				<div class="header">
+						<h1>Grapher</h1>
+						<input type="text" name="q" id="search" change="handleChange">
+				</div>
+				<div id="results">
+						<canvas id="result-view" width="1000" height="800"/>
+				</div>
+		</body>
+</html>

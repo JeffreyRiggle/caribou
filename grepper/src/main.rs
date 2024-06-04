@@ -10,6 +10,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(views::get_page)
             .service(views::query_data)
+            .service(views::get_graph_page)
+            .service(views::query_graph_data)
     })
     .bind(("127.0.0.1", 4080))?
     .run()

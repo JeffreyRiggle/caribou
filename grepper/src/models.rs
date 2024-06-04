@@ -17,3 +17,15 @@ pub struct ResultsResponse {
 pub struct QueryRequest {
     pub q: String,
 }
+
+#[derive(Debug, Serialize)]
+pub struct GraphResult {
+    pub url: String,
+    pub title: String,
+    pub rank: f64
+}
+
+#[derive(Debug, Serialize)]
+pub struct GraphResultReponse {
+    pub results: Vec<GraphResult>
+}
