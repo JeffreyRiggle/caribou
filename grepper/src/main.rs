@@ -1,3 +1,4 @@
+use actix_files as fs;
 use actix_web::{App, HttpServer};
 
 mod views;
@@ -8,6 +9,7 @@ mod api;
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .service(fs::Files::new("/static", "./static").show_files_listing())
             .service(views::get_page)
             .service(views::query_data)
             .service(views::get_graph_page)

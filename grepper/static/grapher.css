@@ -1,0 +1,35 @@
+html {
+  background-color: rgb(27, 28, 38);
+  color: green;
+}
+
+input {
+  margin-bottom: 4px;
+  border-color: green;
+}
+
+.header {
+	text-align: center;
+}
+
+.card {
+	padding: 4px;
+	margin-bottom: 8px;
+}
+
+.card p {
+	max-height: 3.5em;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+li {
+	list-style: none;
+}
+
+canvas {
+		margin: auto;
+		display: block;
+		background-color: rgb(27, 28, 38);
+}
+
