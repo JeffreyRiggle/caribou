@@ -1,7 +1,17 @@
-const possibleColors = ['blue', 'red', 'yellow', 'orange', 'purple'];
+const possibleColors = [
+		{ inner: 'rgb(220, 220, 250)', outer: 'rgb(52, 52, 247)' },
+		{ inner: 'rgb(250, 220, 220)', outer: 'rgb(252, 61, 61)' },
+		{ inner: 'rgb(246, 250, 220)', outer: 'yellow' },
+		{ inner: 'rgb(255, 242, 217)', outer: 'rgb(252, 194, 76)' },
+		{ inner: 'rgb(244, 220, 250)', outer: 'rgb(247, 88, 252)' }
+];
 let canvasWidth, canvasHeight;
 const searchResults = [];
 const stars = [];
+let mouseLocation = {
+		x: 0,
+		y: 0
+}
 
 function handleChange(e) {
   fetch('/query-graph?q=' + e.target.value).then(res => {
@@ -16,6 +26,13 @@ addEventListener('load', () => {
 		canvasWidth = canvas.width = window.innerWidth;
 		canvasHeight = canvas.height = window.innerHeight - 100;
 
+		canvas.addEventListener('mousemove', evt => {
+				mouseLocation.x = evt.clientX;
+				// This is a bit of a hack because the canvas doesn't take up the whole screen
+				// and is fixed positioned
+				mouseLocation.y = evt.clientY - 100;
+		});
+
 		const totalStars = Math.floor(Math.random() * 100);
 		for (let i = 0; i < totalStars; i++)
 		{
@@ -24,15 +41,15 @@ addEventListener('load', () => {
 		requestAnimationFrame(runAnimationLoop);
 });
 
+
 function getRelativeSize(items) {
 		return Math.max(...items.map(i => i.rank));
 }
 
-function getFillGradient(context, x, y, innerRadius, relativeRadius, color, colorStop) {
+function getFillGradient(context, x, y, innerRadius, relativeRadius, color) {
 		const gradient = context.createRadialGradient(x, y, innerRadius, x, y, relativeRadius);
-		gradient.addColorStop(0, 'white');
-		gradient.addColorStop(colorStop, color);
-		gradient.addColorStop(1, 'white');
+		gradient.addColorStop(0, color.inner);
+		gradient.addColorStop(1, color.outer);
 		return gradient;
 }
 
@@ -72,55 +89,44 @@ class Star {
 }
 
 class SearchResult {
-		constructor(x, y, relativeRadius, color, title) {
-				this.x = x;
-				this.y = y;
-				this.relativeRadius = relativeRadius;
+		constructor(radius, color, result) {
+				this.x = Math.random() * (canvasWidth - radius);
+				this.y = Math.random() * (canvasHeight - radius);
+				this.radius = radius;
 				this.color = color;
-				this.title = title;
-				this.innerRadius = relativeRadius / 4;
-				this.colorStop = .99;
-				this.csGrowDirection = 0;
+				this.result = result;
+				this.innerRadius = radius / 1.5;
 				this.irGrowDirection = 1;
+				this.hover = false;
 		}
 
 		draw = (context) => {
 				context.beginPath();
-				context.arc(this.x, this.y, this.relativeRadius, 0, 2 * Math.PI);
-				context.fillStyle = getFillGradient(context, this.x, this.y, this.innerRadius, this.relativeRadius, this.color, this.colorStop);
-				context.strokeStyle = 'white';
+				context.fillStyle = getFillGradient(context, this.x, this.y, this.innerRadius, this.radius, this.color);
+				if (this.hover) {
+						context.shadowColor = 'white';
+						context.shadowBlur = 15;
+						context.shadowOffsetX = 0;
+						context.shadowOffsetY = 0;
+				}
+				context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+				context.closePath();
 				context.fill();
-				context.stroke();
-
-				context.strokeStyle = 'green';
-				context.fillStyle = 'green';
-				context.fillText(this.title, this.x - context.measureText(this.title).width / 2, this.y + 3);
 		}
 
 		update = () => {
-				if (this.csGrowDirection === 1) {
-						this.colorStop += .0001;
-				} else {
-						this.colorStop -= .0001;
-				}
-
-				if (this.colorStop >= .99) {
-						this.csGrowDirection = 0;
-				} else if (this.colorStop <= .85) {
-						this.csGrowDirection = 1;
-				}
-
 				if (this.irGrowDirection === 1) {
-						this.innerRadius = Math.min(this.innerRadius + (this.relativeRadius / 4000), this.relativeRadius / 4);
+						this.innerRadius = Math.min(this.innerRadius + .01, this.radius / 1.5);
 				} else {
-						this.innerRadius = Math.max(this.innerRadius - (this.relativeRadius / 4000), 0);
+						this.innerRadius = Math.max(this.innerRadius - .01, 0);
 				}
 
-				if (this.innerRadius >= this.relativeRadius / 4) {
+				if (this.innerRadius >= this.radius / 1.5) {
 						this.irGrowDirection = 0;
 				} else if (this.innerRadius <= 0) {
 						this.irGrowDirection = 1;
 				}
+				this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 		}
 }
 
@@ -129,7 +135,8 @@ function runAnimationLoop() {
 		const context = canvas.getContext('2d');
 		
 		context.clearRect(0, 0, canvas.width, canvas.height);
-
+		const resetBSC = context.shadowColor;
+		const resetBSB = context.shadowBlur;
 		stars.forEach(s => {
 				s.update();
 				s.draw(context);
@@ -137,6 +144,8 @@ function runAnimationLoop() {
 		searchResults.forEach(r => {
 				r.update();
 				r.draw(context);
+				context.shadowColor = resetBSC;
+				context.shadowBlur = resetBSB;
 		});
 
 		requestAnimationFrame(runAnimationLoop);
@@ -154,11 +163,8 @@ function buildResults(results) {
 		searchResults.length = 0;
 		results.forEach((result, index) => {
 				const relativeRadius = (result.rank / maxRelativeSize) * maxRadius;
-				const angle = (index / results.length) * (2 * Math.PI);
 
-				const x = centerX + (Math.cos(angle) * (centerX - maxRadius));
-				const y = centerY + (Math.sin(angle) * (centerY - maxRadius));
-				const sResult = new SearchResult(x, y, relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result.title);
+				const sResult = new SearchResult(relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result);
 				searchResults.push(sResult);
 		});
 }
