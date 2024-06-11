@@ -11,6 +11,11 @@ const stars = [];
 let mouseLocation = {
 		x: 0,
 		y: 0
+};
+
+let lastClickPosition = {
+		x: undefined,
+		y: undefined
 }
 
 function handleChange(e) {
@@ -33,6 +38,10 @@ addEventListener('load', () => {
 				mouseLocation.y = evt.clientY - 100;
 		});
 
+		canvas.addEventListener('mouseup', evt => {
+				lastClickPosition.x = evt.clientX;
+				lastClickPosition.y = evt.clientY - 100;
+		});
 		const totalStars = Math.floor(Math.random() * 100);
 		for (let i = 0; i < totalStars; i++)
 		{
@@ -90,24 +99,32 @@ class Star {
 
 class SearchResult {
 		constructor(radius, color, result) {
-				this.x = Math.random() * (canvasWidth - radius);
-				this.y = Math.random() * (canvasHeight - radius);
+				this.x = Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2));
+				this.y = Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2));
 				this.radius = radius;
 				this.color = color;
 				this.result = result;
 				this.innerRadius = radius / 1.5;
 				this.irGrowDirection = 1;
 				this.hover = false;
+				this.selected = false;
 		}
 
 		draw = (context) => {
 				context.beginPath();
 				context.fillStyle = getFillGradient(context, this.x, this.y, this.innerRadius, this.radius, this.color);
+				context.shadowOffsetX = 0;
+				context.shadowOffsetY = 0;
+				context.shadowBlur = 15;
+				context.shadowColor = 'white';
+
 				if (this.hover) {
-						context.shadowColor = 'white';
-						context.shadowBlur = 15;
-						context.shadowOffsetX = 0;
-						context.shadowOffsetY = 0;
+						context.shadowBlur = 25;
+				}
+
+				if (this.selected) {
+						context.shadowColor = 'rgb(3, 190, 252)';
+						context.shadowBlur = 40;
 				}
 				context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 				context.closePath();
@@ -127,6 +144,7 @@ class SearchResult {
 						this.irGrowDirection = 1;
 				}
 				this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
+				this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
 		}
 }
 
