@@ -97,6 +97,42 @@ class Star {
 		}
 }
 
+class SearchAction {
+		constructor(x, y, size, actionText, action) {
+				this.x = x;
+				this.y = y;
+				this.size = size;
+				this.actionText = actionText;
+				this.selected = false;
+				this.action = action;
+		}
+
+		draw = (context) => {
+				context.beginPath();
+				context.fillStyle = 'rgba(3, 190, 252, .15)';
+				context.rect(this.x, this.y, this.size, this.size);
+				context.closePath();
+				context.fill();
+				context.fillStyle = 'white';
+				context.font = '24px roboto';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.fillText(this.actionText, this.x + (this.size / 2), this.y + (this.size / 2));
+		}
+
+		update = () => {
+				const validPosition = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined;
+				const validX = lastClickPosition.x >= this.x && lastClickPosition.x <= this.x + this.size;
+				const validY = lastClickPosition.y <= this.y + this.size && lastClickPosition.y >= this.y;
+				const wasSelected = this.selected;
+				this.selected = validPosition && validX && validY;
+
+				if (this.selected && !wasSelected) {
+						setTimeout(() => this.action());
+				}
+		}
+}
+
 class SearchResult {
 		constructor(radius, color, result) {
 				this.x = Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2));
@@ -108,6 +144,7 @@ class SearchResult {
 				this.irGrowDirection = 1;
 				this.hover = false;
 				this.selected = false;
+				this.selectionActions = [];
 		}
 
 		draw = (context) => {
@@ -132,7 +169,7 @@ class SearchResult {
 
 
 				if (this.selected) {
-						this.drawSelectionActions(context);
+						this.selectionActions.forEach(a => a.draw(context));
 						this.drawSelectionHeader(context);
 				}
 		}
@@ -150,35 +187,19 @@ class SearchResult {
 						this.irGrowDirection = 1;
 				}
 				this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
-				this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
-		}
-
-		drawSelectionActions(context) {
-				const diameter = this.radius * 2;
-				const leftX = this.x - diameter - this.radius - 20;
-				const boxY = this.y - this.radius;
-				context.beginPath();
-				context.fillStyle = 'rgba(3, 190, 252, .15)';
-				context.rect(leftX, boxY, diameter, diameter);
-				context.closePath();
-				context.fill();
-				context.fillStyle = 'white';
-				context.font = '24px roboto';
-				context.textAlign = 'center';
-				context.textBaseline = 'middle';
-				context.fillText("Visit", leftX + this.radius, boxY + this.radius);
-
-				const rightX = this.x + this.radius + 20;
-				context.beginPath();
-				context.fillStyle = 'rgba(3, 190, 252, .15)';
-				context.rect(rightX, boxY, diameter, diameter);
-				context.closePath();
-				context.fill();
-				context.fillStyle = 'white';
-				context.font = '24px roboto';
-				context.textAlign = 'center';
-				context.textBaseline = 'middle';
-				context.fillText("Explore", rightX + this.radius, boxY + this.radius);
+				this.selectionActions.forEach(a => a.update());
+				this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+				if (this.selected && this.selectionActions.length === 0) {
+						const diameter = this.radius * 2;
+						const leftX = this.x - diameter - this.radius - 20;
+						const boxY = this.y - this.radius;
+						const rightX = this.x + this.radius + 20;
+						const openAction = () => window.open(this.result.url, '_blank');
+						this.selectionActions.push(new SearchAction(leftX, boxY, diameter, 'Visit', openAction));
+						this.selectionActions.push(new SearchAction(rightX, boxY, diameter, 'Explore'));
+				} else if (!this.selected && this.selectionActions.length > 0) {
+						this.selectionActions = [];
+				}
 		}
 
 		drawSelectionHeader(context) {
