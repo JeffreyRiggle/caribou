@@ -129,6 +129,12 @@ class SearchResult {
 				context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 				context.closePath();
 				context.fill();
+
+
+				if (this.selected) {
+						this.drawSelectionActions(context);
+						this.drawSelectionHeader(context);
+				}
 		}
 
 		update = () => {
@@ -145,6 +151,52 @@ class SearchResult {
 				}
 				this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 				this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
+		}
+
+		drawSelectionActions(context) {
+				const diameter = this.radius * 2;
+				const leftX = this.x - diameter - this.radius - 20;
+				const boxY = this.y - this.radius;
+				context.beginPath();
+				context.fillStyle = 'rgba(3, 190, 252, .15)';
+				context.rect(leftX, boxY, diameter, diameter);
+				context.closePath();
+				context.fill();
+				context.fillStyle = 'white';
+				context.font = '24px roboto';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.fillText("Visit", leftX + this.radius, boxY + this.radius);
+
+				const rightX = this.x + this.radius + 20;
+				context.beginPath();
+				context.fillStyle = 'rgba(3, 190, 252, .15)';
+				context.rect(rightX, boxY, diameter, diameter);
+				context.closePath();
+				context.fill();
+				context.fillStyle = 'white';
+				context.font = '24px roboto';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.fillText("Explore", rightX + this.radius, boxY + this.radius);
+		}
+
+		drawSelectionHeader(context) {
+				const diameter = this.radius * 2;
+				const headerX = this.x - diameter - this.radius - 20;
+				const headerY = this.y - this.radius - 120;
+				const headerWidth = diameter /* left box */ + diameter /* center */  + diameter /* right box */ + 40 /* padding * 2 */;
+				const headerHeight = 100;
+				context.beginPath();
+				context.fillStyle = 'rgba(3, 190, 252, .15)';
+				context.rect(headerX, headerY, headerWidth, headerHeight);
+				context.closePath();
+				context.fill();
+				context.fillStyle = 'white';
+				context.font = '24px roboto';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.fillText(this.result.title, headerX + (headerWidth / 2), headerY + (headerHeight / 2));
 		}
 }
 
