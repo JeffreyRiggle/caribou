@@ -13,6 +13,12 @@ export class SearchResult {
 		this.hover = false;
 		this.selected = false;
 		this.selectionActions = [];
+		if (radius >= 125) {
+			this.growRate = 0;
+		} else {
+			this.growRate = (125 - radius) / 30;
+		}
+		this.originalSize = this.radius;
 	}
 
 	draw = (context) => {
@@ -36,13 +42,22 @@ export class SearchResult {
 		context.fill();
 
 
-		if (this.selected) {
+		if (this.selected && this.selectionActions.length > 0) {
 			this.selectionActions.forEach(a => a.draw(context));
 			this.drawSelectionHeader(context);
 		}
 	}
 
 	update = (lastClickPosition, mouseLocation) => {
+		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+		if (this.selected && this.radius < 125 && this.growRate > 0) {
+			this.radius = Math.min(125, this.growRate + this.radius);
+		}
+
+		if (!this.selected && this.radius !== this.originalSize) {
+			this.radius = Math.max(this.radius - this.growRate, this.originalSize);
+		}
+
 		if (this.irGrowDirection === 1) {
 			this.innerRadius = Math.min(this.innerRadius + .01, this.radius / 1.5);
 		} else {
@@ -56,8 +71,8 @@ export class SearchResult {
 		}
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 		this.selectionActions.forEach(a => a.update(lastClickPosition));
-		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
-		if (this.selected && this.selectionActions.length === 0) {
+		
+		if (this.selected && this.selectionActions.length === 0 && this.radius >= 125) {
 			const diameter = this.radius * 2;
 			const leftX = this.x - diameter - this.radius - 20;
 			const boxY = this.y - this.radius;
