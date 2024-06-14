@@ -1,3 +1,6 @@
+import { Star } from './star.js';
+import { SearchResult } from './search-result.js';
+
 const possibleColors = [
 		{ inner: 'rgb(220, 220, 250)', outer: 'rgb(52, 52, 247)' },
 		{ inner: 'rgb(250, 220, 220)', outer: 'rgb(252, 61, 61)' },
@@ -45,7 +48,7 @@ addEventListener('load', () => {
 		const totalStars = Math.floor(Math.random() * 100);
 		for (let i = 0; i < totalStars; i++)
 		{
-				stars.push(new Star());
+				stars.push(new Star(canvasWidth, canvasHeight));
 		}
 		requestAnimationFrame(runAnimationLoop);
 });
@@ -53,172 +56,6 @@ addEventListener('load', () => {
 
 function getRelativeSize(items) {
 		return Math.max(...items.map(i => i.rank));
-}
-
-function getFillGradient(context, x, y, innerRadius, relativeRadius, color) {
-		const gradient = context.createRadialGradient(x, y, innerRadius, x, y, relativeRadius);
-		gradient.addColorStop(0, color.inner);
-		gradient.addColorStop(1, color.outer);
-		return gradient;
-}
-
-class Star {
-		constructor() {
-				this.x = Math.random() * canvasWidth;
-				this.y = Math.random() * canvasHeight;
-				this.size = Math.random() + .05;
-				this.blinkChance = .003;
-				this.alpha = 1;
-				this.alphaChange = 0;
-		}
-
-		draw = (context) => {
-				context.beginPath();
-				context.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
-				context.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
-				context.fill();
-				context.closePath();
-		}
-
-		update = () => {
-				if (this.alphaChange === 0 && Math.random() < this.blinkChance) {
-						this.alphaChange = -1;
-						return;
-				}
-
-				if (this.alphaChange === 0) return;
-
-				this.alpha += this.alphaChange * .05;
-				if (this.alpha <= 0) {
-						this.alphaChange = 1;
-				} else if (this.alpha >= 1) {
-						this.alphaChange = 0;
-				}
-		}
-}
-
-class SearchAction {
-		constructor(x, y, size, actionText, action) {
-				this.x = x;
-				this.y = y;
-				this.size = size;
-				this.actionText = actionText;
-				this.selected = false;
-				this.action = action;
-		}
-
-		draw = (context) => {
-				context.beginPath();
-				context.fillStyle = 'rgba(3, 190, 252, .15)';
-				context.rect(this.x, this.y, this.size, this.size);
-				context.closePath();
-				context.fill();
-				context.fillStyle = 'white';
-				context.font = '24px roboto';
-				context.textAlign = 'center';
-				context.textBaseline = 'middle';
-				context.fillText(this.actionText, this.x + (this.size / 2), this.y + (this.size / 2));
-		}
-
-		update = () => {
-				const validPosition = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined;
-				const validX = lastClickPosition.x >= this.x && lastClickPosition.x <= this.x + this.size;
-				const validY = lastClickPosition.y <= this.y + this.size && lastClickPosition.y >= this.y;
-				const wasSelected = this.selected;
-				this.selected = validPosition && validX && validY;
-
-				if (this.selected && !wasSelected) {
-						setTimeout(() => this.action());
-				}
-		}
-}
-
-class SearchResult {
-		constructor(radius, color, result) {
-				this.x = Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2));
-				this.y = Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2));
-				this.radius = radius;
-				this.color = color;
-				this.result = result;
-				this.innerRadius = radius / 1.5;
-				this.irGrowDirection = 1;
-				this.hover = false;
-				this.selected = false;
-				this.selectionActions = [];
-		}
-
-		draw = (context) => {
-				context.beginPath();
-				context.fillStyle = getFillGradient(context, this.x, this.y, this.innerRadius, this.radius, this.color);
-				context.shadowOffsetX = 0;
-				context.shadowOffsetY = 0;
-				context.shadowBlur = 15;
-				context.shadowColor = 'white';
-
-				if (this.hover) {
-						context.shadowBlur = 25;
-				}
-
-				if (this.selected) {
-						context.shadowColor = 'rgb(3, 190, 252)';
-						context.shadowBlur = 40;
-				}
-				context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-				context.closePath();
-				context.fill();
-
-
-				if (this.selected) {
-						this.selectionActions.forEach(a => a.draw(context));
-						this.drawSelectionHeader(context);
-				}
-		}
-
-		update = () => {
-				if (this.irGrowDirection === 1) {
-						this.innerRadius = Math.min(this.innerRadius + .01, this.radius / 1.5);
-				} else {
-						this.innerRadius = Math.max(this.innerRadius - .01, 0);
-				}
-
-				if (this.innerRadius >= this.radius / 1.5) {
-						this.irGrowDirection = 0;
-				} else if (this.innerRadius <= 0) {
-						this.irGrowDirection = 1;
-				}
-				this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
-				this.selectionActions.forEach(a => a.update());
-				this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
-				if (this.selected && this.selectionActions.length === 0) {
-						const diameter = this.radius * 2;
-						const leftX = this.x - diameter - this.radius - 20;
-						const boxY = this.y - this.radius;
-						const rightX = this.x + this.radius + 20;
-						const openAction = () => window.open(this.result.url, '_blank');
-						this.selectionActions.push(new SearchAction(leftX, boxY, diameter, 'Visit', openAction));
-						this.selectionActions.push(new SearchAction(rightX, boxY, diameter, 'Explore'));
-				} else if (!this.selected && this.selectionActions.length > 0) {
-						this.selectionActions = [];
-				}
-		}
-
-		drawSelectionHeader(context) {
-				const diameter = this.radius * 2;
-				const headerX = this.x - diameter - this.radius - 20;
-				const headerY = this.y - this.radius - 120;
-				const headerWidth = diameter /* left box */ + diameter /* center */  + diameter /* right box */ + 40 /* padding * 2 */;
-				const headerHeight = 100;
-				context.beginPath();
-				context.fillStyle = 'rgba(3, 190, 252, .15)';
-				context.rect(headerX, headerY, headerWidth, headerHeight);
-				context.closePath();
-				context.fill();
-				context.fillStyle = 'white';
-				context.font = '24px roboto';
-				context.textAlign = 'center';
-				context.textBaseline = 'middle';
-				context.fillText(this.result.title, headerX + (headerWidth / 2), headerY + (headerHeight / 2));
-		}
 }
 
 function runAnimationLoop() {
@@ -233,7 +70,7 @@ function runAnimationLoop() {
 				s.draw(context);
 		});
 		searchResults.forEach(r => {
-				r.update();
+				r.update(lastClickPosition, mouseLocation);
 				r.draw(context);
 				context.shadowColor = resetBSC;
 				context.shadowBlur = resetBSB;
@@ -255,7 +92,7 @@ function buildResults(results) {
 		results.forEach((result, index) => {
 				const relativeRadius = (result.rank / maxRelativeSize) * maxRadius;
 
-				const sResult = new SearchResult(relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result);
+				const sResult = new SearchResult(canvasWidth, canvasHeight, relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result);
 				searchResults.push(sResult);
 		});
 }
