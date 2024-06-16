@@ -3,7 +3,9 @@ import { getFillGradient } from './helpers.js';
 
 export class SearchResult {
 	constructor(canvasWidth, canvasHeight, radius, color, result) {
-		this.x = Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2));
+		this.canvasWidth = canvasWidth;
+		this.canvasHeight = canvasHeight;
+		this.x = Math.floor(Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2)));
 		this.y = Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2));
 		this.radius = radius;
 		this.color = color;
@@ -19,7 +21,20 @@ export class SearchResult {
 			this.growRate = (125 - radius) / 30;
 		}
 		this.originalSize = this.radius;
+
+		this.originalX = this.x;
+		this.maxXPoint = 125 + (125 * 2) + this.x;
+		this.minXPoint = this.x - 125 - (125 * 2);
+		if (this.maxXPoint > canvasWidth) {
+			this.translateX = -((this.maxXPoint - canvasWidth) / 30);
+		} else if (this.minXPoint < 0) {
+			this.translateX = Math.abs(this.minXPoint / 30);
+		} else {
+			this.translateX = 0;
+		}
 	}
+
+
 
 	draw = (context) => {
 		context.beginPath();
@@ -49,13 +64,29 @@ export class SearchResult {
 	}
 
 	update = (lastClickPosition, mouseLocation) => {
-		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.originalX) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
 		if (this.selected && this.radius < 125 && this.growRate > 0) {
 			this.radius = Math.min(125, this.growRate + this.radius);
 		}
 
 		if (!this.selected && this.radius !== this.originalSize) {
 			this.radius = Math.max(this.radius - this.growRate, this.originalSize);
+		}
+
+		if (this.selected && ((this.translateX > 0 && this.x - 125 - (125 * 2) < 0) || (this.translateX < 0 && this.x + 125 + (125 * 2) > this.canvasWidth)))  {
+			if (this.translateX > 0) {
+				this.x = Math.min(this.x + this.translateX, 125 + (125 * 2));
+			} else {
+				this.x = Math.max(this.x + this.translateX, this.maxXPoint - this.canvasWidth);
+			}
+		}
+
+		if (!this.selected && this.x !== this.originalX) {
+			if (this.translateX < 0) {
+				this.x = Math.min(this.x - this.translateX, this.originalX);
+			} else {
+				this.x = Math.max(this.x - this.translateX, this.originalX);
+			}
 		}
 
 		if (this.irGrowDirection === 1) {
