@@ -6,7 +6,7 @@ export class SearchResult {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 		this.x = Math.floor(Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2)));
-		this.y = Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2));
+		this.y = Math.floor(Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2)));
 		this.radius = radius;
 		this.color = color;
 		this.result = result;
@@ -32,8 +32,18 @@ export class SearchResult {
 		} else {
 			this.translateX = 0;
 		}
-	}
 
+		this.originalY = this.y;
+		this.maxYPoint = 125 + 120 + this.y;
+		this.minYPoint = this.y - 125 - 120;
+		if (this.maxYPoint > canvasHeight) {
+			this.translateY = -((this.maxYPoint - canvasHeight) / 30);
+		} else if (this.minYPoint < 0) {
+			this.translateY = Math.abs(this.minYPoint / 30);
+		} else {
+			this.translateY = 0;
+		}
+	}
 
 
 	draw = (context) => {
@@ -64,7 +74,7 @@ export class SearchResult {
 	}
 
 	update = (lastClickPosition, mouseLocation) => {
-		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.originalX) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.originalX) ** 2 + (lastClickPosition.y - this.originalY) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
 		if (this.selected && this.radius < 125 && this.growRate > 0) {
 			this.radius = Math.min(125, this.growRate + this.radius);
 		}
@@ -86,6 +96,22 @@ export class SearchResult {
 				this.x = Math.min(this.x - this.translateX, this.originalX);
 			} else {
 				this.x = Math.max(this.x - this.translateX, this.originalX);
+			}
+		}
+
+		if (this.selected && ((this.translateY > 0 && this.y - 125 - 120 < 0) || (this.translateY < 0 && this.y + 125 + 120 > this.canvasHeight)))  {
+			if (this.translateY > 0) {
+				this.y = Math.min(this.y + this.translateY, 125 + 120);
+			} else {
+				this.y = Math.max(this.y + this.translateY, this.maxYPoint - this.canvasHeight);
+			}
+		}
+
+		if (!this.selected && this.y !== this.originalY) {
+			if (this.translateY < 0) {
+				this.y = Math.min(this.y - this.translateY, this.originalY);
+			} else {
+				this.y = Math.max(this.y - this.translateY, this.originalY);
 			}
 		}
 
