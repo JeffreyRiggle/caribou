@@ -1,6 +1,12 @@
 import { SearchAction } from './search-action.js';
 import { getFillGradient } from './helpers.js';
 
+const MAX_RADIUS = 125;
+const ACTION_WIDTH = MAX_RADIUS * 2;
+const HEADER_HEIGHT = 100;
+const COMPONENT_PADDING = 20;
+const TOTAL_HEADER_SIZE = HEADER_HEIGHT + COMPONENT_PADDING;
+
 export class SearchResult {
 	constructor(canvasWidth, canvasHeight, radius, color, result) {
 		this.canvasWidth = canvasWidth;
@@ -18,28 +24,28 @@ export class SearchResult {
 		if (radius >= 125) {
 			this.growRate = 0;
 		} else {
-			this.growRate = (125 - radius) / 30;
+			this.growRate = (MAX_RADIUS - radius) / 30;
 		}
 		this.originalSize = this.radius;
 
 		this.originalX = this.x;
-		this.maxXPoint = 125 + (125 * 2) + this.x;
-		this.minXPoint = this.x - 125 - (125 * 2);
+		this.maxXPoint = MAX_RADIUS + ACTION_WIDTH + this.x;
+		const minXPoint = this.x - MAX_RADIUS - ACTION_WIDTH;
 		if (this.maxXPoint > canvasWidth) {
 			this.translateX = -((this.maxXPoint - canvasWidth) / 30);
-		} else if (this.minXPoint < 0) {
-			this.translateX = Math.abs(this.minXPoint / 30);
+		} else if (minXPoint < 0) {
+			this.translateX = Math.abs(minXPoint / 30);
 		} else {
 			this.translateX = 0;
 		}
 
 		this.originalY = this.y;
-		this.maxYPoint = 125 + 120 + this.y;
-		this.minYPoint = this.y - 125 - 120;
+		this.maxYPoint = MAX_RADIUS + TOTAL_HEADER_SIZE + this.y;
+		const minYPoint = this.y - MAX_RADIUS - TOTAL_HEADER_SIZE;
 		if (this.maxYPoint > canvasHeight) {
 			this.translateY = -((this.maxYPoint - canvasHeight) / 30);
-		} else if (this.minYPoint < 0) {
-			this.translateY = Math.abs(this.minYPoint / 30);
+		} else if (minYPoint < 0) {
+			this.translateY = Math.abs(minYPoint / 30);
 		} else {
 			this.translateY = 0;
 		}
@@ -75,17 +81,17 @@ export class SearchResult {
 
 	update = (lastClickPosition, mouseLocation) => {
 		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.originalX) ** 2 + (lastClickPosition.y - this.originalY) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
-		if (this.selected && this.radius < 125 && this.growRate > 0) {
-			this.radius = Math.min(125, this.growRate + this.radius);
+		if (this.selected && this.radius < MAX_RADIUS && this.growRate > 0) {
+			this.radius = Math.min(MAX_RADIUS, this.growRate + this.radius);
 		}
 
 		if (!this.selected && this.radius !== this.originalSize) {
 			this.radius = Math.max(this.radius - this.growRate, this.originalSize);
 		}
 
-		if (this.selected && ((this.translateX > 0 && this.x - 125 - (125 * 2) < 0) || (this.translateX < 0 && this.x + 125 + (125 * 2) > this.canvasWidth)))  {
+		if (this.selected && ((this.translateX > 0 && this.x - MAX_RADIUS - ACTION_WIDTH < 0) || (this.translateX < 0 && this.x + MAX_RADIUS + ACTION_WIDTH > this.canvasWidth)))  {
 			if (this.translateX > 0) {
-				this.x = Math.min(this.x + this.translateX, 125 + (125 * 2));
+				this.x = Math.min(this.x + this.translateX, MAX_RADIUS + ACTION_WIDTH);
 			} else {
 				this.x = Math.max(this.x + this.translateX, this.maxXPoint - this.canvasWidth);
 			}
@@ -99,9 +105,9 @@ export class SearchResult {
 			}
 		}
 
-		if (this.selected && ((this.translateY > 0 && this.y - 125 - 120 < 0) || (this.translateY < 0 && this.y + 125 + 120 > this.canvasHeight)))  {
+		if (this.selected && ((this.translateY > 0 && this.y - MAX_RADIUS - TOTAL_HEADER_SIZE < 0) || (this.translateY < 0 && this.y + MAX_RADIUS + TOTAL_HEADER_SIZE > this.canvasHeight)))  {
 			if (this.translateY > 0) {
-				this.y = Math.min(this.y + this.translateY, 125 + 120);
+				this.y = Math.min(this.y + this.translateY, MAX_RADIUS + TOTAL_HEADER_SIZE);
 			} else {
 				this.y = Math.max(this.y + this.translateY, this.maxYPoint - this.canvasHeight);
 			}
@@ -129,14 +135,13 @@ export class SearchResult {
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 		this.selectionActions.forEach(a => a.update(lastClickPosition));
 		
-		if (this.selected && this.selectionActions.length === 0 && this.radius >= 125) {
-			const diameter = this.radius * 2;
-			const leftX = this.x - diameter - this.radius - 20;
+		if (this.selected && this.selectionActions.length === 0 && this.radius >= MAX_RADIUS) {
+			const leftX = this.x - ACTION_WIDTH - this.radius - COMPONENT_PADDING;
 			const boxY = this.y - this.radius;
-			const rightX = this.x + this.radius + 20;
+			const rightX = this.x + this.radius + COMPONENT_PADDING;
 			const openAction = () => window.open(this.result.url, '_blank');
-			this.selectionActions.push(new SearchAction(leftX, boxY, diameter, 'Visit', openAction));
-			this.selectionActions.push(new SearchAction(rightX, boxY, diameter, 'Explore'));
+			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', openAction));
+			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore'));
 		} else if (!this.selected && this.selectionActions.length > 0) {
 			this.selectionActions = [];
 		}
@@ -144,10 +149,10 @@ export class SearchResult {
 
 	drawSelectionHeader(context) {
 		const diameter = this.radius * 2;
-		const headerX = this.x - diameter - this.radius - 20;
-		const headerY = this.y - this.radius - 120;
-		const headerWidth = diameter /* left box */ + diameter /* center */  + diameter /* right box */ + 40 /* padding * 2 */;
-		const headerHeight = 100;
+		const headerX = this.x - diameter - this.radius - COMPONENT_PADDING;
+		const headerY = this.y - this.radius - TOTAL_HEADER_SIZE;
+		const headerWidth = diameter /* left box */ + diameter /* center */  + diameter /* right box */ + (COMPONENT_PADDING * 2) /* padding * 2 */;
+		const headerHeight = HEADER_HEIGHT;
 		context.beginPath();
 		context.fillStyle = 'rgba(3, 190, 252, .15)';
 		context.rect(headerX, headerY, headerWidth, headerHeight);
@@ -160,5 +165,4 @@ export class SearchResult {
 		context.fillText(this.result.title, headerX + (headerWidth / 2), headerY + (headerHeight / 2));
 	}
 }
-
 
