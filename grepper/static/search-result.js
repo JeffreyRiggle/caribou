@@ -140,8 +140,8 @@ export class SearchResult {
 			const boxY = this.y - this.radius;
 			const rightX = this.x + this.radius + COMPONENT_PADDING;
 			const openAction = () => window.open(this.result.url, '_blank');
-			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', openAction));
-			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore'));
+			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', this.result.summary, openAction));
+			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', 'TODO references'));
 		} else if (!this.selected && this.selectionActions.length > 0) {
 			this.selectionActions = [];
 		}

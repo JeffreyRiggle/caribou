@@ -22,6 +22,7 @@ pub struct QueryRequest {
 pub struct GraphResult {
     pub url: String,
     pub title: String,
+    pub summary: String,
     pub rank: f64
 }
 

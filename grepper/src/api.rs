@@ -41,12 +41,13 @@ pub fn get_graph_results(query: String) -> GraphResultReponse {
         }
     };
     
-    let mut stmt = conn.prepare(format!("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%') ORDER BY pageRank DESC) SELECT url, title, pageRank FROM res", query, query).as_str()).unwrap();
+    let mut stmt = conn.prepare(format!("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND (summary LIKE '%{}%' OR description LIKE '%{}%') ORDER BY pageRank DESC) SELECT url, title, summary, pageRank FROM res", query, query).as_str()).unwrap();
     let rows = stmt.query_map([], |row| {
         Ok(GraphResult {
             url: row.get(0)?,
             title: row.get(1)?,
-            rank: row.get(2)?
+            summary: row.get(2)?,
+            rank: row.get(3)?
         })
     }).unwrap();
 
