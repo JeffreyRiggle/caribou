@@ -78,7 +78,7 @@ class Page:
                 self.jsBytes += inlineScriptSize
                 continue
 
-            if self.is_absolute_url(scriptSrc) == False:
+            if helpers.is_absolute_url(scriptSrc) == False:
                 scriptSrc = f"https://{helpers.get_domain(self.url)}{scriptSrc}"
 
             jsFutures.append(executor.submit(self.download_and_process_static_content, url=scriptSrc))
@@ -93,7 +93,7 @@ class Page:
                 self.cssBytes += inlineStyleSize
                 continue
 
-            if self.is_absolute_url(styleSrc) == False:
+            if helpers.is_absolute_url(styleSrc) == False:
                 styleSrc = f"https://{helpers.get_domain(self.url)}{styleSrc}"
 
             cssFutures.append(executor.submit(self.download_and_process_static_content, url=styleSrc))
@@ -140,7 +140,7 @@ class Page:
         if link == None:
             return None
 
-        if self.is_absolute_url(link):
+        if helpers.is_absolute_url(link):
             return Page(link, self.asset_respository)
 
         # Do not include self references
@@ -148,7 +148,4 @@ class Page:
             return None
 
         return Page(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository)
-
-    def is_absolute_url(self, url):
-        return re.match(r'^(https?://)|^([^./]+\.)', url) != None
 

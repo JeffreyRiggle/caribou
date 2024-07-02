@@ -15,3 +15,7 @@ def write_file(file_path, file_name, contents):
 
 def get_domain(url):
     return re.search(r'^https?:\/\/([^\/]+)|^[^.]+\.([^\/]+)', url).group(1)
+
+def is_absolute_url(url):
+    return re.match(r'^(https?://)|^([^./]+\.)', url) != None
+

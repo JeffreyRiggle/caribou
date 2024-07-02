@@ -10,16 +10,15 @@ from status import ResourceStatus
 from uuid import uuid4
 
 class Crawler:
-    def __init__(self):
-        self.conn = sqlite3.connect("../grepper.db", check_same_thread=False)
-        self.db = DBAccess(self.conn)
-        self.db.setup()
+    def __init__(self, db, startTime):
+        self.db = db
         self.policyManager = PolicyManager(self.db)
         self.processed = set()
         self.asset_respository = AssetRespositoy()
         self.pending_resouce_entries = []
         self.pending_metadata_entries = []
         self.pending_performance_traces = []
+        self.startTime = startTime
 
     def load(self):
         crawlPages = self.policyManager.get_crawl_pages()
@@ -124,7 +123,7 @@ class Crawler:
         if page == None:
             return
 
-        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > startTime:
+        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > self.startTime:
             return 
 
         if self.policyManager.should_download_url(page.url):
@@ -142,14 +141,9 @@ class Crawler:
     def download_child_page(self, page):
         dpgStart = time.time()
 
-        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > startTime:
+        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > self.startTime:
             return 
 
         dpgResult = self.record_page(page)
         self.pending_performance_traces.append({ 'url': page.url, 'appTime': time.time() - dpgStart - dpgResult[1], 'networkTime': dpgResult[1] })
 
-startTime = time.time()
-c = Crawler()
-c.load()
-c.crawl()
-print(f"Operation finished in {time.time() - startTime}")
