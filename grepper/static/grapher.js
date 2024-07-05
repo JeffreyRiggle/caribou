@@ -96,16 +96,11 @@ function runAnimationLoop() {
 }
 
 function buildResults(results) {
-	const canvas = document.getElementById('result-view');
-	const context = canvas.getContext('2d');
-	
 	const maxRelativeSize = getRelativeSize(results);
-	const centerX = canvas.width / 2;
-	const centerY = canvas.height / 2;
 	const maxRadius = 100;
 
 	searchResults.length = 0;
-	results.forEach((result, index) => {
+	results.forEach(result => {
 		const relativeRadius = (result.rank / maxRelativeSize) * maxRadius;
 
 		const sResult = new SearchResult(canvasWidth, canvasHeight, relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result);

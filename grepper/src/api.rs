@@ -47,13 +47,27 @@ pub fn get_graph_results(query: String) -> GraphResultReponse {
             url: row.get(0)?,
             title: row.get(1)?,
             summary: row.get(2)?,
-            rank: row.get(3)?
+            rank: row.get(3)?,
+            links: Vec::new()
         })
     }).unwrap();
 
     let mut result = Vec::new();
     for domain_result in rows {
-        result.push(domain_result.unwrap());
+        let dresult = domain_result.unwrap();
+        let mut stmt = conn.prepare(format!("SELECT sourceUrl, targetUrl FROM links WHERE sourceUrl='{}'", dresult.url).as_str()).unwrap();
+        let mut link_rows = stmt.query([]).unwrap();
+        let mut target_links = Vec::new(); 
+        while let Some(row) = link_rows.next().unwrap() {
+            target_links.push(row.get(1).unwrap());
+        }
+        result.push(GraphResult {
+            url: dresult.url,
+            title: dresult.title,
+            summary: dresult.summary,
+            rank: dresult.rank,
+            links: target_links
+        });
     }
 
     GraphResultReponse {

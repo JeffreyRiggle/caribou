@@ -141,7 +141,7 @@ export class SearchResult {
 			const rightX = this.x + this.radius + COMPONENT_PADDING;
 			const openAction = () => window.open(this.result.url, '_blank');
 			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', this.result.summary, openAction));
-			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', 'TODO references'));
+			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', this.getExploreSubText()));
 		} else if (!this.selected && this.selectionActions.length > 0) {
 			this.selectionActions = [];
 		}
@@ -163,6 +163,21 @@ export class SearchResult {
 		context.textAlign = 'center';
 		context.textBaseline = 'middle';
 		context.fillText(this.result.title, headerX + (headerWidth / 2), headerY + (headerHeight / 2));
+	}
+
+	getExploreSubText() {
+		let result = '';
+
+		const truncatedResults = Math.min(10, this.result.links.length);
+		for (let i = 0; i < truncatedResults; i++) {
+			result += `${this.result.links[i]}, \n`;
+		}
+
+		if (this.result.links.length > 10) {
+			result += `+${this.result.links.length - 10} more`;
+		}
+
+		return result;
 	}
 }
 

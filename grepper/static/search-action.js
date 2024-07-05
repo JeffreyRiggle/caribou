@@ -48,31 +48,35 @@ export class SearchAction {
 
 
 	getSubTextAsLines = (context) => {
-		const words = this.subText.split(' ');
 		const lines = [];
-		let curr = '';
-		const maxWidth = this.size - (ACTION_PADDING * 2);
-		words.forEach(w => {
-			const lineWidth = context.measureText(curr + ' ' + w).width;
-			if (lineWidth < maxWidth) {
-				curr = curr + ' ' + w;
-				return;
-			}
+		const originalLines = this.subText.split('\n');
+		originalLines.forEach(line => {
+			const words = line.split(' ');
+			let curr = '';
+			const maxWidth = this.size - (ACTION_PADDING * 2);
+			words.forEach(w => {
+				const lineWidth = context.measureText(curr + ' ' + w).width;
+				if (lineWidth < maxWidth) {
+					curr = curr + ' ' + w;
+					return;
+				}
 
+				lines.push(curr);
+
+				const wordWidth = context.measureText(w).width;
+
+				if (wordWidth < maxWidth) {
+					curr = w;
+					return;
+				}
+
+				// If word overflows split it
+				const percentOverflow = Math.ceil((maxWidth / wordWidth) * 100);
+				const cutIndex = Math.floor((percentOverflow / w.length) * 100);
+				lines.push(w.substring(0, cutIndex - 1) + '-');
+				curr = w.substring(cutIndex - 1, w.length);
+			});
 			lines.push(curr);
-
-			const wordWidth = context.measureText(w).width;
-
-			if (wordWidth < maxWidth) {
-				curr = w;
-				return;
-			}
-
-			// If word overflows split it
-			const percentOverflow = Math.ceil((maxWidth / wordWidth) * 100);
-			const cutIndex = Math.floor((percentOverflow / w.length) * 100);
-			lines.push(w.substring(0, cutIndex - 1) + '-');
-			curr = w.substring(cutIndex - 1, w.length);
 		});
 
 		return lines;

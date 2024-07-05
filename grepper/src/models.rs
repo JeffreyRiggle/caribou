@@ -23,7 +23,8 @@ pub struct GraphResult {
     pub url: String,
     pub title: String,
     pub summary: String,
-    pub rank: f64
+    pub rank: f64,
+    pub links: Vec<String>
 }
 
 #[derive(Debug, Serialize)]
