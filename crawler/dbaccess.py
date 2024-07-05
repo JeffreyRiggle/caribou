@@ -14,6 +14,7 @@ class DBAccess:
         cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
         cursor.execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
+        cursor.execute("CREATE TABLE IF NOT EXISTS links(sourceUrl TEXT, targetUrl TEXT)")
         cursor.connection.commit()
 
     def build_transaction(self):
@@ -77,9 +78,16 @@ class DBAccess:
     def add_page_rank(self, url, rank, transaction):
         with self.lock:
             cursor = self.connection.cursor()
-            # TODO execute
             cursor.execute("INSERT OR REPLACE INTO rank VALUES (?, ?)", (url, rank))
 
             if transaction == None:
                 cursor.connection.commit()
+
+    def add_link(self, sourceUrl, targetUrl, transaction):
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT INTO links VALUES (?, ?)", (sourceUrl, targetUrl))
+
+            if transaction == None:
+                self.connection.commit()
 

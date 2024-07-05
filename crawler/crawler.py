@@ -18,6 +18,7 @@ class Crawler:
         self.pending_resouce_entries = []
         self.pending_metadata_entries = []
         self.pending_performance_traces = []
+        self.pending_links = []
         self.startTime = startTime
 
     def load(self):
@@ -69,6 +70,9 @@ class Crawler:
                 for perf in self.pending_performance_traces:
                     self.db.track_performance(perf['url'], perf['appTime'], perf['networkTime'], transaction)
 
+                for link in self.pending_links:
+                    self.db.add_link(link["sourceUrl"], link["targetUrl"], transaction)
+
                 self.policyManager.flush_pending_domains()
                 self.pending_resouce_entries.clear()
                 self.pending_metadata_entries.clear()
@@ -117,7 +121,13 @@ class Crawler:
         helpers.write_file(dir_path, file_name, page.content)
         self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title })
         self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.jsBytes, 'htmlBytes': page.htmlBytes, 'cssBytes': page.cssBytes, 'compressed': page.compression != None })
-        return (failed, networkTime, page.get_links())
+        
+        links = page.get_links()
+        for link in links:
+            if link != None:
+                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': link.url })
+
+        return (failed, networkTime, links)
 
     def process_child_page(self, page, download_child_pages, relevant_child_pages):
         if page == None:
