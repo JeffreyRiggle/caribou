@@ -1,5 +1,7 @@
 import { SearchAction } from './search-action.js';
 import { getFillGradient } from './helpers.js';
+import {setCurrentScene} from './scene-manager.js';
+import {ExploreScene} from './explore-scene.js';
 
 const MAX_RADIUS = 125;
 const ACTION_WIDTH = MAX_RADIUS * 2;
@@ -140,8 +142,11 @@ export class SearchResult {
 			const boxY = this.y - this.radius;
 			const rightX = this.x + this.radius + COMPONENT_PADDING;
 			const openAction = () => window.open(this.result.url, '_blank');
+			const exploreAction = () => {
+				setCurrentScene(new ExploreScene(this.canvasWidth, this.canvasHeight, this.result));
+			};
 			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', this.result.summary, openAction));
-			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', this.getExploreSubText()));
+			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', this.getExploreSubText(), exploreAction));
 		} else if (!this.selected && this.selectionActions.length > 0) {
 			this.selectionActions = [];
 		}

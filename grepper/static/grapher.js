@@ -1,4 +1,5 @@
 import { StarMapScene } from './star-map-scene.js';
+import { getCurrentScene, setCurrentScene } from './scene-manager.js';
 let mouseLocation = {
 	x: 0,
 	y: 0
@@ -38,11 +39,12 @@ addEventListener('load', () => {
 	});
 
 	mainScene = new StarMapScene(canvasWidth, canvasHeight);
+	setCurrentScene(mainScene);
 	requestAnimationFrame(runAnimationLoop);
 });
 
 function runAnimationLoop() {
-	mainScene.draw(canvas, context, mouseLocation, lastClickPosition);
+	getCurrentScene().draw(canvas, context, mouseLocation, lastClickPosition);
 	requestAnimationFrame(runAnimationLoop);
 }
 
