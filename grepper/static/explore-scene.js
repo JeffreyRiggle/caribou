@@ -20,12 +20,15 @@ export class ExploreScene {
 	}
 
 	buildOrbit() {
-		let lastX = (this.canvasWidth / 2) + 55;
-		let lastY = (this.canvasHeight / 2) + 55;
-		this.orbitingPlanets = this.exploring.links.map(link => {
-			lastX = lastX + 15;
-			lastY = lastY + 15;
-			return new Planet(lastX, lastY, 10);
+		const initialRadius = 80;
+		const xStart = this.canvasWidth / 2;
+		const yStart = this.canvasHeight / 2;
+		this.orbitingPlanets = this.exploring.links.map((link, ind) => {
+			const angle = Math.random()*Math.PI*2;
+			const targetRadius = initialRadius + (ind * 10);
+			const x = xStart + (Math.cos(angle) * targetRadius);
+			const y = yStart + (Math.sin(angle) * targetRadius);
+			return new Planet(x, y, 10);
 		});
 	}
 
