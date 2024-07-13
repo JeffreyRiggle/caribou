@@ -11,6 +11,11 @@ export class Planet {
 	}
 
 	draw = (context) => {
+		const initialShadowOffsetX = context.shadowOffsetX;
+		const initialShadowOffsetY = context.shadowOffsetY;
+		const initialShadowBlur = context.shadowBlur;
+		const initialShadowColor = context.shadowColor;
+
 		context.beginPath();
 		context.fillStyle = 'green';
 		context.shadowOffsetX = 0;
@@ -25,5 +30,10 @@ export class Planet {
 		context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 		context.closePath();
 		context.fill();
+
+		context.shadowOffsetX = initialShadowOffsetX;
+		context.shadowOffsetY = initialShadowOffsetY;
+		context.shadowBlur = initialShadowBlur;
+		context.shadowColor = initialShadowColor;
 	}
 }
