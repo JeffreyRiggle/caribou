@@ -29,7 +29,7 @@ export class ExploreScene {
 			const targetRadius = initialRadius + (ind * 12);
 			const x = xStart + (Math.cos(angle) * targetRadius);
 			const y = yStart + (Math.sin(angle) * targetRadius);
-			const planet = new Planet(x, y, 10);
+			const planet = new Planet(x, y, 10, { xStart, yStart, angle, targetRadius });
 			prev[0].push(planet);
 			prev[1].push(new PlanetWarp(this.mainPlanet, planet)); 
 			return prev;
