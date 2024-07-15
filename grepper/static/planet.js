@@ -1,3 +1,25 @@
+let planets = {};
+const planetMappings = {
+	'cold': './static/coldplanet.png',
+	'forest': './static/forestplanet.png',
+	'fire': './static/fireplanet.png',
+	'purple': './static/purpleplanet.png',
+	'living': './static/livingplanet.png'
+};
+
+const getImageEl = (id) => {
+	let planet = planets[id];
+	if (planet) {
+		return planet;
+	}
+
+	planet = document.createElement('img');
+	planet.src = planetMappings[id];
+	planets[id] = planet;
+
+	return planet;
+};
+
 export class Planet {
 	constructor(x, y, radius, rotationData) {
 		this.x = x;
@@ -7,6 +29,7 @@ export class Planet {
 		this.rotationData = rotationData;
 		this.currentAngle = this.rotationData?.angle;
 		this.rateOfRotation = Math.max(.00025, Math.random() * .0015);
+		this.planetType = Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
 	}
 
 	update = (lastClickPosition, mouseLocation) => {
@@ -30,7 +53,7 @@ export class Planet {
 		const initialShadowColor = context.shadowColor;
 
 		context.beginPath();
-		context.fillStyle = 'green';
+		context.fillStyle = context.createPattern(getImageEl(this.planetType), 'repeat');
 		context.shadowOffsetX = 0;
 		context.shadowOffsetY = 0;
 		context.shadowBlur = 15;
