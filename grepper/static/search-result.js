@@ -135,7 +135,7 @@ export class SearchResult {
 			this.irGrowDirection = 1;
 		}
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
-		this.selectionActions.forEach(a => a.update(lastClickPosition));
+		this.selectionActions.forEach(a => a.update(lastClickPosition, mouseLocation));
 		
 		if (this.selected && this.selectionActions.length === 0 && this.radius >= MAX_RADIUS) {
 			const leftX = this.x - ACTION_WIDTH - this.radius - COMPONENT_PADDING;

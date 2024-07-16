@@ -10,12 +10,32 @@ export class SearchAction {
 		this.actionText = actionText;
 		this.subText = subText;
 		this.selected = false;
+		this.hover = false;
+		this.midPoint = .01;
 		this.action = action;
 	}
 
 	draw = (context) => {
+		const initialShadowOffsetX = context.shadowOffsetX;
+		const initialShadowOffsetY = context.shadowOffsetY;
+		const initialShadowBlur = context.shadowBlur;
+		const initialShadowColor = context.shadowColor;
+
 		context.beginPath();
-		context.fillStyle = 'rgba(3, 190, 252, .15)';
+		const alpha = this.hover ? .45 : .15; 
+
+		if (this.hover) {
+			const gradient = context.createLinearGradient(this.x, this.y, this.x + this.size, this.y + this.size);
+			gradient.addColorStop(0, `rgba(3, 190, 252, ${alpha})`);
+			gradient.addColorStop(this.midPoint, `rgba(3, 190, 252, ${alpha})`);
+			gradient.addColorStop(this.midPoint + .005, 'white');
+			gradient.addColorStop(this.midPoint + .01, 'white');
+			gradient.addColorStop(this.midPoint + .015, `rgba(3, 190, 252, ${alpha})`);
+			gradient.addColorStop(1, `rgba(3, 190, 252, ${alpha})`);
+			context.fillStyle = gradient;
+		} else {
+			context.fillStyle = `rgba(3, 190, 252, ${alpha})`;
+		}
 		context.rect(this.x, this.y, this.size, this.size);
 		context.closePath();
 		context.fill();
@@ -32,17 +52,39 @@ export class SearchAction {
 
 			context.fillText(l, this.x + (this.size / 2), targetY);
 		});
+
+		context.shadowOffsetX = initialShadowOffsetX;
+		context.shadowOffsetY = initialShadowOffsetY;
+		context.shadowBlur = initialShadowBlur;
+		context.shadowColor = initialShadowColor;
 	}
 
-	update = (lastClickPosition) => {
-		const validPosition = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined;
-		const validX = lastClickPosition.x >= this.x && lastClickPosition.x <= this.x + this.size;
-		const validY = lastClickPosition.y <= this.y + this.size && lastClickPosition.y >= this.y;
+	update = (lastClickPosition, mouseLocation) => {
+		const validClickPosition = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined;
+		const validClickX = lastClickPosition.x >= this.x && lastClickPosition.x <= this.x + this.size;
+		const validClickY = lastClickPosition.y <= this.y + this.size && lastClickPosition.y >= this.y;
 		const wasSelected = this.selected;
-		this.selected = validPosition && validX && validY;
+		this.selected = validClickPosition && validClickX && validClickY;
 
+		const validHoverX = mouseLocation.x >= this.x && mouseLocation.x <= this.x + this.size;
+		const validHoverY = mouseLocation.y <= this.y + this.size && mouseLocation.y >= this.y;
+		this.hover = validHoverX && validHoverY;
+
+		if (this.hover) {
+			this.updateMidpoint();
+		} else if (this.midPoint != .01) {
+			this.midPoint = .01;
+		}
 		if (this.selected && !wasSelected) {
 			setTimeout(() => this.action());
+		}
+	}
+
+	updateMidpoint = () => {
+		if (this.midPoint >= .98) {
+			this.midPoint = .01;
+		} else {
+			this.midPoint = Math.min(.98, this.midPoint + .005);
 		}
 	}
 
