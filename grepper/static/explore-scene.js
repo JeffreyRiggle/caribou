@@ -5,6 +5,7 @@ import { PlanetWarp } from "./planet-warp.js";
 export class ExploreScene {
 	constructor(canvasWidth, canvasHeight, exploring) {
 		this.stars = [];
+		this.planetWarps = new Map();
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 		this.setupStars();
@@ -24,19 +25,13 @@ export class ExploreScene {
 		const initialRadius = 80;
 		const xStart = this.canvasWidth / 2;
 		const yStart = this.canvasHeight / 2;
-		const [orbitingPlanets, connectors] = this.orbitingPlanets = this.exploring.links.reduce((prev, curr, ind) => {
+		this.orbitingPlanets = this.exploring.links.map((link, ind) => {
 			const angle = Math.random()*Math.PI*2;
 			const targetRadius = initialRadius + (ind * 12);
 			const x = xStart + (Math.cos(angle) * targetRadius);
 			const y = yStart + (Math.sin(angle) * targetRadius);
-			const planet = new Planet(x, y, 10, { xStart, yStart, angle, targetRadius });
-			prev[0].push(planet);
-			prev[1].push(new PlanetWarp(this.mainPlanet, planet)); 
-			return prev;
-		}, [[],[]]);
-
-		this.orbitingPlanets = orbitingPlanets;
-		this.planetWarps = connectors;
+			return new Planet(x, y, 10, { xStart, yStart, angle, targetRadius });
+		});
 	}
 
 	draw = (canvas, context, mouseLocation, lastClickPosition) => {
@@ -51,9 +46,19 @@ export class ExploreScene {
 		const originalStrokeStyle = context.strokeStyle;
 		const originalLineWidth = context.lineWidth;
 
-		this.orbitingPlanets.forEach(p => p.update(lastClickPosition, mouseLocation));
+		let anySelected = this.orbitingPlanets.some(p => p.selected);
+		this.orbitingPlanets.forEach(p => {
+			p.update(lastClickPosition, mouseLocation, anySelected);
+			let hasPlanetWarp = this.planetWarps.has(p.id);
+			if (p.selected && !hasPlanetWarp) {
+				this.planetWarps.set(p.id, new PlanetWarp(this.mainPlanet, p));
+			} else if (!p.selected && hasPlanetWarp) {
+				this.planetWarps.delete(p.id);
+			}
+			anySelected = anySelected || p.selected;
+		});
 		context.lineWidth = 3;
-		this.planetWarps.forEach(pWarp => {
+		this.planetWarps.values().forEach(pWarp => {
 			pWarp.update();
 			pWarp.draw(context);
 		});

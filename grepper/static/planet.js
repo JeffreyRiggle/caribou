@@ -1,4 +1,5 @@
 let planets = {};
+let id = 0;
 const planetMappings = {
 	'cold': './static/coldplanet.png',
 	'forest': './static/forestplanet.png',
@@ -22,20 +23,26 @@ const getImageEl = (id) => {
 
 export class Planet {
 	constructor(x, y, radius, rotationData) {
+		this.id = id++;
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
 		this.hover = false;
+		this.selected = false;
 		this.rotationData = rotationData;
 		this.currentAngle = this.rotationData?.angle;
 		this.rateOfRotation = Math.max(.00025, Math.random() * .0015);
 		this.planetType = Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
 	}
 
-	update = (lastClickPosition, mouseLocation) => {
+	update = (lastClickPosition, mouseLocation, anySelected) => {
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 
 		if (!this.rotationData) return;
+
+		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
+
+		if (this.selected || anySelected) return;
 
 		if (this.currentAngle >= Math.PI*2) {
 			this.currentAngle = .001;
