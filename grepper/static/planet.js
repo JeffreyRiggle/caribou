@@ -1,3 +1,5 @@
+import { PlanetActions } from "./planet-actions.js";
+
 let planets = {};
 let id = 0;
 const planetMappings = {
@@ -33,16 +35,19 @@ export class Planet {
 		this.currentAngle = this.rotationData?.angle;
 		this.rateOfRotation = Math.max(.00025, Math.random() * .0015);
 		this.planetType = Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
+		
+		const actions = !this.rotationData ? [{ displayText: 'Visit' }, {displayText: 'Explore' }] : [{ displayText: 'Visit' }, { displayText: 'Explore' }, { displayText: 'Follow' }];
+		this.planetActions = new PlanetActions(this, actions);
 	}
 
 	update = (lastClickPosition, mouseLocation, anySelected) => {
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 
-		if (!this.rotationData) return;
-
 		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
 
 		if (this.selected || anySelected) return;
+
+		if (!this.rotationData) return;
 
 		if (this.currentAngle >= Math.PI*2) {
 			this.currentAngle = .001;
@@ -54,6 +59,9 @@ export class Planet {
 	}
 
 	draw = (context) => {
+		if (this.selected) {
+			this.planetActions.draw(context);
+		}
 		const initialShadowOffsetX = context.shadowOffsetX;
 		const initialShadowOffsetY = context.shadowOffsetY;
 		const initialShadowBlur = context.shadowBlur;
