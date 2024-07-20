@@ -24,7 +24,7 @@ const getImageEl = (id) => {
 };
 
 export class Planet {
-	constructor(x, y, radius, rotationData) {
+	constructor(url, x, y, radius, rotationData) {
 		this.id = id++;
 		this.x = x;
 		this.y = y;
@@ -36,11 +36,21 @@ export class Planet {
 		this.rateOfRotation = Math.max(.00025, Math.random() * .0015);
 		this.planetType = Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
 		
-		const actions = !this.rotationData ? [{ displayText: 'Visit' }, {displayText: 'Explore' }] : [{ displayText: 'Visit' }, { displayText: 'Explore' }, { displayText: 'Follow' }];
+		const openAction = () => window.open(url, '_blank');
+		const exploreAction = () => console.log('TODO explore');
+		const followAction = () => console.log('TODO follow');
+		const actions = !this.rotationData ? [
+			{ displayText: 'Visit', action: openAction },
+			{ displayText: 'Explore', action: exploreAction }
+		] : [
+			{ displayText: 'Visit', action: openAction },
+			{ displayText: 'Explore', action: exploreAction },
+			{ displayText: 'Follow', action: followAction }];
 		this.planetActions = new PlanetActions(this, actions);
 	}
 
 	update = (lastClickPosition, mouseLocation, anySelected) => {
+		this.planetActions.update(mouseLocation, lastClickPosition);
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 
 		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;

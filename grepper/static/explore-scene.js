@@ -10,7 +10,7 @@ export class ExploreScene {
 		this.canvasHeight = canvasHeight;
 		this.setupStars();
 		this.exploring = exploring;
-		this.mainPlanet = new Planet(this.canvasWidth / 2, this.canvasHeight / 2, 50);
+		this.mainPlanet = new Planet(this.exploring.url, this.canvasWidth / 2, this.canvasHeight / 2, 50);
 		this.buildOrbit();
 	}
 
@@ -30,7 +30,7 @@ export class ExploreScene {
 			const targetRadius = initialRadius + (ind * 12);
 			const x = xStart + (Math.cos(angle) * targetRadius);
 			const y = yStart + (Math.sin(angle) * targetRadius);
-			return new Planet(x, y, 10, { xStart, yStart, angle, targetRadius });
+			return new Planet(link, x, y, 10, { xStart, yStart, angle, targetRadius });
 		});
 	}
 
