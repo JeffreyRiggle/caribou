@@ -43,7 +43,7 @@ export class StarMapScene {
 		});
 	}
 
-	draw = (canvas, context, mouseLocation, lastClickPosition) => {
+	draw = (canvas, context) => {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		const resetBSC = context.shadowColor;
 		const resetBSB = context.shadowBlur;
@@ -54,7 +54,7 @@ export class StarMapScene {
 			s.draw(context);
 		});
 		this.searchResults.forEach(r => {
-			r.update(lastClickPosition, mouseLocation);
+			r.update();
 
 			if (r.selected) {
 				selectedItem = r;

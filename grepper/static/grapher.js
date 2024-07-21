@@ -1,14 +1,6 @@
 import { StarMapScene } from './star-map-scene.js';
 import { getCurrentScene, setCurrentScene } from './scene-manager.js';
-let mouseLocation = {
-	x: 0,
-	y: 0
-};
-
-let lastClickPosition = {
-	x: undefined,
-	y: undefined
-}
+import inputManager from './input-manager.js';
 
 let mainScene, canvas, context; 
 
@@ -25,26 +17,16 @@ addEventListener('load', () => {
 	context = canvas.getContext('2d');
 	const canvasWidth = canvas.width = window.innerWidth;
 	const canvasHeight = canvas.height = window.innerHeight - 100;
-
-	canvas.addEventListener('mousemove', evt => {
-		mouseLocation.x = evt.clientX;
-		// This is a bit of a hack because the canvas doesn't take up the whole screen
-		// and is fixed positioned
-		mouseLocation.y = evt.clientY - 100;
-	});
-
-	canvas.addEventListener('mouseup', evt => {
-		lastClickPosition.x = evt.clientX;
-		lastClickPosition.y = evt.clientY - 100;
-	});
-
+	inputManager.listen(canvas);
+	
 	mainScene = new StarMapScene(canvasWidth, canvasHeight);
 	setCurrentScene(mainScene);
 	requestAnimationFrame(runAnimationLoop);
 });
 
 function runAnimationLoop() {
-	getCurrentScene().draw(canvas, context, mouseLocation, lastClickPosition);
+	getCurrentScene().draw(canvas, context);
+	inputManager.clear();
 	requestAnimationFrame(runAnimationLoop);
 }
 

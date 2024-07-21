@@ -1,3 +1,5 @@
+import inputManager from './input-manager.js';
+
 class PlanetAction {
 	constructor(action, planet, radius, beginAngle, endAngle) {
 		this.action = action;
@@ -15,14 +17,13 @@ class PlanetAction {
 		this.shape.lineTo(this.planet.x, this.planet.y);
 	}
 
-	update = (mouseLocation, lastClickPosition) => {
+	update = () => {
 		this.createShape();
-		this.mouseLocation = mouseLocation;
-		this.lastClickPosition = lastClickPosition;
 	}
 
 	draw = (context) => {
-		const hover = this.mouseLocation && context.isPointInPath(this.shape, this.mouseLocation.x, this.mouseLocation.y);
+		const mouseLocation = inputManager.mouseLocation;
+		const hover = mouseLocation && context.isPointInPath(this.shape, mouseLocation.x, mouseLocation.y);
 		const alpha = hover ? .45 : .15; 
 		context.fillStyle = `rgba(3, 190, 252, ${alpha})`;
 		context.fill(this.shape);
@@ -34,12 +35,16 @@ class PlanetAction {
 		context.font = '12px roboto';
 		context.fillText(this.action.displayText, textX, textY);
 
-		const isSelected = this.lastClickPosition && context.isPointInPath(this.shape, this.lastClickPosition.x, this.lastClickPosition.y);
+		const clickPosition = inputManager.clickPosition;
+		if (!clickPosition) {
+			return;
+		}
 
-		if (isSelected && !this.selected) {
+		this.selected = context.isPointInPath(this.shape, clickPosition.x, clickPosition.y);
+
+		if (this.selected) {
 			setTimeout(() => this.action.action());
 		}
-		this.selected = isSelected;
 	};
 }
 
@@ -55,11 +60,13 @@ export class PlanetActions {
 		});
 	}
 
-	update = (mouseLocation, lastClickPosition) => {
-		this.actions.forEach(a => a.update(mouseLocation, lastClickPosition));
+	update = () => {
+		this.actions.forEach(a => a.update());
+		this.selected = this.actions.some(a => a.selected);
 	};
 
 	draw = (context) => {
 		this.actions.forEach(a => a.draw(context));	
+		this.selected = this.actions.some(a => a.selected);
 	};
 }

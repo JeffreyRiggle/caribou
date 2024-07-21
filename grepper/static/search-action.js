@@ -1,3 +1,5 @@
+import inputManager from './input-manager.js';
+
 const ACTION_TEXT_VERTICAL_MARGIN = 24;
 const SUB_TEXT_LINE_HEIGHT = 10;
 const ACTION_PADDING = 10;
@@ -59,13 +61,17 @@ export class SearchAction {
 		context.shadowColor = initialShadowColor;
 	}
 
-	update = (lastClickPosition, mouseLocation) => {
-		const validClickPosition = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined;
-		const validClickX = lastClickPosition.x >= this.x && lastClickPosition.x <= this.x + this.size;
-		const validClickY = lastClickPosition.y <= this.y + this.size && lastClickPosition.y >= this.y;
-		const wasSelected = this.selected;
-		this.selected = validClickPosition && validClickX && validClickY;
+	update = () => {
+		const clickPosition = inputManager.clickPosition;
 
+		const wasSelected = this.selected;
+		if (clickPosition) {
+			const validClickX = clickPosition.x >= this.x && clickPosition.x <= this.x + this.size;
+			const validClickY = clickPosition.y <= this.y + this.size && clickPosition.y >= this.y;
+			this.selected = validClickX && validClickY;
+		}
+
+		const mouseLocation = inputManager.mouseLocation;
 		const validHoverX = mouseLocation.x >= this.x && mouseLocation.x <= this.x + this.size;
 		const validHoverY = mouseLocation.y <= this.y + this.size && mouseLocation.y >= this.y;
 		this.hover = validHoverX && validHoverY;
@@ -124,5 +130,4 @@ export class SearchAction {
 		return lines;
 	}
 }
-
 

@@ -1,4 +1,5 @@
 import { PlanetActions } from "./planet-actions.js";
+import inputManager from './input-manager.js';
 
 let planets = {};
 let id = 0;
@@ -30,6 +31,7 @@ export class Planet {
 		this.y = y;
 		this.radius = radius;
 		this.hover = false;
+		this.wasSelected = false;
 		this.selected = false;
 		this.rotationData = rotationData;
 		this.currentAngle = this.rotationData?.angle;
@@ -49,12 +51,17 @@ export class Planet {
 		this.planetActions = new PlanetActions(this, actions);
 	}
 
-	update = (lastClickPosition, mouseLocation, anySelected) => {
-		this.planetActions.update(mouseLocation, lastClickPosition);
+	update = (anySelected) => {
+		const clickPosition = inputManager.clickPosition;
+		const mouseLocation = inputManager.mouseLocation;
+		this.planetActions.update();
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
 
-		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.x) ** 2 + (lastClickPosition.y - this.y) ** 2) < this.radius;
-
+		this.wasSelected = this.selected;
+		if (clickPosition) {
+			this.selected = Math.sqrt((clickPosition.x - this.x) ** 2 + (clickPosition.y - this.y) ** 2) < this.radius;
+		}
+		
 		if (this.selected || anySelected) return;
 
 		if (!this.rotationData) return;
@@ -69,8 +76,11 @@ export class Planet {
 	}
 
 	draw = (context) => {
-		if (this.selected) {
+		if (this.wasSelected) {
 			this.planetActions.draw(context);
+			// this is a bit weird really the selected state of planet actions
+			// is driven by context. Since update does not have context this hack was needed
+			this.selected = this.selected || this.planetActions.selected;
 		}
 		const initialShadowOffsetX = context.shadowOffsetX;
 		const initialShadowOffsetY = context.shadowOffsetY;

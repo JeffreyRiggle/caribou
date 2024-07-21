@@ -2,6 +2,7 @@ import { SearchAction } from './search-action.js';
 import { getFillGradient } from './helpers.js';
 import {setCurrentScene} from './scene-manager.js';
 import {ExploreScene} from './explore-scene.js';
+import inputManager from './input-manager.js';
 
 const MAX_RADIUS = 125;
 const ACTION_WIDTH = MAX_RADIUS * 2;
@@ -81,8 +82,12 @@ export class SearchResult {
 		}
 	}
 
-	update = (lastClickPosition, mouseLocation) => {
-		this.selected = lastClickPosition.x !== undefined && lastClickPosition.y !== undefined && Math.sqrt((lastClickPosition.x - this.originalX) ** 2 + (lastClickPosition.y - this.originalY) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+	update = () => {
+		const clickPosition = inputManager.clickPosition;
+		if (clickPosition) {
+			this.selected = Math.sqrt((clickPosition.x - this.originalX) ** 2 + (clickPosition.y - this.originalY) ** 2) < this.radius || this.selectionActions.some(a => a.selected);
+		}
+
 		if (this.selected && this.radius < MAX_RADIUS && this.growRate > 0) {
 			this.radius = Math.min(MAX_RADIUS, this.growRate + this.radius);
 		}
@@ -134,8 +139,9 @@ export class SearchResult {
 		} else if (this.innerRadius <= 0) {
 			this.irGrowDirection = 1;
 		}
+		const mouseLocation = inputManager.mouseLocation;
 		this.hover = Math.sqrt((mouseLocation.x - this.x) ** 2 + (mouseLocation.y - this.y) ** 2) < this.radius;
-		this.selectionActions.forEach(a => a.update(lastClickPosition, mouseLocation));
+		this.selectionActions.forEach(a => a.update());
 		
 		if (this.selected && this.selectionActions.length === 0 && this.radius >= MAX_RADIUS) {
 			const leftX = this.x - ACTION_WIDTH - this.radius - COMPONENT_PADDING;

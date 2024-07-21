@@ -34,21 +34,21 @@ export class ExploreScene {
 		});
 	}
 
-	draw = (canvas, context, mouseLocation, lastClickPosition) => {
+	draw = (canvas, context) => {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		this.stars.forEach(s => {
 			s.update();
 			s.draw(context);
 		});
 
-		this.mainPlanet.update(lastClickPosition, mouseLocation);
+		this.mainPlanet.update();
 
 		const originalStrokeStyle = context.strokeStyle;
 		const originalLineWidth = context.lineWidth;
 
 		let anySelected = this.orbitingPlanets.some(p => p.selected);
 		this.orbitingPlanets.forEach(p => {
-			p.update(lastClickPosition, mouseLocation, anySelected);
+			p.update(anySelected);
 			let hasPlanetWarp = this.planetWarps.has(p.id);
 			if (p.selected && !hasPlanetWarp) {
 				this.planetWarps.set(p.id, new PlanetWarp(this.mainPlanet, p));
