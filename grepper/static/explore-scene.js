@@ -30,7 +30,7 @@ export class ExploreScene {
 			const targetRadius = initialRadius + (ind * 12);
 			const x = xStart + (Math.cos(angle) * targetRadius);
 			const y = yStart + (Math.sin(angle) * targetRadius);
-			return new Planet(link, x, y, 10, { xStart, yStart, angle, targetRadius });
+			return new Planet(link, x, y, 10, this.canvasWidth, this.canvasHeight, { xStart, yStart, angle, targetRadius });
 		});
 	}
 

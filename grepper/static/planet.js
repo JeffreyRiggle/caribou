@@ -1,5 +1,7 @@
 import { PlanetActions } from "./planet-actions.js";
 import inputManager from './input-manager.js';
+import { setCurrentScene } from "./scene-manager.js";
+import { ExploreScene } from "./explore-scene.js";
 
 let planets = {};
 let id = 0;
@@ -25,7 +27,7 @@ const getImageEl = (id) => {
 };
 
 export class Planet {
-	constructor(url, x, y, radius, rotationData) {
+	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData) {
 		this.id = id++;
 		this.x = x;
 		this.y = y;
@@ -40,7 +42,13 @@ export class Planet {
 		
 		const openAction = () => window.open(url, '_blank');
 		const exploreAction = () => console.log('TODO explore');
-		const followAction = () => console.log('TODO follow');
+		const followAction = () => {
+			fetch(`/query-graph/${btoa(url)}`).then(res => {
+				res.json().then(body => {
+					setCurrentScene(new ExploreScene(canvasWidth, canvasHeight, body));
+				});
+			});
+		};
 		const actions = !this.rotationData ? [
 			{ displayText: 'Visit', action: openAction },
 			{ displayText: 'Explore', action: exploreAction }

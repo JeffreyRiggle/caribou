@@ -14,6 +14,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::query_data)
             .service(views::get_graph_page)
             .service(views::query_graph_data)
+            .service(views::query_url_data)
     })
     .bind(("127.0.0.1", 4080))?
     .run()

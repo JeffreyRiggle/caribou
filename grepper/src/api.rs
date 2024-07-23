@@ -32,6 +32,51 @@ pub fn get_results(query: String) -> ResultsResponse {
     }
 }
 
+pub fn get_graph_result(url: String) -> GraphResult {
+    let conn = match Connection::open("../grepper.db") {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Failed to create connection {}", e);
+            panic!("Failed to connect to database")
+        }
+    };
+
+    let mut stmt = conn.prepare(format!("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE resources.url='{}') SELECT url, title, summary, pageRank FROM res", url).as_str()).unwrap();
+    let mut rows = stmt.query_map([], |row| {
+        Ok(GraphResult {
+            url: row.get(0)?,
+            title: row.get(1)?,
+            summary: row.get(2)?,
+            rank: row.get(3)?,
+            links: Vec::new()
+        })
+
+    }).unwrap();
+
+    let row = match rows.next().unwrap() {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Failed to load row for {}", url);
+            panic!("Failed to load row with error {}", e)
+        }
+    };
+
+    let mut stmt = conn.prepare(format!("SELECT sourceUrl, targetUrl FROM links WHERE sourceUrl='{}'", row.url).as_str()).unwrap();
+    let mut link_rows = stmt.query([]).unwrap();
+    let mut target_links = Vec::new(); 
+    while let Some(row) = link_rows.next().unwrap() {
+        target_links.push(row.get(1).unwrap());
+    }
+
+    GraphResult {
+        url: row.url,
+        title: row.title,
+        summary: row.summary,
+        rank: row.rank,
+        links: target_links
+    }
+}
+
 pub fn get_graph_results(query: String) -> GraphResultReponse {
     let conn = match Connection::open("../grepper.db") {
         Ok(c) => c,
