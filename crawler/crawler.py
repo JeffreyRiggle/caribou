@@ -27,6 +27,7 @@ class Crawler:
         if (len(crawlPages) < 1):
             domain = input("No crawl pages set select a starting domain: ")
             self.policyManager.add_crawl_domain(domain)
+            self.policyManager.enable_content_download("image")
             crawlPages.append(domain)
          
         self.pendingPages = list(map(lambda p: Page(helpers.domain_to_full_url(p), self.asset_respository), crawlPages))
@@ -62,7 +63,7 @@ class Crawler:
 
             with self.db.build_transaction() as transaction:
                 for res in self.pending_resouce_entries:
-                    self.db.add_resource(res['url'], res['file'], res['status'], res['title'], res['text'], res['description'], transaction)
+                    self.db.add_resource(res['url'], res['file'], res['status'], res['title'], res['text'], res['description'], res['contentType'], transaction)
 
                 for metadata in self.pending_metadata_entries:
                     self.db.add_metadata(metadata['url'], metadata['jsBytes'], metadata['htmlBytes'], metadata['cssBytes'], metadata['compressed'], transaction)
@@ -85,6 +86,7 @@ class Crawler:
         pgStart = time.time()
         loadPageResult = self.record_page(page)
         networkTime = loadPageResult[1] 
+        self.process_assets(page)
 
         if loadPageResult[0]:
             if self.pendingPages:
@@ -92,7 +94,7 @@ class Crawler:
             else:
                 return None
         
-        pages = loadPageResult[2] 
+        pages = loadPageResult[2]
         for p in pages:
             self.process_child_page(p, downloadChildPages, relevantChildPages)
 
@@ -106,12 +108,29 @@ class Crawler:
             return self.pendingPages.pop()
 
         return None
+    
+    def process_assets(self, page):
+        if page == None:
+            return
+
+        assetCollection = page.get_downloadable_assets()
+        if self.policyManager.should_download_asset('image'):
+            for img in assetCollection['image']:
+                if img.url in self.processed or self.db.get_resource_last_edit(img.url) > self.startTime:
+                    continue
+
+                file_path = img.download()
+                if file_path == None:
+                    continue
+
+                self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image" })
+                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': img.url })
 
     def record_page(self, page):
         networkTime = page.load()
         failed = page.failed == True 
         if failed:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "" })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': 'html' })
             self.processed.add(page.url)
             return (failed, networkTime, [])
 
@@ -119,7 +138,7 @@ class Crawler:
         file_id = str(uuid4())
         file_name = f"{file_id}.html"
         helpers.write_file(dir_path, file_name, page.content)
-        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title })
+        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title, 'contentType': "html" })
         self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.jsBytes, 'htmlBytes': page.htmlBytes, 'cssBytes': page.cssBytes, 'compressed': page.compression != None })
         
         links = page.get_links()
@@ -143,7 +162,7 @@ class Crawler:
         shouldCrawl = self.policyManager.should_crawl_url(page.url)
 
         if shouldCrawl[0] == False:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "" })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': "html" })
             return 
 
         relevant_child_pages.append(page)

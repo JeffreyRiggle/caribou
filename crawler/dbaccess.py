@@ -9,21 +9,22 @@ class DBAccess:
 
     def setup(self):
         cursor = self.connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT, downloadAssets TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
         cursor.execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
         cursor.execute("CREATE TABLE IF NOT EXISTS links(sourceUrl TEXT, targetUrl TEXT, PRIMARY KEY (sourceUrl, targetUrl))")
+        cursor.execute("CREATE TABLE IF NOT EXISTS downloadPolicy(contentType TEXT PRIMARY KEY, download INTEGER)")
         cursor.connection.commit()
 
     def build_transaction(self):
         return transactions.DBTransaction(self.connection)
 
-    def add_resource(self, url, path, status, title, summary, description, transaction):
+    def add_resource(self, url, path, status, title, summary, description, contentType, transaction):
         with self.lock:
             cursor = self.connection.cursor()
-            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?)", (url, path, time.time(), title, summary, description, status))
+            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status))
 
             if transaction == None:
                 cursor.connection.commit()
@@ -62,7 +63,7 @@ class DBAccess:
 
     def add_domain(self, domain, status, transaction=None):
         with self.lock:
-            self.connection.execute("INSERT INTO domains VALUES (?, ?, ?);", (domain, status, ""))
+            self.connection.execute("INSERT INTO domains VALUES (?, ?);", (domain, status))
             
             if transaction == None:
                 self.connection.commit()
@@ -90,4 +91,16 @@ class DBAccess:
 
             if transaction == None:
                 self.connection.commit()
+
+    def add_download_policy(self, contentType, shouldDownload, transaction):
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT OR REPLACE INTO downloadPolicy VALUES (?, ?)", (contentType, 1 if shouldDownload else 0)) 
+
+            if transaction == None:
+                self.connection.commit()
+
+    def get_download_policy(self, contentType):
+        with self.lock:
+            return self.connection.execute("SELECT download FROM downloadPolicy WHERE contentType = ?", (contentType,)).fetchall()
 

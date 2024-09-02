@@ -9,12 +9,11 @@ pub fn get_domains() -> Vec<DomainData> {
             panic!("Failed to connect to database")
         }
     };
-    let mut stmt = conn.prepare("SELECT * from domains").unwrap();
+    let mut stmt = conn.prepare("SELECT * from domains WHERE domain IS NOT NULL").unwrap();
     let rows = stmt.query_map([], |row| {
         Ok(DomainData {
             domain: row.get(0)?,
-            status: row.get(1)?,
-            downloadAssets: row.get(2)?
+            status: row.get(1)?
         })
     }).unwrap();
 

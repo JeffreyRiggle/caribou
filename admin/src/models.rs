@@ -3,8 +3,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Serialize)]
 pub struct DomainData {
     pub domain: String,
-    pub status: String,
-    pub downloadAssets: String,
+    pub status: String
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -16,5 +15,4 @@ pub struct DomainStatus {
 pub struct DomainsResponse {
     pub domains: Vec<DomainData>
 }
-
 

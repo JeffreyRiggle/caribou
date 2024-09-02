@@ -19,8 +19,7 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Json<Domai
     stmt.execute((update.status.clone(), domain.as_str())).unwrap();
     Ok(web::Json(DomainData {
         domain: String::from(domain.as_str()),
-        status: String::from(&update.status),
-        downloadAssets: String::from("")
+        status: String::from(&update.status)
     }))
 }
 

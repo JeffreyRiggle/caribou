@@ -5,6 +5,7 @@ import re
 import time
 import helpers
 import concurrent.futures
+from image import ImageAsset
 
 class Page:
     def __init__(self, url, asset_respository):
@@ -15,6 +16,7 @@ class Page:
         self.networkTime = 0
         self.cssBytes = 0
         self.title = url
+        self.interactiveContent = None
 
     def load(self):
         result = self.get_content(self.url)
@@ -134,6 +136,14 @@ class Page:
     def get_links(self):
         return list(set(map(self.process_link, self.interactiveContent.select('a'))))
 
+    def get_downloadable_assets(self):
+        # TODO add support for other types
+        if self.interactiveContent == None:
+            return { 'image': [] }
+
+        images = list(set(map(self.process_image, self.interactiveContent.select('img'))))
+        return { 'image': images }
+
     def process_link(self, el):
         link = el.get('href')
 
@@ -148,4 +158,8 @@ class Page:
             return None
 
         return Page(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository)
+
+    def process_image(self, el):
+        domain = helpers.get_domain(self.url)
+        return ImageAsset(el, domain)
 

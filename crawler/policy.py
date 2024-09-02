@@ -15,6 +15,9 @@ class PolicyManager:
     def add_domain(self, domain, status, transaction=None):
         self.dbaccess.add_domain(domain, status, transaction)
 
+    def enable_content_download(self, contentType, transaction=None):
+        self.dbaccess.add_download_policy(contentType, True, transaction)
+
     def should_download_url(self, url):
         domain = get_domain(url)
         result = self.dbaccess.get_domain_status(domain)
@@ -23,6 +26,14 @@ class PolicyManager:
             return False
 
         return result[0][0] == DomainStatus.Read.value
+
+    def should_download_asset(self, contentType):
+        result = self.dbaccess.get_download_policy(contentType)
+
+        if len(result) < 1:
+            return False
+
+        return result[0][0] == 1
 
     def should_crawl_url(self, url):
         domain = get_domain(url)
