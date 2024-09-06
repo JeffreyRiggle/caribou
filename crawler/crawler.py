@@ -28,6 +28,7 @@ class Crawler:
             domain = input("No crawl pages set select a starting domain: ")
             self.policyManager.add_crawl_domain(domain)
             self.policyManager.enable_content_download("image")
+            self.policyManager.enable_content_download('javascript')
             crawlPages.append(domain)
          
         self.pendingPages = list(map(lambda p: Page(helpers.domain_to_full_url(p), self.asset_respository), crawlPages))
@@ -125,6 +126,21 @@ class Crawler:
 
                 self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image" })
                 self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': img.url })
+
+        if self.policyManager.should_download_asset('javascript'):
+            for js_asset in assetCollection['javascript']:
+                url = js_asset[0]
+                content = js_asset[1]
+
+                if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.startTime:
+                    continue
+
+                dir_path = f"../contents/{helpers.get_domain(page.url)}/javascript"
+                file_id = str(uuid4())
+                file_name = f"{file_id}.js"
+                helpers.write_file(dir_path, file_name, content)
+                self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript' })
+                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': url })
 
     def record_page(self, page):
         networkTime = page.load()

@@ -17,6 +17,7 @@ class Page:
         self.cssBytes = 0
         self.title = url
         self.interactiveContent = None
+        self.jsAssets = []
 
     def load(self):
         result = self.get_content(self.url)
@@ -76,14 +77,16 @@ class Page:
         for script in scripts:
             scriptSrc = script.get('src')
             if scriptSrc == None:
-                inlineScriptSize = len(script.encode_contents())
+                inlineContent = script.encode_contents()
+                inlineScriptSize = len(inlineContent)
                 self.jsBytes += inlineScriptSize
+                self.jsAssets.append((None, inlineContent))
                 continue
 
             if helpers.is_absolute_url(scriptSrc) == False:
                 scriptSrc = f"https://{helpers.get_domain(self.url)}{scriptSrc}"
 
-            jsFutures.append(executor.submit(self.download_and_process_static_content, url=scriptSrc))
+            jsFutures.append(executor.submit(self.download_and_process_static_content, url=scriptSrc, related_resource="javascript"))
 
     def get_css_bytes(self, executor, cssFutures):
         styles = self.interactiveContent.select('link[rel="stylesheet"]')
@@ -100,7 +103,7 @@ class Page:
 
             cssFutures.append(executor.submit(self.download_and_process_static_content, url=styleSrc))
 
-    def download_and_process_static_content(self, url):
+    def download_and_process_static_content(self, url, related_resource=None):
         cache_size = self.asset_respository.get_asset_size(url)
 
         if cache_size != None:
@@ -110,6 +113,9 @@ class Page:
         if result == None:
             self.asset_respository.set_asset_bytes(url, 0)
             return (0, 0)
+
+        if related_resource == "javascript":
+            self.jsAssets.append((url, result[0]))
 
         self.asset_respository.set_asset_bytes(url, result[1])
         return (result[1], result[3])
@@ -139,10 +145,10 @@ class Page:
     def get_downloadable_assets(self):
         # TODO add support for other types
         if self.interactiveContent == None:
-            return { 'image': [] }
+            return { 'image': [], 'javascript': self.jsAssets }
 
         images = list(set(map(self.process_image, self.interactiveContent.select('img'))))
-        return { 'image': images }
+        return { 'image': images, 'javascript': self.jsAssets }
 
     def process_link(self, el):
         link = el.get('href')
