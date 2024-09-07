@@ -1,5 +1,3 @@
-import sqlite3
-import re
 from bs4 import BeautifulSoup
 from helpers import get_domain, is_absolute_url
 
