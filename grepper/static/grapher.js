@@ -8,6 +8,8 @@ async function handleChange(e) {
 	const res = await fetch('/query-graph?q=' + e.target.value);
 	const body = await res.json();
 	mainScene.setupFromResults(body.results);
+	const header = document.querySelector('.header');
+	header.classList.add('toggle-hide');
 }
 
 addEventListener('load', () => {
@@ -16,7 +18,7 @@ addEventListener('load', () => {
 	canvas = document.getElementById('result-view');
 	context = canvas.getContext('2d');
 	const canvasWidth = canvas.width = window.innerWidth;
-	const canvasHeight = canvas.height = window.innerHeight - 100;
+	const canvasHeight = canvas.height = window.innerHeight;
 	inputManager.listen(canvas);
 	
 	mainScene = new StarMapScene(canvasWidth, canvasHeight);
