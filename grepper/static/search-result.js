@@ -1,8 +1,8 @@
 import { SearchAction } from './search-action.js';
 import { getFillGradient } from './helpers.js';
 import {setCurrentScene} from './scene-manager.js';
-import {ExploreScene} from './explore-scene.js';
 import inputManager from './input-manager.js';
+import { StarMapTransitionScene } from './star-map-transition-scene.js';
 
 const MAX_RADIUS = 125;
 const ACTION_WIDTH = MAX_RADIUS * 2;
@@ -11,9 +11,10 @@ const COMPONENT_PADDING = 20;
 const TOTAL_HEADER_SIZE = HEADER_HEIGHT + COMPONENT_PADDING;
 
 export class SearchResult {
-	constructor(canvasWidth, canvasHeight, radius, color, result) {
+	constructor(canvasWidth, canvasHeight, radius, color, result, originalScene) {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
+		this.originalScene = originalScene;
 		this.x = Math.floor(Math.min(Math.random() * canvasWidth, canvasWidth - (radius * 2)));
 		this.y = Math.floor(Math.min(Math.random() * canvasHeight, canvasHeight - (radius * 2)));
 		this.radius = radius;
@@ -149,7 +150,7 @@ export class SearchResult {
 			const rightX = this.x + this.radius + COMPONENT_PADDING;
 			const openAction = () => window.open(this.result.url, '_blank');
 			const exploreAction = () => {
-				setCurrentScene(new ExploreScene(this.canvasWidth, this.canvasHeight, this.result));
+				setCurrentScene(new StarMapTransitionScene(this.originalScene.stars, this, this.originalScene.searchResults, this.canvasWidth, this.canvasHeight));
 			};
 			this.selectionActions.push(new SearchAction(leftX, boxY, ACTION_WIDTH, 'Visit', this.result.summary, openAction));
 			this.selectionActions.push(new SearchAction(rightX, boxY, ACTION_WIDTH, 'Explore', this.getExploreSubText(), exploreAction));

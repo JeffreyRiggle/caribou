@@ -38,7 +38,7 @@ export class StarMapScene {
 		results.forEach(result => {
 			const relativeRadius = (result.rank / maxRelativeSize) * maxRadius;
 
-			const sResult = new SearchResult(this.canvasWidth, this.canvasHeight, relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result);
+			const sResult = new SearchResult(this.canvasWidth, this.canvasHeight, relativeRadius, possibleColors[Math.floor(Math.random()*possibleColors.length)], result, this);
 			this.searchResults.push(sResult);
 		});
 	}
