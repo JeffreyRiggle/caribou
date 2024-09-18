@@ -1,10 +1,11 @@
 import { setCurrentScene } from './scene-manager.js';
 import { TransitioningResult } from './transitioning-result.js';
 import { ExploreScene } from './explore-scene.js';
+import { TransitioningStar } from './transitioning-star.js';
 
 export class StarMapTransitionScene {
     constructor(stars, selectedResult, allResults, canvasWidth, canvasHeight) {
-        this.stars = stars;
+        this.stars = stars.map(s => new TransitioningStar(s, canvasWidth, canvasHeight));
         this.selectedResult = selectedResult;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
@@ -27,13 +28,13 @@ export class StarMapTransitionScene {
 		this.allResults.forEach(r => {
 			r.update();
 
-            const offScreenX = r.x > this.canvasWidth || r.x <= 0;
+            const offScreenX = (r.x - r.radius) > this.canvasWidth || (r.x + r.radius) <= 0;
             if (offScreenX) {
                 resultsToRemove.push(r);
                 return;
             }
 
-            const offScreenY = r.y > this.canvasHeight || r.y <= 0;
+            const offScreenY = (r.y + r.radius) > this.canvasHeight || (r.y + r.radius) <= 0;
             if (offScreenY) {
                 resultsToRemove.push(r);
             }
