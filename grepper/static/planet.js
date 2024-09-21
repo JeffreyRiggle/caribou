@@ -43,7 +43,7 @@ export class Planet {
 		const openAction = () => window.open(url, '_blank');
 		const exploreAction = () => console.log('TODO explore');
 		const followAction = () => {
-			fetch(`/query-graph/${btoa(url)}`).then(res => {
+			fetch(`/api/v1/graph/${btoa(url)}`).then(res => {
 				res.json().then(body => {
 					setCurrentScene(new ExploreScene(canvasWidth, canvasHeight, body));
 				});

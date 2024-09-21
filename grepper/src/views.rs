@@ -1,9 +1,8 @@
-use actix_web::{get, web, HttpResponse, Result, Responder};
+use actix_web::{get, web, HttpResponse};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
-use base64::prelude::*;
 
-use crate::{api::{get_graph_results, get_results, get_graph_result}, models::QueryRequest};
+use crate::{repository::get_results, models::QueryRequest};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -64,18 +63,4 @@ async fn query_data(q: web::Query<QueryRequest>) -> HttpResponse {
     HttpResponse::Ok()
        .content_type("text/html; charset=utf-8")
        .body(page)
-}
-
-#[get("/query-graph")]
-async fn query_graph_data(q: web::Query<QueryRequest>) -> Result<impl Responder> {
-    let results = get_graph_results(q.into_inner().q);
-
-    Ok(web::Json(results))
-}
-
-#[get("/query-graph/{base64_url}")]
-async fn query_url_data(base64_url: web::Path<String>,) -> Result<impl Responder> {
-    let url = BASE64_STANDARD.decode(base64_url.as_str()).unwrap();
-    let result = get_graph_result(String::from_utf8(url).unwrap());
-    Ok(web::Json(result))
 }

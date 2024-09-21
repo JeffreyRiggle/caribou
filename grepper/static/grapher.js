@@ -5,7 +5,7 @@ import inputManager from './input-manager.js';
 let mainScene, canvas, context; 
 
 async function handleChange(e) {
-	const res = await fetch('/query-graph?q=' + e.target.value);
+	const res = await fetch('/api/v1/graph?q=' + e.target.value);
 	const body = await res.json();
 	mainScene.setupFromResults(body.results);
 	const header = document.querySelector('.header');

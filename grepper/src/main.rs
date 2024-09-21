@@ -3,6 +3,7 @@ use actix_web::{App, HttpServer};
 
 mod views;
 mod models;
+mod repository;
 mod api;
 
 #[actix_web::main]
@@ -13,8 +14,9 @@ async fn main() -> std::io::Result<()> {
             .service(views::get_page)
             .service(views::query_data)
             .service(views::get_graph_page)
-            .service(views::query_graph_data)
-            .service(views::query_url_data)
+            .service(api::query_graph_data)
+            .service(api::query_url_data)
+            .service(api::get_page_assets)
     })
     .bind(("127.0.0.1", 4080))?
     .run()

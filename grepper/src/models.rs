@@ -31,3 +31,15 @@ pub struct GraphResult {
 pub struct GraphResultReponse {
     pub results: Vec<GraphResult>
 }
+
+#[derive(Debug, Serialize)]
+pub struct AssetResult {
+    pub url: String,
+    pub bytes: u64,
+    pub content_type: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PageAssets {
+    pub assets: Vec<AssetResult>
+}
