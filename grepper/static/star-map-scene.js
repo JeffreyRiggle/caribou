@@ -1,5 +1,5 @@
-import { Star } from './star.js';
 import { SearchResult } from './search-result.js';
+import { buildStars } from './helpers.js';
 
 const possibleColors = [
 	{ inner: 'rgb(220, 220, 250)', outer: 'rgb(52, 52, 247)' },
@@ -15,19 +15,10 @@ function getRelativeSize(items) {
 
 export class StarMapScene {
 	constructor(canvasWidth, canvasHeight) {
-		this.stars = [];
+		this.stars = buildStars(canvasWidth, canvasHeight);
 		this.searchResults = [];
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
-
-		this.setupStars();
-	}
-
-	setupStars() {
-		const totalStars = Math.max(Math.floor(Math.random() * 100), 10);
-		for (let i = 0; i < totalStars; i++) {
-			this.stars.push(new Star(this.canvasWidth, this.canvasHeight));
-		}
 	}
 	
 	setupFromResults(results) {

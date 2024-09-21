@@ -1,24 +1,16 @@
 import { Planet } from "./planet.js";
-import { Star } from "./star.js";
 import { PlanetWarp } from "./planet-warp.js";
+import { buildStars } from "./helpers.js";
 
 export class ExploreScene {
 	constructor(canvasWidth, canvasHeight, exploring) {
-		this.stars = [];
+		this.stars = buildStars(canvasWidth, canvasHeight);
 		this.planetWarps = new Map();
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
-		this.setupStars();
 		this.exploring = exploring;
 		this.mainPlanet = new Planet(this.exploring.url, this.canvasWidth / 2, this.canvasHeight / 2, 50);
 		this.buildOrbit();
-	}
-
-	setupStars() {
-		const totalStars = Math.max(Math.floor(Math.random() * 100), 10);
-		for (let i = 0; i < totalStars; i++) {
-			this.stars.push(new Star(this.canvasWidth, this.canvasHeight));
-		}
 	}
 
 	buildOrbit() {

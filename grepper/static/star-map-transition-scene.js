@@ -12,6 +12,22 @@ export class StarMapTransitionScene {
         this.allResults = allResults.filter(r => r !== this.selectedResult).map(r => {
             return new TransitioningResult(r, canvasWidth, canvasHeight);
         });
+        this.targetX = this.canvasWidth / 2;
+        this.targetY = this.canvasHeight / 2;
+    }
+
+    centerMainResult = () => {
+        if (this.selectedResult.x < this.targetX) {
+            this.selectedResult.x = Math.min(this.targetX, this.selectedResult.x + 5);
+        } else {
+            this.selectedResult.x = Math.max(this.targetX, this.selectedResult.x - 5);
+        }
+        
+        if (this.selectedResult.y < this.targetY) {
+            this.selectedResult.y = Math.min(this.targetY, this.selectedResult.y + 5);
+        } else {
+            this.selectedResult.y = Math.max(this.targetY, this.selectedResult.y - 5);
+        }
     }
 
     draw = (canvas, context) => {
@@ -19,14 +35,24 @@ export class StarMapTransitionScene {
 		const resetBSC = context.shadowColor;
 		const resetBSB = context.shadowBlur;
 
+        const movingMainResult = this.selectedResult.x !== this.targetX || this.selectedResult.y !== this.targetY;
+        if (movingMainResult) {
+            this.centerMainResult();
+        }
+
 		this.stars.forEach(s => {
-			s.update();
+			if (!movingMainResult) {
+                s.update();
+            }
+
 			s.draw(context);
 		});
 
         const resultsToRemove = [];
 		this.allResults.forEach(r => {
-			r.update();
+            if (!movingMainResult) {
+                r.update();
+            }
 
             const offScreenX = (r.x - r.radius) > this.canvasWidth || (r.x + r.radius) <= 0;
             if (offScreenX) {
