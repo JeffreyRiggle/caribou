@@ -13,3 +13,5 @@ lazy_static = "1.4.0"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
 tera = "1.19.1"
+derive_more = { version = "1", features = ["full"] }
+select = "0.6.0"

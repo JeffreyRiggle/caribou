@@ -1,7 +1,7 @@
 use std::fs;
 
 use rusqlite::Connection;
-use crate::models::{AssetResult, GraphResult, GraphResultReponse, PageAssets};
+use crate::models::{AssetResult, DBAsset, GraphResult, GraphResultReponse, PageAssets};
 
 use super::models::{ResultsResponse, ResultData};
 
@@ -125,12 +125,6 @@ pub fn get_graph_results(query: String) -> GraphResultReponse {
     }
 }
 
-struct DBAsset {
-    url: String,
-    path: String,
-    content_type: String
-}
-
 pub fn get_assets(url: String) -> PageAssets {
     let conn = match Connection::open("../grepper.db") {
         Ok(c) => c,
@@ -166,4 +160,26 @@ pub fn get_assets(url: String) -> PageAssets {
     PageAssets {
         assets: resulting_assets
     }
+}
+
+pub fn get_page_data(url: String) -> DBAsset {
+    let conn = match Connection::open("../grepper.db") {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Failed to create connection {}", e);
+            panic!("Failed to connect to database")
+        }
+    };
+
+    let mut stmt = conn.prepare(format!("select url, path, contentType from resources where url = '{}'", url).as_str()).unwrap();
+    let mut rows = stmt.query_map([], |row| {
+        Ok(DBAsset {
+            url: row.get(0)?,
+            path: row.get(1)?,
+            content_type: row.get(2)?
+        })
+
+    }).unwrap();
+
+    rows.next().unwrap().unwrap_or(DBAsset { url: String::from(""), path: String::from(""), content_type: String::from("Error")})
 }

@@ -43,3 +43,16 @@ pub struct AssetResult {
 pub struct PageAssets {
     pub assets: Vec<AssetResult>
 }
+
+#[derive(Debug, Serialize)]
+pub struct DBAsset {
+    pub url: String,
+    pub path: String,
+    pub content_type: String 
+}
+
+#[derive(Debug, Serialize)]
+pub struct HtmlAssetDetails {
+    pub links: Vec<String>,
+    pub nodes: Vec<String>
+}

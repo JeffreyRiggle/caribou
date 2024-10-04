@@ -5,6 +5,7 @@ mod views;
 mod models;
 mod repository;
 mod api;
+mod errors;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,6 +18,7 @@ async fn main() -> std::io::Result<()> {
             .service(api::query_graph_data)
             .service(api::query_url_data)
             .service(api::get_page_assets)
+            .service(api::get_page_details)
     })
     .bind(("127.0.0.1", 4080))?
     .run()
