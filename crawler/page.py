@@ -81,7 +81,6 @@ class Page:
                 inline_content = script.encode_contents()
                 inlin_acript_size = len(inline_content)
                 self.js_bytes += inlin_acript_size
-                self.js_assets.append((None, inline_content))
                 continue
 
             if helpers.is_absolute_url(script_src) == False:
@@ -98,7 +97,6 @@ class Page:
                 inline_content = style.encode_contents()
                 inline_style_size = len(inline_content)
                 self.css_bytes += inline_style_size
-                self.css_assets.append((None, inline_content))
                 continue
 
             if helpers.is_absolute_url(style_src) == False:
@@ -107,22 +105,21 @@ class Page:
             css_futures.append(executor.submit(self.download_and_process_static_content, url=style_src, related_resource="css"))
 
     def download_and_process_static_content(self, url: str, related_resource: str = None):
-        cache_size = self.asset_respository.get_asset_size(url)
+        cached_asset = self.asset_respository.get_asset(url)
 
-        if cache_size != None:
-            return (cache_size, 0)
+        if cached_asset != None:
+            if related_resource == "javascript":
+                self.js_assets.append((url, cached_asset))
+            if related_resource == "css":
+                self.css_assets.append((url, cached_asset))
+            return (len(cached_asset), 0)
 
         result = self.get_content(url)
         if result == None:
-            self.asset_respository.set_asset_bytes(url, 0)
+            self.asset_respository.set_asset(url, '')
             return (0, 0)
 
-        if related_resource == "javascript":
-            self.js_assets.append((url, result[0]))
-        if related_resource == "css":
-            self.css_assets.append((url, result[0]))
-
-        self.asset_respository.set_asset_bytes(url, result[1])
+        self.asset_respository.set_asset(url, result[0])
         return (result[1], result[3])
 
     def get_content(self, url: str):

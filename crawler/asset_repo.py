@@ -2,10 +2,10 @@ from typing import Dict
 
 class AssetRespositoy:
     def __init__(self):
-        self.cache: Dict[str, int] = {}
+        self.cache: Dict[str, str] = {}
 
-    def get_asset_size(self, asset: str) -> int:
+    def get_asset(self, asset: str) -> str:
         return self.cache.get(asset)
 
-    def set_asset_bytes(self, asset: str, size: int):
-        self.cache[asset] = size
+    def set_asset(self, asset: str, content: str):
+        self.cache[asset] = content

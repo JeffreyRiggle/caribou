@@ -106,7 +106,10 @@ pub fn get_graph_results(query: String) -> GraphResultReponse {
         let mut link_rows = stmt.query([]).unwrap();
         let mut target_links = Vec::new(); 
         while let Some(row) = link_rows.next().unwrap() {
-            target_links.push(row.get(1).unwrap());
+            match row.get(1) {
+                Ok(link) => target_links.push(link),
+                _ => println!("Failed to process link row")
+            };
         }
         result.push(GraphResult {
             url: dresult.url,
