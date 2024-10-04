@@ -54,5 +54,7 @@ pub struct DBAsset {
 #[derive(Debug, Serialize)]
 pub struct HtmlAssetDetails {
     pub links: Vec<String>,
-    pub nodes: Vec<String>
+    pub nodes: Vec<String>,
+    pub ids: Vec<String>,
+    pub classes: Vec<String>
 }

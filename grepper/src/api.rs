@@ -53,8 +53,28 @@ async fn get_page_details(base64_url: web::Path<String>) -> Result<Json<HtmlAsse
             used_nodes.insert(String::from(x));
         });
 
+     let mut ids = HashSet::new();
+     Document::from(html_string.as_str())
+         .find(Any)
+         .filter_map(|n| n.attr("id"))
+         .for_each(|x| {
+            ids.insert(String::from(x));
+         });
+
+     let mut classes = HashSet::new();
+     Document::from(html_string.as_str())
+         .find(Any)
+         .filter_map(|n| n.attr("class"))
+         .for_each(|x| {
+            for class in x.split(' ') {
+                classes.insert(String::from(class));
+            }
+         });
+
     Ok(web::Json(HtmlAssetDetails {
         links: links.into_iter().collect(),
-        nodes: used_nodes.into_iter().collect()
+        nodes: used_nodes.into_iter().collect(),
+        ids: ids.into_iter().collect(),
+        classes: classes.into_iter().collect()
     }))
 }
