@@ -6,6 +6,7 @@ mod models;
 mod repository;
 mod api;
 mod errors;
+mod html_parser;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

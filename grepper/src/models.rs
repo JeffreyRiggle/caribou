@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
@@ -53,8 +55,9 @@ pub struct DBAsset {
 
 #[derive(Debug, Serialize)]
 pub struct HtmlAssetDetails {
-    pub links: Vec<String>,
-    pub nodes: Vec<String>,
+    pub external_links: Vec<String>,
+    pub nodes: HashMap<String, usize>,
+    pub attributes: HashMap<String, usize>,
     pub ids: Vec<String>,
     pub classes: Vec<String>
 }
