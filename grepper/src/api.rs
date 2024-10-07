@@ -3,7 +3,7 @@ use std::fs;
 use actix_web::{get, web::{self, Json}, Responder, Result};
 use base64::prelude::*;
 
-use crate::{errors::ApiError, models::{HtmlAssetDetails, QueryRequest}, repository::{get_assets, get_graph_result, get_graph_results, get_page_data}, html_parser::get_html_details};
+use crate::{css_parser::get_css_details, errors::ApiError, html_parser::get_html_details, models::{AssetDetail, QueryRequest}, repository::{get_assets, get_graph_result, get_graph_results, get_page_data}};
 
 #[get("/api/v1/graph")]
 async fn query_graph_data(q: web::Query<QueryRequest>) -> Result<impl Responder> {
@@ -27,9 +27,14 @@ async fn get_page_assets(base64_url: web::Path<String>) -> Result<impl Responder
 }
 
 #[get("/api/v1/{base64_url}/details")]
-async fn get_page_details(base64_url: web::Path<String>) -> Result<Json<HtmlAssetDetails>, ApiError> {
+async fn get_page_details(base64_url: web::Path<String>) -> Result<Json<AssetDetail>, ApiError> {
     let url = BASE64_STANDARD.decode(base64_url.as_str()).unwrap();
     let page_details = get_page_data(String::from_utf8(url).unwrap());
+
+    if page_details.content_type == "css" {
+        let css_string = fs::read_to_string(page_details.path.clone()).unwrap();
+        return Ok(web::Json(AssetDetail::Css(get_css_details(css_string.as_str()))));
+    }
 
     if page_details.content_type != "html" {
         return Err(ApiError::InvalidContentType)
@@ -37,5 +42,5 @@ async fn get_page_details(base64_url: web::Path<String>) -> Result<Json<HtmlAsse
 
     let html_string = fs::read_to_string(page_details.path.clone()).unwrap();
 
-    Ok(web::Json(get_html_details(html_string)))
+    Ok(web::Json(AssetDetail::Html(get_html_details(html_string))))
 }

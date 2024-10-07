@@ -54,10 +54,24 @@ pub struct DBAsset {
 }
 
 #[derive(Debug, Serialize)]
+pub struct CssAssetDetails {
+    pub external_links: Vec<String>,
+    pub attributes: Vec<String>,
+    pub selected: Vec<String>,
+    pub functions: Vec<String>
+}
+
+#[derive(Debug, Serialize)]
 pub struct HtmlAssetDetails {
     pub external_links: Vec<String>,
     pub nodes: HashMap<String, usize>,
     pub attributes: HashMap<String, usize>,
     pub ids: Vec<String>,
     pub classes: Vec<String>
+}
+
+#[derive(Debug, Serialize)]
+pub enum AssetDetail {
+    Html(HtmlAssetDetails),
+    Css(CssAssetDetails)
 }

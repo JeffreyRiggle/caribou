@@ -15,3 +15,4 @@ serde = { version = "1.0", features = ["derive"] }
 tera = "1.19.1"
 derive_more = { version = "1", features = ["full"] }
 select = "0.6.0"
+cssparser = "0.34.0"
