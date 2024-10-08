@@ -58,6 +58,8 @@ pub struct CssAssetDetails {
     pub external_links: Vec<String>,
     pub attributes: Vec<String>,
     pub selected: Vec<String>,
+    pub selected_ids: Vec<String>,
+    pub selected_classes: Vec<String>,
     pub functions: Vec<String>
 }
 

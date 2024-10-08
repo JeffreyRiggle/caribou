@@ -8,6 +8,8 @@ pub fn get_css_details(css_string: &str) -> CssAssetDetails {
     let mut parser = Parser::new(&mut input);
     let mut attrs = HashSet::new();
     let mut selected = HashSet::new();
+    let mut selected_ids = HashSet::new();
+    let mut selected_classes = HashSet::new();
     let mut functions = HashSet::new();
     let mut external_links = HashSet::new();
 
@@ -54,9 +56,23 @@ pub fn get_css_details(css_string: &str) -> CssAssetDetails {
             Token::Ident(name) => {
                 selected.insert(name.to_string());
             },
+            Token::IDHash(name) => {
+                selected_ids.insert(name.to_string());
+            },
+            Token::Delim(d) => {
+                if d.eq(&'.') {
+                    let next_token = parser.next();
+                    match next_token {
+                        Ok(Token::Ident(name)) => {
+                            selected_classes.insert(name.to_string());
+                        },
+                        _ => {}
+                    }
+                }
+            },
             Token::Function(func) => {
                 functions.insert(func.to_string());
-            },
+            }
             _ => {}
         }
     }
@@ -65,6 +81,8 @@ pub fn get_css_details(css_string: &str) -> CssAssetDetails {
         external_links: external_links.into_iter().collect(),
         attributes: attrs.into_iter().collect(),
         selected: selected.into_iter().collect(),
+        selected_ids: selected_ids.into_iter().collect(),
+        selected_classes: selected_classes.into_iter().collect(),
         functions: functions.into_iter().collect()
     }
 }
