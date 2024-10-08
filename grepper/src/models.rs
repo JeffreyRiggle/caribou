@@ -38,6 +38,7 @@ pub struct GraphResultReponse {
 pub struct AssetResult {
     pub url: String,
     pub bytes: u64,
+    #[serde(rename="contentType")]
     pub content_type: String,
 }
 
@@ -50,21 +51,26 @@ pub struct PageAssets {
 pub struct DBAsset {
     pub url: String,
     pub path: String,
+    #[serde(rename="contentType")]
     pub content_type: String 
 }
 
 #[derive(Debug, Serialize)]
 pub struct CssAssetDetails {
+    #[serde(rename="externalLinks")]
     pub external_links: Vec<String>,
     pub attributes: Vec<String>,
     pub selected: Vec<String>,
+    #[serde(rename="selectedIds")]
     pub selected_ids: Vec<String>,
+    #[serde(rename="selectedClasses")]
     pub selected_classes: Vec<String>,
     pub functions: Vec<String>
 }
 
 #[derive(Debug, Serialize)]
 pub struct HtmlAssetDetails {
+    #[serde(rename="externalLinks")]
     pub external_links: Vec<String>,
     pub nodes: HashMap<String, usize>,
     pub attributes: HashMap<String, usize>,
@@ -74,6 +80,8 @@ pub struct HtmlAssetDetails {
 
 #[derive(Debug, Serialize)]
 pub enum AssetDetail {
+    #[serde(rename="html")]
     Html(HtmlAssetDetails),
+    #[serde(rename="css")]
     Css(CssAssetDetails)
 }
