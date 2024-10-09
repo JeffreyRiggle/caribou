@@ -17,17 +17,28 @@ export class StarMapTransitionScene {
     }
 
     centerMainResult = () => {
+        let moveXAmount, moveYAmount;
         if (this.selectedResult.x < this.targetX) {
-            this.selectedResult.x = Math.min(this.targetX, this.selectedResult.x + 5);
+            const newX = Math.min(this.targetX, this.selectedResult.x + 5);
+            moveXAmount = newX - this.selectedResult.x;
+            this.selectedResult.x = newX;
         } else {
-            this.selectedResult.x = Math.max(this.targetX, this.selectedResult.x - 5);
+            const newX = Math.max(this.targetX, this.selectedResult.x - 5);
+            moveXAmount = newX - this.selectedResult.x;
+            this.selectedResult.x = newX;
         }
         
         if (this.selectedResult.y < this.targetY) {
-            this.selectedResult.y = Math.min(this.targetY, this.selectedResult.y + 5);
+            const newY = Math.min(this.targetY, this.selectedResult.y + 5);
+            moveYAmount = newY - this.selectedResult.y;
+            this.selectedResult.y = newY;
         } else {
-            this.selectedResult.y = Math.max(this.targetY, this.selectedResult.y - 5);
+            const newY = Math.max(this.targetY, this.selectedResult.y - 5);
+            moveYAmount = newY - this.selectedResult.y;
+            this.selectedResult.y = newY;
         }
+
+        return { moveXAmount, moveYAmount };
     }
 
     draw = (canvas, context) => {
@@ -36,8 +47,9 @@ export class StarMapTransitionScene {
 		const resetBSB = context.shadowBlur;
 
         const movingMainResult = this.selectedResult.x !== this.targetX || this.selectedResult.y !== this.targetY;
+        let moveResult;
         if (movingMainResult) {
-            this.centerMainResult();
+            moveResult = this.centerMainResult();
         }
 
 		this.stars.forEach(s => {
@@ -52,6 +64,9 @@ export class StarMapTransitionScene {
 		this.allResults.forEach(r => {
             if (!movingMainResult) {
                 r.update();
+            } else {
+                r.x += moveResult.moveXAmount
+                r.y += moveResult.moveYAmount
             }
 
             const offScreenX = (r.x - r.radius) > this.canvasWidth || (r.x + r.radius) <= 0;
