@@ -1,16 +1,16 @@
 import { PlanetActions } from "./planet-actions.js";
-import inputManager from './input-manager.js';
-import { setCurrentScene } from "./scene-manager.js";
-import { ExploreScene } from "./explore-scene.js";
+import inputManager from '../input-manager.js';
+import { setCurrentScene } from "../scene-manager.js";
+import { ExploreScene } from "../scenes/explore-scene.js";
 
 let planets = {};
 let id = 0;
 const planetMappings = {
-	'cold': './static/coldplanet.png',
-	'forest': './static/forestplanet.png',
-	'fire': './static/fireplanet.png',
-	'purple': './static/purpleplanet.png',
-	'living': './static/livingplanet.png'
+	'cold': './static/img/coldplanet.png',
+	'forest': './static/img/forestplanet.png',
+	'fire': './static/img/fireplanet.png',
+	'purple': './static/img/purpleplanet.png',
+	'living': './static/img/livingplanet.png'
 };
 
 const getImageEl = (id) => {

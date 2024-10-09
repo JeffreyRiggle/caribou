@@ -1,4 +1,4 @@
-import { Star } from './star.js';
+import { Star } from './entities/star.js';
 
 export function getFillGradient(context, x, y, innerRadius, relativeRadius, color) {
 		const gradient = context.createRadialGradient(x, y, innerRadius, x, y, relativeRadius);

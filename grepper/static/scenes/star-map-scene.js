@@ -1,5 +1,5 @@
-import { SearchResult } from './search-result.js';
-import { buildStars } from './helpers.js';
+import { SearchResult } from '../entities/search-result.js';
+import { buildStars } from '../helpers.js';
 
 const possibleColors = [
 	{ inner: 'rgb(220, 220, 250)', outer: 'rgb(52, 52, 247)' },

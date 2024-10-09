@@ -1,4 +1,4 @@
-import { StarMapScene } from './star-map-scene.js';
+import { StarMapScene } from './scenes/star-map-scene.js';
 import { getCurrentScene, setCurrentScene } from './scene-manager.js';
 import inputManager from './input-manager.js';
 

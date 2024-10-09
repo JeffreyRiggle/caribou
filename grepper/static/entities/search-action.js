@@ -1,4 +1,4 @@
-import inputManager from './input-manager.js';
+import inputManager from '../input-manager.js';
 
 const ACTION_TEXT_VERTICAL_MARGIN = 24;
 const SUB_TEXT_LINE_HEIGHT = 10;

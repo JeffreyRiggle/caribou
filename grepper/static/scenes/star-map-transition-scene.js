@@ -1,7 +1,7 @@
-import { setCurrentScene } from './scene-manager.js';
-import { TransitioningResult } from './transitioning-result.js';
+import { setCurrentScene } from '../scene-manager.js';
+import { TransitioningResult } from '../entities/transitioning-result.js';
 import { ExploreScene } from './explore-scene.js';
-import { TransitioningStar } from './transitioning-star.js';
+import { TransitioningStar } from '../entities/transitioning-star.js';
 
 export class StarMapTransitionScene {
     constructor(stars, selectedResult, allResults, canvasWidth, canvasHeight) {

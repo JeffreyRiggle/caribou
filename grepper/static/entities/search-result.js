@@ -1,8 +1,8 @@
 import { SearchAction } from './search-action.js';
-import { getFillGradient } from './helpers.js';
-import {setCurrentScene} from './scene-manager.js';
-import inputManager from './input-manager.js';
-import { StarMapTransitionScene } from './star-map-transition-scene.js';
+import { getFillGradient } from '../helpers.js';
+import {setCurrentScene} from '../scene-manager.js';
+import inputManager from '../input-manager.js';
+import { StarMapTransitionScene } from '../scenes/star-map-transition-scene.js';
 
 const MAX_RADIUS = 125;
 const ACTION_WIDTH = MAX_RADIUS * 2;

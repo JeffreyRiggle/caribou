@@ -1,4 +1,4 @@
-import { getFillGradient } from './helpers.js';
+import { getFillGradient } from '../helpers.js';
 
 export class TransitioningResult {
     constructor(originalResult, canvasWidth, canvasHeight) {

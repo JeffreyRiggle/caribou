@@ -1,4 +1,4 @@
-import inputManager from './input-manager.js';
+import inputManager from '../input-manager.js';
 
 class PlanetAction {
 	constructor(action, planet, radius, beginAngle, endAngle) {

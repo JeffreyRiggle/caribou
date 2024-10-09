@@ -1,6 +1,6 @@
-import { Planet } from "./planet.js";
-import { PlanetWarp } from "./planet-warp.js";
-import { buildStars } from "./helpers.js";
+import { Planet } from "../entities/planet.js";
+import { PlanetWarp } from "../entities/planet-warp.js";
+import { buildStars } from "../helpers.js";
 
 export class ExploreScene {
 	constructor(canvasWidth, canvasHeight, exploring) {
