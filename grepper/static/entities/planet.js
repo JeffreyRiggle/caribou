@@ -2,33 +2,11 @@ import { PlanetActions } from "./planet-actions.js";
 import inputManager from '../input-manager.js';
 import { setCurrentScene } from "../scene-manager.js";
 import { ExploreScene } from "../scenes/explore-scene.js";
-
-let planets = {};
-let id = 0;
-const planetMappings = {
-	'cold': './static/img/coldplanet.png',
-	'forest': './static/img/forestplanet.png',
-	'fire': './static/img/fireplanet.png',
-	'purple': './static/img/purpleplanet.png',
-	'living': './static/img/livingplanet.png'
-};
-
-const getImageEl = (id) => {
-	let planet = planets[id];
-	if (planet) {
-		return planet;
-	}
-
-	planet = document.createElement('img');
-	planet.src = planetMappings[id];
-	planets[id] = planet;
-
-	return planet;
-};
+import { PlanetScene } from "../scenes/planet-scene.js";
+import { getImageEl, planetMappings } from "../helpers.js";
 
 export class Planet {
-	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData) {
-		this.id = id++;
+	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData, planetType) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
@@ -38,10 +16,16 @@ export class Planet {
 		this.rotationData = rotationData;
 		this.currentAngle = this.rotationData?.angle;
 		this.rateOfRotation = Math.max(.00025, Math.random() * .0015);
-		this.planetType = Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
+		this.planetType = planetType ?? Object.keys(planetMappings)[Math.floor(Math.random() * 5)];
 		
 		const openAction = () => window.open(url, '_blank');
-		const exploreAction = () => console.log('TODO explore');
+		const exploreAction = () => {
+			fetch(`/api/v1/graph/${btoa(url)}`).then(res => {
+				res.json().then(body => {
+					setCurrentScene(new PlanetScene(canvasWidth, canvasHeight, body, this.planetType));
+				});
+			});
+		}
 		const followAction = () => {
 			fetch(`/api/v1/graph/${btoa(url)}`).then(res => {
 				res.json().then(body => {

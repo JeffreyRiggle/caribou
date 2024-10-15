@@ -16,3 +16,26 @@ export function buildStars(canvasWidth, canvasHeight) {
 
 	return result;
 }
+
+let planets = {};
+
+export const planetMappings = {
+	'cold': './static/img/coldplanet.png',
+	'forest': './static/img/forestplanet.png',
+	'fire': './static/img/fireplanet.png',
+	'purple': './static/img/purpleplanet.png',
+	'living': './static/img/livingplanet.png'
+};
+
+export const getImageEl = (id) => {
+	let planet = planets[id];
+	if (planet) {
+		return planet;
+	}
+
+	planet = document.createElement('img');
+	planet.src = planetMappings[id];
+	planets[id] = planet;
+
+	return planet;
+};

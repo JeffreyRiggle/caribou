@@ -9,7 +9,7 @@ export class ExploreScene {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 		this.exploring = exploring;
-		this.mainPlanet = new Planet(this.exploring.url, this.canvasWidth / 2, this.canvasHeight / 2, 50);
+		this.mainPlanet = new Planet(this.exploring.url, this.canvasWidth / 2, this.canvasHeight / 2, 50, canvasWidth, canvasHeight);
 		this.buildOrbit();
 	}
 
