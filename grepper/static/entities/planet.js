@@ -20,10 +20,12 @@ export class Planet {
 		
 		const openAction = () => window.open(url, '_blank');
 		const exploreAction = () => {
-			fetch(`/api/v1/graph/${btoa(url)}`).then(res => {
-				res.json().then(body => {
-					setCurrentScene(new PlanetScene(canvasWidth, canvasHeight, body, this.planetType));
-				});
+			const encodedUrl = btoa(url);
+			Promise.all([
+				fetch(`/api/v1/graph/${encodedUrl}`).then(res => res.json()),
+				fetch(`/api/v1/${encodedUrl}/assets`).then(res => res.json())
+			]).then(([graphResult, assetsResult]) => {
+				setCurrentScene(new PlanetScene(canvasWidth, canvasHeight, graphResult, assetsResult.assets, this.planetType));
 			});
 		}
 		const followAction = () => {

@@ -39,3 +39,7 @@ export const getImageEl = (id) => {
 
 	return planet;
 };
+
+export function getMaxSize(items, prop) {
+	return Math.max(...items.map(i => i[prop]));
+}

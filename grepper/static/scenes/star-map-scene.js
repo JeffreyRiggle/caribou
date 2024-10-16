@@ -1,5 +1,5 @@
 import { SearchResult } from '../entities/search-result.js';
-import { buildStars } from '../helpers.js';
+import { buildStars, getMaxSize } from '../helpers.js';
 
 const possibleColors = [
 	{ inner: 'rgb(220, 220, 250)', outer: 'rgb(52, 52, 247)' },
@@ -8,10 +8,6 @@ const possibleColors = [
 	{ inner: 'rgb(255, 242, 217)', outer: 'rgb(252, 194, 76)' },
 	{ inner: 'rgb(244, 220, 250)', outer: 'rgb(247, 88, 252)' }
 ];
-
-function getRelativeSize(items) {
-	return Math.max(...items.map(i => i.rank));
-}
 
 export class StarMapScene {
 	constructor(canvasWidth, canvasHeight) {
@@ -22,7 +18,7 @@ export class StarMapScene {
 	}
 	
 	setupFromResults(results) {
-		const maxRelativeSize = getRelativeSize(results);
+		const maxRelativeSize = getMaxSize(results, 'rank');
 		const maxRadius = 100;
 
 		this.searchResults.length = 0;
