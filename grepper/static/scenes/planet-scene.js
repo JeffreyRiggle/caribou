@@ -14,16 +14,32 @@ export class PlanetScene {
 
     buildAssets(assets) {
         const maxRelativeSize = getMaxSize(assets, 'bytes');
-        const minSize = 25;
-        const maxSize = 75;
+        const minSize = 32;
+        const maxSize = 100;
 
+        const minAngle = Math.PI * 1.25;
+        const minX = (Math.cos(minAngle) * this.mainPlanet.radius) + this.mainPlanet.x + 8;
+        const minY = (Math.sin(minAngle) * this.mainPlanet.radius) + this.mainPlanet.y;
+        const maxAngle = Math.PI * 1.75;
+        const maxX = (Math.cos(maxAngle) * this.mainPlanet.radius) + this.mainPlanet.x - 8;
+        let currX = minX;
+        let currY = minY;
+        let maxSizeInRow = 0;
+        let maxYInRow = 0;
         return assets.map(a => {
             const size = Math.max(minSize, (a.bytes / maxRelativeSize) * maxSize);
-            const angle = Math.random() * Math.PI * 2;
-            const targetRadius = (Math.random() * this.mainPlanet.radius) - size;
-            const x = (Math.cos(angle) * targetRadius) + this.mainPlanet.x;
-            const y = (Math.sin(angle) * targetRadius) + this.mainPlanet.y;
-            return new AssetRegion(a, x, y, size);
+            const targetY = currY + (Math.random() * 20);
+            const region = new AssetRegion(a, currX, targetY, size);
+            currX += size + Math.max(32, (75 * Math.random()));
+            maxSizeInRow = Math.max(maxSizeInRow, size);
+            maxYInRow = Math.max(maxYInRow, targetY);
+            if (currX >= maxX) {
+                currX = minX;
+                currY = maxSizeInRow + maxYInRow + Math.max(32, (75 * Math.random()));
+                maxSizeInRow = 0;
+            }
+
+            return region;
         });
     }
 
