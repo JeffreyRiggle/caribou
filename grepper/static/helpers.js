@@ -42,4 +42,16 @@ export const getImageEl = (id) => {
 
 export function getMaxSize(items, prop) {
 	return Math.max(...items.map(i => i[prop]));
-}
+};
+
+export function resetContextScope(context, callback) {
+	const initialShadowOffsetX = context.shadowOffsetX;
+	const initialShadowOffsetY = context.shadowOffsetY;
+	const initialShadowBlur = context.shadowBlur;
+	const initialShadowColor = context.shadowColor;
+	callback();
+	context.shadowOffsetX = initialShadowOffsetX;
+	context.shadowOffsetY = initialShadowOffsetY;
+	context.shadowBlur = initialShadowBlur;
+	context.shadowColor = initialShadowColor;
+};

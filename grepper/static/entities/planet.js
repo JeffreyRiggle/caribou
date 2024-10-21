@@ -3,7 +3,7 @@ import inputManager from '../input-manager.js';
 import { setCurrentScene } from "../scene-manager.js";
 import { ExploreScene } from "../scenes/explore-scene.js";
 import { PlanetScene } from "../scenes/planet-scene.js";
-import { getImageEl, planetMappings } from "../helpers.js";
+import { getImageEl, planetMappings, resetContextScope } from "../helpers.js";
 
 export class Planet {
 	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData, planetType) {
@@ -76,29 +76,21 @@ export class Planet {
 			// is driven by context. Since update does not have context this hack was needed
 			this.selected = this.selected || this.planetActions.selected;
 		}
-		const initialShadowOffsetX = context.shadowOffsetX;
-		const initialShadowOffsetY = context.shadowOffsetY;
-		const initialShadowBlur = context.shadowBlur;
-		const initialShadowColor = context.shadowColor;
-
-		context.beginPath();
-		context.fillStyle = context.createPattern(getImageEl(this.planetType), 'repeat');
-		context.shadowOffsetX = 0;
-		context.shadowOffsetY = 0;
-		context.shadowBlur = 15;
-		context.shadowColor = 'white';
-
-		if (this.hover) {
-			context.shadowBlur = 25;
-		}
-
-		context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-		context.closePath();
-		context.fill();
-
-		context.shadowOffsetX = initialShadowOffsetX;
-		context.shadowOffsetY = initialShadowOffsetY;
-		context.shadowBlur = initialShadowBlur;
-		context.shadowColor = initialShadowColor;
+		resetContextScope(context, () => {
+			context.beginPath();
+			context.fillStyle = context.createPattern(getImageEl(this.planetType), 'repeat');
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 15;
+			context.shadowColor = 'white';
+	
+			if (this.hover) {
+				context.shadowBlur = 25;
+			}
+	
+			context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+			context.closePath();
+			context.fill();
+		});
 	}
 }
