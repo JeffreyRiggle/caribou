@@ -1,4 +1,5 @@
 import { AssetRegion } from "../entities/asset-region.js";
+import { PlanetInfoPane } from "../entities/planet-info-pane.js";
 import { PlanetView } from "../entities/planet-view.js";
 import { buildStars, getMaxSize } from "../helpers.js";
 
@@ -8,8 +9,19 @@ export class PlanetScene {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 		this.exploring = exploring;
-		this.mainPlanet = new PlanetView(this.canvasWidth / 2, this.canvasHeight / 2, 325, planetType);
+
+        const planetX = this.canvasWidth / 2;
+        const planetY = this.canvasHeight / 2;
+        const planetRadius = 325;
+		this.mainPlanet = new PlanetView(planetX, planetY, planetRadius, planetType);
+        this.assetInfo = {
+            type: 'assets',
+            image: { total: 0, bytes: 0 },
+            css: { total: 0, bytes: 0 },
+            javascript: { total: 0, bytes: 0 }
+        };
         this.assets = this.buildAssets(assets);
+        this.infoPane = new PlanetInfoPane(planetX + planetRadius + 48, planetY - planetRadius, 600, 400, this.assetInfo);
 	}
 
     buildAssets(assets) {
@@ -39,6 +51,9 @@ export class PlanetScene {
                 maxSizeInRow = 0;
             }
 
+            this.assetInfo[a.contentType].total += 1;
+            this.assetInfo[a.contentType].bytes += a.bytes;
+
             return region;
         });
     }
@@ -57,5 +72,7 @@ export class PlanetScene {
             a.update();
             a.draw(context);
         });
+
+        this.infoPane.draw(context);
 	}
 }

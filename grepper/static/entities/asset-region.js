@@ -7,6 +7,7 @@ export class AssetRegion {
         this.y = y;
         this.size = size;
         this.asset = asset;
+        this.selected = false;
     }
 
     update = () => {
@@ -14,6 +15,19 @@ export class AssetRegion {
 		const validHoverX = mouseLocation.x >= this.x && mouseLocation.x <= this.x + this.size;
 		const validHoverY = mouseLocation.y <= this.y + this.size && mouseLocation.y >= this.y;
 		this.hover = validHoverX && validHoverY;
+
+        const clickPosition = inputManager.clickPosition;
+
+		const wasSelected = this.selected;
+		if (clickPosition) {
+			const validClickX = clickPosition.x >= this.x && clickPosition.x <= this.x + this.size;
+			const validClickY = clickPosition.y <= this.y + this.size && clickPosition.y >= this.y;
+			this.selected = validClickX && validClickY;
+		}
+
+        if (this.selected && !wasSelected) {
+            this.action();
+		}
     }
 
     draw = (context) => {
@@ -29,6 +43,15 @@ export class AssetRegion {
             context.rect(this.x, this.y, this.size, this.size);
             context.closePath();
             context.fill();
+        });
+    }
+
+    action = () => {
+        fetch(`/api/v1/${btoa(this.asset.url)}/details`).then(res => {
+            return res.json().then(assetDetails => {
+                // TODO emit and action and feed it into the info pane
+                console.log(assetDetails);
+            });
         });
     }
 
