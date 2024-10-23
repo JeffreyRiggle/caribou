@@ -2,12 +2,13 @@ import inputManager from '../input-manager.js';
 import { resetContextScope } from '../helpers.js';
 
 export class AssetRegion {
-    constructor(asset, x, y, size) {
+    constructor(asset, x, y, size, assetCallback) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.asset = asset;
         this.selected = false;
+        this.assetCallback = assetCallback;
     }
 
     update = () => {
@@ -49,8 +50,7 @@ export class AssetRegion {
     action = () => {
         fetch(`/api/v1/${btoa(this.asset.url)}/details`).then(res => {
             return res.json().then(assetDetails => {
-                // TODO emit and action and feed it into the info pane
-                console.log(assetDetails);
+                this.assetCallback(assetDetails, this.asset);
             });
         });
     }

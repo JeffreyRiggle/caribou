@@ -1,4 +1,4 @@
-import { resetContextScope } from '../helpers.js';
+import { getTextAsLines, resetContextScope } from '../helpers.js';
 import inputManager from '../input-manager.js';
 
 const ACTION_TEXT_VERTICAL_MARGIN = 24;
@@ -44,7 +44,7 @@ export class SearchAction {
 			context.textBaseline = 'middle';
 			context.fillText(this.actionText, this.x + (this.size / 2), this.y + ACTION_TEXT_VERTICAL_MARGIN);
 			context.font = '8px roboto';
-			this.getSubTextAsLines(context).forEach((l, i) => {
+			getTextAsLines(context, this.subText, this.size, ACTION_PADDING).forEach((l, i) => {
 				const targetY = this.y + ACTION_TEXT_VERTICAL_MARGIN + ACTION_TEXT_VERTICAL_MARGIN + (i * SUB_TEXT_LINE_HEIGHT);
 				// if text vertically overflows hide it
 				if (targetY > this.y + this.size - ACTION_PADDING) return;
@@ -85,42 +85,6 @@ export class SearchAction {
 		} else {
 			this.midPoint = Math.min(.98, this.midPoint + .005);
 		}
-	}
-
-
-	getSubTextAsLines = (context) => {
-		const lines = [];
-		const originalLines = this.subText.split('\n');
-		originalLines.forEach(line => {
-			const words = line.split(' ');
-			let curr = '';
-			const maxWidth = this.size - (ACTION_PADDING * 2);
-			words.forEach(w => {
-				const lineWidth = context.measureText(curr + ' ' + w).width;
-				if (lineWidth < maxWidth) {
-					curr = curr + ' ' + w;
-					return;
-				}
-
-				lines.push(curr);
-
-				const wordWidth = context.measureText(w).width;
-
-				if (wordWidth < maxWidth) {
-					curr = w;
-					return;
-				}
-
-				// If word overflows split it
-				const percentOverflow = Math.ceil((maxWidth / wordWidth) * 100);
-				const cutIndex = Math.floor((percentOverflow / w.length) * 100);
-				lines.push(w.substring(0, cutIndex - 1) + '-');
-				curr = w.substring(cutIndex - 1, w.length);
-			});
-			lines.push(curr);
-		});
-
-		return lines;
 	}
 }
 

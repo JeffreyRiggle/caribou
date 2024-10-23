@@ -55,3 +55,38 @@ export function resetContextScope(context, callback) {
 	context.shadowBlur = initialShadowBlur;
 	context.shadowColor = initialShadowColor;
 };
+
+export function getTextAsLines(context, text, width, widthPadding) {
+	const lines = [];
+	const originalLines = text.split('\n');
+	originalLines.forEach(line => {
+		const words = line.split(' ');
+		let curr = '';
+		const maxWidth = width - (widthPadding * 2);
+		words.forEach(w => {
+			const lineWidth = context.measureText(curr + ' ' + w).width;
+			if (lineWidth < maxWidth) {
+				curr = curr + ' ' + w;
+				return;
+			}
+
+			lines.push(curr);
+
+			const wordWidth = context.measureText(w).width;
+
+			if (wordWidth < maxWidth) {
+				curr = w;
+				return;
+			}
+
+			// If word overflows split it
+			const percentOverflow = maxWidth / wordWidth;
+			const cutIndex = Math.floor(w.length * percentOverflow);
+			lines.push(w.substring(0, cutIndex - 1) + '-');
+			curr = w.substring(cutIndex - 1, w.length);
+		});
+		lines.push(curr);
+	});
+
+	return lines;
+}

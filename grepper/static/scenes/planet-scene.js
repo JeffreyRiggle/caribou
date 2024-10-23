@@ -41,7 +41,7 @@ export class PlanetScene {
         return assets.map(a => {
             const size = Math.max(minSize, (a.bytes / maxRelativeSize) * maxSize);
             const targetY = currY + (Math.random() * 20);
-            const region = new AssetRegion(a, currX, targetY, size);
+            const region = new AssetRegion(a, currX, targetY, size, this.handleAssetInfo);
             currX += size + Math.max(32, (75 * Math.random()));
             maxSizeInRow = Math.max(maxSizeInRow, size);
             maxYInRow = Math.max(maxYInRow, targetY);
@@ -75,4 +75,20 @@ export class PlanetScene {
 
         this.infoPane.draw(context);
 	}
+
+    handleAssetInfo = (info, asset) => {
+        console.log(info);
+        if (info.css) {
+            this.assetInfo = {
+                type: 'css',
+                url: asset.url,
+                bytes: asset.bytes,
+                links: info.css.externalLinks,
+                totalClasses: info.css.selectedClasses.length,
+                totalIds: info.css.selectedIds.length
+            };
+        }
+
+        this.infoPane.info = this.assetInfo;
+    }
 }
