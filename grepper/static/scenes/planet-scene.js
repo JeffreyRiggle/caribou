@@ -4,7 +4,7 @@ import { PlanetView } from "../entities/planet-view.js";
 import { buildStars, getMaxSize } from "../helpers.js";
 
 export class PlanetScene {
-	constructor(canvasWidth, canvasHeight, exploring, assets, planetType) {
+	constructor(canvasWidth, canvasHeight, exploring, assets, url, planetType) {
 		this.stars = buildStars(canvasWidth, canvasHeight);
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
@@ -13,7 +13,7 @@ export class PlanetScene {
         const planetX = this.canvasWidth / 2;
         const planetY = this.canvasHeight / 2;
         const planetRadius = 325;
-		this.mainPlanet = new PlanetView(planetX, planetY, planetRadius, planetType);
+		this.mainPlanet = new PlanetView(planetX, planetY, planetRadius, planetType, url, this.handleAssetInfo);
         this.assetInfo = {
             type: 'assets',
             image: { total: 0, bytes: 0 },
@@ -65,11 +65,16 @@ export class PlanetScene {
 			s.draw(context);
 		});
 
-		this.mainPlanet.update();
+        let assetSelected = false;
+        this.assets.forEach(a => {
+            a.update();
+            assetSelected = assetSelected || a.selected;
+        });
+
+		this.mainPlanet.update(assetSelected);
 		this.mainPlanet.draw(context);
 
         this.assets.forEach(a => {
-            a.update();
             a.draw(context);
         });
 
@@ -96,6 +101,17 @@ export class PlanetScene {
                 bytes: asset.bytes,
                 imageType: info.image.imageType
             };
+        }
+
+        if (info.html) {
+            this.assetInfo = {
+                type: 'html',
+                url: asset.url,
+                links: info.html.externalLinks,
+                totalClasses: info.html.classes.length,
+                totalIds: info.html.ids.length,
+                nodes: Object.entries(info.html.nodes).sort(([,aCount], [,bCount]) => bCount - aCount).map(([node]) => node)
+            }
         }
 
         this.infoPane.info = this.assetInfo;

@@ -25,7 +25,7 @@ export class Planet {
 				fetch(`/api/v1/graph/${encodedUrl}`).then(res => res.json()),
 				fetch(`/api/v1/${encodedUrl}/assets`).then(res => res.json())
 			]).then(([graphResult, assetsResult]) => {
-				setCurrentScene(new PlanetScene(canvasWidth, canvasHeight, graphResult, assetsResult.assets, this.planetType));
+				setCurrentScene(new PlanetScene(canvasWidth, canvasHeight, graphResult, assetsResult.assets, url, this.planetType));
 			});
 		}
 		const followAction = () => {

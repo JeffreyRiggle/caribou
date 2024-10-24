@@ -24,9 +24,11 @@ export class PlanetInfoPane {
         if (this.info?.type === 'assets') {
             this.drawAssetInfo(context);
         } else if (this.info?.type === 'css') {
-            this.drawACssInfo(context);
+            this.drawCssInfo(context);
         } else if (this.info?.type === 'image') {
             this.drawImageInfo(context);
+        } else if (this.info?.type === 'html') {
+            this.drawHtmlInfo(context);
         }
     }
 
@@ -38,7 +40,7 @@ export class PlanetInfoPane {
         context.fillText(`Javascript: ${this.info.javascript.total}, size: ${this.bytesToDisplay(this.info.javascript.bytes)}`, this.x + (this.width / 2), this.y + 96 + 12);
     }
 
-    drawACssInfo(context) {
+    drawCssInfo(context) {
         let verticalPadding = 12;
         let lineHeight = 24;
         let currentLine = 1;
@@ -77,6 +79,43 @@ export class PlanetInfoPane {
         });
         context.fillText(`Size: ${this.bytesToDisplay(this.info.bytes)}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
         context.fillText(`Image Type: ${this.info.imageType}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+    }
+
+    drawHtmlInfo(context) {
+        let verticalPadding = 12;
+        let lineHeight = 24;
+        let currentLine = 1;
+        this.setHeadingFont(context);
+        context.fillText('Document Details', this.x + (this.width / 2), this.y + lineHeight);
+        const urlLines = getTextAsLines(context, `URL: ${this.info.url}`, this.width, 4);
+        urlLines.forEach(line => {
+            context.fillText(line, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        });
+        context.fillText(`Total classes: ${this.info.totalClasses}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        context.fillText(`Total Ids: ${this.info.totalIds}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+
+        if (this.info.links < 1) {
+            return;
+        }
+
+        context.fillText('Referenced URLs:', this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        this.setSubHeadingFont(context);
+        let baseHeightOffset = lineHeight * ++currentLine;
+        lineHeight = 12;
+        verticalPadding = 8;
+        let subLines = 1;
+        this.info.links.forEach((link, ind) => {
+            const linkLines = getTextAsLines(context, link, this.width, 4);
+            linkLines.forEach(line => {
+                context.fillText(line, this.x + (this.width / 2), this.y + baseHeightOffset + (lineHeight * ++subLines) + verticalPadding);
+            });
+        });
+
+        const nodes = this.info.nodes.join(', ');
+        const nodeLines = getTextAsLines(context, `Used Nodes: ${nodes}`, this.width, 4);
+        nodeLines.forEach(line => {
+            context.fillText(line, this.x + (this.width / 2), this.y + baseHeightOffset + (lineHeight * ++subLines) + verticalPadding);
+        });
     }
 
     setHeadingFont(context) {
