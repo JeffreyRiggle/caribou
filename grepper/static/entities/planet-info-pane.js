@@ -25,6 +25,8 @@ export class PlanetInfoPane {
             this.drawAssetInfo(context);
         } else if (this.info?.type === 'css') {
             this.drawACssInfo(context);
+        } else if (this.info?.type === 'image') {
+            this.drawImageInfo(context);
         }
     }
 
@@ -61,6 +63,20 @@ export class PlanetInfoPane {
         this.info.links.forEach((link, ind) => {
             context.fillText(link, this.x + (this.width / 2), this.y + baseHeightOffset + (12 * ind) + verticalPadding);
         });
+    }
+
+    drawImageInfo(context) {
+        let verticalPadding = 12;
+        let lineHeight = 24;
+        let currentLine = 1;
+        this.setHeadingFont(context);
+        context.fillText('Image Details', this.x + (this.width / 2), this.y + lineHeight);
+        const urlLines = getTextAsLines(context, `URL: ${this.info.url}`, this.width, 4);
+        urlLines.forEach(line => {
+            context.fillText(line, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        });
+        context.fillText(`Size: ${this.bytesToDisplay(this.info.bytes)}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        context.fillText(`Image Type: ${this.info.imageType}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
     }
 
     setHeadingFont(context) {

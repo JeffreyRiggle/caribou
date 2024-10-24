@@ -79,11 +79,16 @@ export function getTextAsLines(context, text, width, widthPadding) {
 				return;
 			}
 
-			// If word overflows split it
-			const percentOverflow = maxWidth / wordWidth;
-			const cutIndex = Math.floor(w.length * percentOverflow);
-			lines.push(w.substring(0, cutIndex - 1) + '-');
-			curr = w.substring(cutIndex - 1, w.length);
+			let remainder = w;
+			let remainderWidth = wordWidth;
+			while (remainderWidth > maxWidth) {
+				const percentOverflow = maxWidth / remainderWidth;
+				const cutIndex = Math.floor(remainder.length * percentOverflow);
+				lines.push(remainder.substring(0, cutIndex - 1) + '-');
+				remainder = remainder.substring(cutIndex - 1, remainder.length);
+				remainderWidth = context.measureText(remainder).width;
+			}
+			curr = remainder;
 		});
 		lines.push(curr);
 	});

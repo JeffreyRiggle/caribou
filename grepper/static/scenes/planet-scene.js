@@ -89,6 +89,15 @@ export class PlanetScene {
             };
         }
 
+        if (info.image) {
+            this.assetInfo = {
+                type: 'image',
+                url: asset.url,
+                bytes: asset.bytes,
+                imageType: info.image.imageType
+            };
+        }
+
         this.infoPane.info = this.assetInfo;
     }
 }

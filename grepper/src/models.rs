@@ -79,9 +79,17 @@ pub struct HtmlAssetDetails {
 }
 
 #[derive(Debug, Serialize)]
+pub struct ImageAssetDetails {
+    #[serde(rename="imageType")]
+    pub image_type: String
+}
+
+#[derive(Debug, Serialize)]
 pub enum AssetDetail {
     #[serde(rename="html")]
     Html(HtmlAssetDetails),
     #[serde(rename="css")]
-    Css(CssAssetDetails)
+    Css(CssAssetDetails),
+    #[serde(rename="image")]
+    Image(ImageAssetDetails)
 }
