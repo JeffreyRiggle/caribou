@@ -1,16 +1,16 @@
 import { setCurrentScene } from '../scene-manager.js';
-import { TransitioningResult } from '../entities/transitioning-result.js';
 import { ExploreScene } from './explore-scene.js';
 import { TransitioningStar } from '../entities/transitioning-star.js';
+import { TransitioningGalaxy } from '../entities/transitioning-galaxy.js';
 
 export class StarMapTransitionScene {
     constructor(stars, selectedResult, allResults, canvasWidth, canvasHeight) {
         this.stars = stars.map(s => new TransitioningStar(s, canvasWidth, canvasHeight));
-        this.selectedResult = selectedResult;
+        this.selectedResult = new TransitioningGalaxy(selectedResult, canvasWidth, canvasHeight);
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        this.allResults = allResults.filter(r => r !== this.selectedResult).map(r => {
-            return new TransitioningResult(r, canvasWidth, canvasHeight);
+        this.allResults = allResults.filter(r => r !== selectedResult).map(r => {
+            return new TransitioningGalaxy(r, canvasWidth, canvasHeight);
         });
         this.targetX = this.canvasWidth / 2;
         this.targetY = this.canvasHeight / 2;
@@ -21,22 +21,20 @@ export class StarMapTransitionScene {
         if (this.selectedResult.x < this.targetX) {
             const newX = Math.min(this.targetX, this.selectedResult.x + 5);
             moveXAmount = newX - this.selectedResult.x;
-            this.selectedResult.x = newX;
         } else {
             const newX = Math.max(this.targetX, this.selectedResult.x - 5);
             moveXAmount = newX - this.selectedResult.x;
-            this.selectedResult.x = newX;
         }
         
         if (this.selectedResult.y < this.targetY) {
             const newY = Math.min(this.targetY, this.selectedResult.y + 5);
             moveYAmount = newY - this.selectedResult.y;
-            this.selectedResult.y = newY;
         } else {
             const newY = Math.max(this.targetY, this.selectedResult.y - 5);
             moveYAmount = newY - this.selectedResult.y;
-            this.selectedResult.y = newY;
         }
+
+        this.selectedResult.update(moveXAmount, moveYAmount);
 
         return { moveXAmount, moveYAmount };
     }
@@ -65,8 +63,7 @@ export class StarMapTransitionScene {
             if (!movingMainResult) {
                 r.update();
             } else {
-                r.x += moveResult.moveXAmount
-                r.y += moveResult.moveYAmount
+                r.update(moveResult.moveXAmount, moveResult.moveYAmount);
             }
 
             const offScreenX = (r.x - r.radius) > this.canvasWidth || (r.x + r.radius) <= 0;
