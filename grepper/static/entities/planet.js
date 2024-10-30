@@ -5,8 +5,10 @@ import { ExploreScene } from "../scenes/explore-scene.js";
 import { PlanetScene } from "../scenes/planet-scene.js";
 import { getPlanetImageEl, planetMappings, resetContextScope } from "../helpers.js";
 
+let id = 0;
 export class Planet {
 	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData, planetType) {
+		this.id = id++;
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
