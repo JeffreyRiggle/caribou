@@ -1,14 +1,15 @@
 import inputManager from '../input-manager.js';
-import { resetContextScope } from '../helpers.js';
+import { resetContextScope, getPlanetAsset } from '../helpers.js';
 
 export class AssetRegion {
-    constructor(asset, x, y, size, assetCallback) {
+    constructor(asset, x, y, size, assetCallback, planetType) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.asset = asset;
         this.selected = false;
         this.assetCallback = assetCallback;
+        this.planetType = planetType;
     }
 
     update = () => {
@@ -40,10 +41,13 @@ export class AssetRegion {
                 context.shadowBlur = 15;
                 context.shadowColor = 'white';
             }
-            context.fillStyle = this.getFillColor();
+            context.fillStyle = 'transparent';
             context.rect(this.x, this.y, this.size, this.size);
             context.closePath();
             context.fill();
+
+            const image = this.getImage();
+            context.drawImage(image, 0, 0, image.width, image.height, this.x, this.y, this.size, this.size);
         });
     }
 
@@ -55,19 +59,19 @@ export class AssetRegion {
         });
     }
 
-    getFillColor() {
+    getImage() {
         if (this.asset.contentType === 'javascript') {
-            return 'green';
+            return getPlanetAsset(this.planetType, 'city');
         }
 
         if (this.asset.contentType === 'css') {
-            return 'brown';
+            return getPlanetAsset(this.planetType, 'lake');
         }
 
         if (this.asset.contentType === 'image') {
-            return 'blue'
+            return getPlanetAsset(this.planetType, 'forest');
         }
 
-        return 'red';
+        return getPlanetAsset(this.planetType, 'mountain');
     }
 }

@@ -9,11 +9,12 @@ export class PlanetScene {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 		this.exploring = exploring;
+        this.planetType = this.getAppropriatePlanetType(planetType);
 
         const planetX = this.canvasWidth / 2;
         const planetY = this.canvasHeight / 2;
         const planetRadius = 325;
-		this.mainPlanet = new PlanetView(planetX, planetY, planetRadius, planetType, url, this.handleAssetInfo);
+		this.mainPlanet = new PlanetView(planetX, planetY, planetRadius, this.planetType, url, this.handleAssetInfo);
         this.assetInfo = {
             type: 'assets',
             image: { total: 0, bytes: 0 },
@@ -22,6 +23,13 @@ export class PlanetScene {
         };
         this.assets = this.buildAssets(assets);
         this.infoPane = new PlanetInfoPane(planetX + planetRadius + 48, planetY - planetRadius, 600, 400, this.assetInfo);
+	}
+
+    getAppropriatePlanetType(type) {
+		if (type === 'cold' || type === 'fire' || type === 'purple') return type;
+
+        // TODO handle other planet types
+		return 'cold';
 	}
 
     buildAssets(assets) {
@@ -41,7 +49,7 @@ export class PlanetScene {
         return assets.map(a => {
             const size = Math.max(minSize, (a.bytes / maxRelativeSize) * maxSize);
             const targetY = currY + (Math.random() * 20);
-            const region = new AssetRegion(a, currX, targetY, size, this.handleAssetInfo);
+            const region = new AssetRegion(a, currX, targetY, size, this.handleAssetInfo, this.planetType);
             currX += size + Math.max(32, (75 * Math.random()));
             maxSizeInRow = Math.max(maxSizeInRow, size);
             maxYInRow = Math.max(maxYInRow, targetY);

@@ -1,5 +1,5 @@
 import inputManager from '../input-manager.js';
-import { getImageEl, resetContextScope } from '../helpers.js';
+import { getPlanetImageEl, resetContextScope } from '../helpers.js';
 
 export class PlanetView {
 	constructor(x, y, radius, planetType, url, assetCallback) {
@@ -31,7 +31,7 @@ export class PlanetView {
 	draw = (context) => {
 		resetContextScope(context, () => {
 			context.beginPath();
-			context.fillStyle = context.createPattern(getImageEl(this.planetType), 'repeat');
+			context.fillStyle = context.createPattern(getPlanetImageEl(this.planetType), 'repeat');
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
 			context.shadowBlur = 15;

@@ -3,7 +3,7 @@ import inputManager from '../input-manager.js';
 import { setCurrentScene } from "../scene-manager.js";
 import { ExploreScene } from "../scenes/explore-scene.js";
 import { PlanetScene } from "../scenes/planet-scene.js";
-import { getImageEl, planetMappings, resetContextScope } from "../helpers.js";
+import { getPlanetImageEl, planetMappings, resetContextScope } from "../helpers.js";
 
 export class Planet {
 	constructor(url, x, y, radius, canvasWidth, canvasHeight, rotationData, planetType) {
@@ -78,7 +78,7 @@ export class Planet {
 		}
 		resetContextScope(context, () => {
 			context.beginPath();
-			context.fillStyle = context.createPattern(getImageEl(this.planetType), 'repeat');
+			context.fillStyle = context.createPattern(getPlanetImageEl(this.planetType), 'repeat');
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
 			context.shadowBlur = 15;

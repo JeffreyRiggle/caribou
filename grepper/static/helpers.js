@@ -27,7 +27,7 @@ export const planetMappings = {
 	'living': './static/img/livingplanet.png'
 };
 
-export const getImageEl = (id) => {
+export const getPlanetImageEl = (id) => {
 	let planet = planets[id];
 	if (planet) {
 		return planet;
@@ -39,6 +39,49 @@ export const getImageEl = (id) => {
 
 	return planet;
 };
+
+const planetAssetMappings = {
+	'cold': {
+		'forest': './static/img/frozen-forest.png',
+		'lake': './static/img/frozen-lake.png',
+		'city': './static/img/frozen-city.png',
+		'mountain': './static/img/frozen-mountain.png'
+	},
+	'fire': {
+		'forest': './static/img/fire-forest.png',
+		'lake': './static/img/fire-lake.png',
+		'city': './static/img/fire-city.png',
+		'mountain': './static/img/fire-mountain.png'
+	},
+	'purple': {
+		'forest': './static/img/purple-forest.png',
+		'lake': './static/img/purple-lake.png',
+		'city': './static/img/purple-city.png',
+		'mountain': './static/img/purple-mountain.png'
+	}
+};
+
+const planetAssets = {};
+
+export const getPlanetAsset = (planetType, assetType) => {
+	let assets = planetAssets[planetType];
+
+	if (!assets) {
+		planetAssets[planetType] = {};
+		assets = {};
+	}
+
+	const asset = assets[assetType];
+	if (asset) {
+		return asset;
+	}
+
+	const assetEl = document.createElement('img');
+	assetEl.src = planetAssetMappings[planetType][assetType];
+	planetAssets[planetType][assetType] = assetEl;
+
+	return assetEl;
+}
 
 export function getMaxSize(items, prop) {
 	return Math.max(...items.map(i => i[prop]));
