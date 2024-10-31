@@ -127,6 +127,7 @@ class Crawler:
                     continue
 
                 self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image" })
+                self.processed.add(img.url)
 
         if self.policy_manager.should_download_asset('javascript'):
             for js_asset in asset_collection['javascript']:
@@ -142,6 +143,7 @@ class Crawler:
                 file_name = f"{file_id}.js"
                 helpers.write_file(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript' })
+                self.processed.add(url)
 
         if self.policy_manager.should_download_asset('css'):
             for css_asset in asset_collection['css']:
@@ -157,6 +159,7 @@ class Crawler:
                 file_name = f"{file_id}.css"
                 helpers.write_file(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css' })
+                self.processed.add(url)
 
     def record_page(self, page: Page):
         network_time = page.load()

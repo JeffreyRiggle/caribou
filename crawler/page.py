@@ -6,6 +6,7 @@ from asset_repo import AssetRespositoy
 import helpers
 import concurrent.futures
 from image import ImageAsset
+import gzip
 
 class Page:
     def __init__(self, url: str, asset_respository: AssetRespositoy):
@@ -132,8 +133,10 @@ class Page:
                 compression = response.getheader('Content-Encoding')
                 if compression == 'br':
                     content = brotli.decompress(raw)
+                elif compression == 'gzip':
+                    content = gzip.decompress(raw)
                 else:
-                    content = response.read()
+                    content = raw
 
                 total_time = time.time() - start_time
                 return (content, len(raw), compression, total_time)
