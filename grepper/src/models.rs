@@ -85,11 +85,21 @@ pub struct ImageAssetDetails {
 }
 
 #[derive(Debug, Serialize)]
+pub struct JavascriptAssetDetails {
+    #[serde(rename="windowProps")]
+    pub window_props: Vec<String>,
+    #[serde(rename="documentProps")]
+    pub document_props: Vec<String>
+}
+
+#[derive(Debug, Serialize)]
 pub enum AssetDetail {
     #[serde(rename="html")]
     Html(HtmlAssetDetails),
     #[serde(rename="css")]
     Css(CssAssetDetails),
     #[serde(rename="image")]
-    Image(ImageAssetDetails)
+    Image(ImageAssetDetails),
+    #[serde(rename="javascript")]
+    javascript(JavascriptAssetDetails)
 }

@@ -16,3 +16,7 @@ tera = "1.19.1"
 derive_more = { version = "1", features = ["full"] }
 select = "0.6.0"
 cssparser = "0.34.0"
+swc_common = "3.0.0"
+swc_ecma_ast = "3.0.0"
+swc_ecma_parser = "4.0.0"
+swc_ecma_visit = "3.0.0"
