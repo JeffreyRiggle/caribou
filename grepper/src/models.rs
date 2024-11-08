@@ -88,6 +88,8 @@ pub struct ImageAssetDetails {
 pub struct JavascriptAssetDetails {
     #[serde(rename="windowProps")]
     pub window_props: Vec<String>,
+    #[serde(rename="windowFunctions")]
+    pub window_functions: Vec<String>,
     #[serde(rename="documentProps")]
     pub document_props: Vec<String>
 }
@@ -101,5 +103,5 @@ pub enum AssetDetail {
     #[serde(rename="image")]
     Image(ImageAssetDetails),
     #[serde(rename="javascript")]
-    javascript(JavascriptAssetDetails)
+    Javascript(JavascriptAssetDetails)
 }

@@ -6,7 +6,8 @@ use crate::models::JavascriptAssetDetails;
 
 struct PropertyFinder {
     window_properties: Vec<String>,
-    document_properties: Vec<String>
+    window_functions: Vec<String>,
+    document_properties: Vec<String>,
 }
 
 impl Visit for PropertyFinder {
@@ -26,6 +27,33 @@ impl Visit for PropertyFinder {
         }
         node.visit_children_with(self); // Continue visiting child nodes
     }
+
+    fn visit_call_expr(&mut self, node: &CallExpr) {
+        match &node.callee {
+            Callee::Expr(expression) => {
+                match &*expression.clone() {
+                    Expr::Member(mem) => {
+                        match &*mem.obj {
+                            Expr::Ident(obj_ident) => {
+                                if obj_ident.sym == "window" {
+                                    match &mem.prop {
+                                        MemberProp::Ident(prop_ident) => {
+                                            self.window_functions.push(prop_ident.sym.to_string())
+                                        },
+                                        _ => {}
+                                    }
+                                }
+                            },
+                            _ => {}
+                        }
+                    },
+                    _ => {}
+                }
+            },
+            _ => {}
+        };
+        node.visit_children_with(self);
+    }
 }
 
 pub fn get_js_details(js_string: &str) -> JavascriptAssetDetails {
@@ -39,11 +67,12 @@ pub fn get_js_details(js_string: &str) -> JavascriptAssetDetails {
     let mut parser = Parser::new_from(lexer);
 
     let module = parser.parse_module().expect("Parsing failed");
-    let mut finder = PropertyFinder { window_properties: Vec::new(), document_properties: Vec::new() };
+    let mut finder = PropertyFinder { window_properties: Vec::new(), document_properties: Vec::new(), window_functions: Vec::new() };
     module.visit_with(&mut finder);
 
     JavascriptAssetDetails {
         window_props: finder.window_properties,
-        document_props: finder.document_properties
+        document_props: finder.document_properties,
+        window_functions: finder.window_functions
     }
 }

@@ -43,7 +43,7 @@ async fn get_page_details(base64_url: web::Path<String>) -> Result<Json<AssetDet
 
     if page_details.content_type == "javascript" {
         let js_string = fs::read_to_string(page_details.path.clone()).unwrap();
-        return Ok(web::Json(AssetDetail::javascript(get_js_details(js_string.as_str()))));
+        return Ok(web::Json(AssetDetail::Javascript(get_js_details(js_string.as_str()))));
     }
 
     if page_details.content_type != "html" {
