@@ -92,6 +92,8 @@ pub struct JavascriptAssetDetails {
     pub window_functions: Vec<String>,
     #[serde(rename="documentProps")]
     pub document_props: Vec<String>,
+    #[serde(rename="documentFunctions")]
+    pub document_functions: Vec<String>,
     pub strings: Vec<String>
 }
 
