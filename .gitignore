@@ -7,4 +7,5 @@ admin/target/**
 grepper/target/**
 crawler/contents/**
 crawler/.crawlerenv
+crawler/.crawler
 .DS_Store

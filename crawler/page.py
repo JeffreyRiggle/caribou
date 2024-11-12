@@ -89,6 +89,17 @@ class Page:
 
             js_futures.append(executor.submit(self.download_and_process_static_content, url=script_src, related_resource="javascript"))
 
+        links = self.interactive_content.select('link')
+        for link in links:
+            link_ref = link.get('href')
+            if link_ref.endswith('.js') != True:
+                continue
+
+            if helpers.is_absolute_url(link_ref) == False:
+                link_ref = f"https://{helpers.get_domain(self.url)}{link_ref}"
+
+            js_futures.append(executor.submit(self.download_and_process_static_content, url=link_ref, related_resource="javascript"))
+
     def get_css_bytes(self, executor: concurrent.futures.ThreadPoolExecutor, css_futures: list[concurrent.futures.Future]):
         styles = self.interactive_content.select('link[rel="stylesheet"]')
 
