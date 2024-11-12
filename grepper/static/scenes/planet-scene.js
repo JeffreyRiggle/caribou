@@ -122,6 +122,17 @@ export class PlanetScene {
             }
         }
 
+        if (info.javascript) {
+            this.assetInfo = {
+                type: 'javascript',
+                url: asset.url,
+                bytes: asset.bytes,
+                totalStrings: info.javascript.strings.length,
+                totalWindowProperties: info.javascript.windowProps.length,
+                usedFunctions: [...new Set([...info.javascript.windowFunctions, info.javascript.documentFunctions])]
+            }
+        }
+
         this.infoPane.info = this.assetInfo;
     }
 }

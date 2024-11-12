@@ -29,6 +29,8 @@ export class PlanetInfoPane {
             this.drawImageInfo(context);
         } else if (this.info?.type === 'html') {
             this.drawHtmlInfo(context);
+        } else if (this.info?.type === 'javascript') {
+            this.drawJsInfo(context);
         }
     }
 
@@ -115,6 +117,34 @@ export class PlanetInfoPane {
         const nodeLines = getTextAsLines(context, `Used Nodes: ${nodes}`, this.width, 4);
         nodeLines.forEach(line => {
             context.fillText(line, this.x + (this.width / 2), this.y + baseHeightOffset + (lineHeight * ++subLines) + verticalPadding);
+        });
+    }
+
+    drawJsInfo(context) {
+        let verticalPadding = 12;
+        let lineHeight = 24;
+        let currentLine = 1;
+        this.setHeadingFont(context);
+        context.fillText('Javascript Details', this.x + (this.width / 2), this.y + lineHeight);
+        const urlLines = getTextAsLines(context, `URL: ${this.info.url}`, this.width, 4);
+        urlLines.forEach(line => {
+            context.fillText(line, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        });
+        context.fillText(`Size: ${this.bytesToDisplay(this.info.bytes)}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        context.fillText(`Total Strings: ${this.info.totalStrings}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        context.fillText(`Total Window Properties: ${this.info.totalWindowProperties}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+
+        if (this.info.links < 1) {
+            return;
+        }
+
+        context.fillText('Used functions:', this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        this.setSubHeadingFont(context);
+        let baseHeightOffset = lineHeight * ++currentLine;
+        verticalPadding = 8;
+        const funcLines = getTextAsLines(context, `URL: ${this.info.usedFunctions.join(',')}`, this.width, 4);
+        funcLines.forEach((line, ind) => {
+            context.fillText(line, this.x + (this.width / 2), this.y + baseHeightOffset + (12 * ind) + verticalPadding);
         });
     }
 
