@@ -20,6 +20,7 @@ class Page:
         self.interactive_content: BeautifulSoup = None
         self.js_assets = []
         self.css_assets = []
+        self.headers = ''
 
     def load(self):
         result = self.get_content(self.url)
@@ -141,6 +142,7 @@ class Page:
             req.add_header('Accept-Encoding', 'gzip, deflate, br')
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
+                self.headers = response.headers.as_string()
                 compression = response.getheader('Content-Encoding')
                 if compression == 'br':
                     content = brotli.decompress(raw)

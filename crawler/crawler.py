@@ -64,7 +64,7 @@ class Crawler:
 
             with self.db.build_transaction() as transaction:
                 for res in self.pending_resouce_entries:
-                    self.db.add_resource(res['url'], res['file'], res['status'], res['title'], res['text'], res['description'], res['contentType'], transaction)
+                    self.db.add_resource(res['url'], res['file'], res['status'], res['title'], res['text'], res['description'], res['contentType'], res['headers'] or '', transaction)
 
                 for metadata in self.pending_metadata_entries:
                     self.db.add_metadata(metadata['url'], metadata['jsBytes'], metadata['htmlBytes'], metadata['cssBytes'], metadata['compressed'], transaction)
@@ -126,7 +126,7 @@ class Crawler:
                 if file_path == None:
                     continue
 
-                self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image" })
+                self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image", 'headers': img.headers })
                 self.processed.add(img.url)
 
         if self.policy_manager.should_download_asset('javascript'):
@@ -142,7 +142,7 @@ class Crawler:
                 file_id = str(uuid4())
                 file_name = f"{file_id}.js"
                 helpers.write_file(dir_path, file_name, content)
-                self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript' })
+                self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript', 'headers': "" })
                 self.processed.add(url)
 
         if self.policy_manager.should_download_asset('css'):
@@ -158,14 +158,14 @@ class Crawler:
                 file_id = str(uuid4())
                 file_name = f"{file_id}.css"
                 helpers.write_file(dir_path, file_name, content)
-                self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css' })
+                self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css', 'headers': "" })
                 self.processed.add(url)
 
     def record_page(self, page: Page):
         network_time = page.load()
         failed = page.failed == True 
         if failed:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': 'html' })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': 'html', 'headers': "" })
             self.processed.add(page.url)
             return (failed, network_time, [])
 
@@ -173,7 +173,7 @@ class Crawler:
         file_id = str(uuid4())
         file_name = f"{file_id}.html"
         helpers.write_file(dir_path, file_name, page.content)
-        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title, 'contentType': "html" })
+        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title, 'contentType': "html", 'headers': page.headers })
         self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.js_bytes, 'htmlBytes': page.html_bytes, 'cssBytes': page.css_bytes, 'compressed': page.compression != None })
         
         links = page.get_links()
@@ -197,7 +197,7 @@ class Crawler:
         shouldCrawl = self.policy_manager.should_crawl_url(page.url)
 
         if shouldCrawl[0] == False:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': "html" })
+            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': "html", 'headers': "" })
             return 
 
         relevant_child_pages.append(page)

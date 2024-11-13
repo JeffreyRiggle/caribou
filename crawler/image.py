@@ -10,6 +10,7 @@ class ImageAsset:
         self.url = el.get('src')
         self.description = el.get('alt')
         self.title = el.get('title')
+        self.headers = ''
     
     def download(self):
         dir_path = f"../contents/{self.domain}/image"
@@ -34,6 +35,7 @@ class ImageAsset:
             req.add_header('Accept-Encoding', 'gzip, deflate, br')
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
+                self.headers = response.headers.as_string()
                 extension = mimetypes.guess_extension(response.headers['content-type'])
                 compression = response.getheader('Content-Encoding')
                 if compression == 'br':

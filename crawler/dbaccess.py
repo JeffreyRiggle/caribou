@@ -9,7 +9,7 @@ class DBAccess:
 
     def setup(self):
         cursor = self.connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT, headers TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
@@ -21,10 +21,10 @@ class DBAccess:
     def build_transaction(self):
         return transactions.DBTransaction(self.connection)
 
-    def add_resource(self, url, path, status, title, summary, description, contentType, transaction):
+    def add_resource(self, url, path, status, title, summary, description, contentType, headers, transaction):
         with self.lock:
             cursor = self.connection.cursor()
-            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status))
+            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status, headers))
 
             if transaction == None:
                 cursor.connection.commit()
