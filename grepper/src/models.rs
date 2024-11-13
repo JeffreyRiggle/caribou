@@ -75,7 +75,9 @@ pub struct HtmlAssetDetails {
     pub nodes: HashMap<String, usize>,
     pub attributes: HashMap<String, usize>,
     pub ids: Vec<String>,
-    pub classes: Vec<String>
+    pub classes: Vec<String>,
+    #[serde(rename="inlineJavascriptDetails")]
+    pub inline_javascript_details: Vec<JavascriptAssetDetails>
 }
 
 #[derive(Debug, Serialize)]

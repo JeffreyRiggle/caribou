@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
-use select::{document::Document, predicate::Any};
-use crate::models::HtmlAssetDetails;
+use select::{document::Document, predicate::{Any, Name}};
+use crate::{javascript_parser::get_js_details, models::HtmlAssetDetails};
 
 pub fn get_html_details(html_string: String) -> HtmlAssetDetails {
     let mut external_links = HashSet::new();
@@ -59,12 +59,25 @@ pub fn get_html_details(html_string: String) -> HtmlAssetDetails {
                 classes.insert(String::from(class));
             }
          });
+     let mut js_details = Vec::new();
+
+     document
+        .find(Name("script"))
+        .for_each(|node| {
+            if node.attr("src").is_some() {
+                return
+            }
+
+            let text = node.text();
+            js_details.push(get_js_details(text.as_str()));
+        });
 
      HtmlAssetDetails {
         external_links: external_links.into_iter().collect(),
         nodes: used_nodes.into_iter().collect(),
         attributes: used_attrs.into_iter().collect(),
         ids: ids.into_iter().collect(),
-        classes: classes.into_iter().collect()
+        classes: classes.into_iter().collect(),
+        inline_javascript_details: js_details
     }
 }

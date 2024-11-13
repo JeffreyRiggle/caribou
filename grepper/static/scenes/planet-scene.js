@@ -118,7 +118,8 @@ export class PlanetScene {
                 links: info.html.externalLinks,
                 totalClasses: info.html.classes.length,
                 totalIds: info.html.ids.length,
-                nodes: Object.entries(info.html.nodes).sort(([,aCount], [,bCount]) => bCount - aCount).map(([node]) => node)
+                nodes: Object.entries(info.html.nodes).sort(([,aCount], [,bCount]) => bCount - aCount).map(([node]) => node),
+                inlinedScripts: info.html.inlineJavascriptDetails.length
             }
         }
 

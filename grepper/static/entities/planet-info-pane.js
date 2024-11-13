@@ -95,6 +95,7 @@ export class PlanetInfoPane {
         });
         context.fillText(`Total classes: ${this.info.totalClasses}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
         context.fillText(`Total Ids: ${this.info.totalIds}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
+        context.fillText(`Inlined Scripts: ${this.info.inlinedScripts}`, this.x + (this.width / 2), this.y + (lineHeight * ++currentLine) + verticalPadding);
 
         if (this.info.links < 1) {
             return;
