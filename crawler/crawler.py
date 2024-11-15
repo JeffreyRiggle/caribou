@@ -1,6 +1,7 @@
 from dbaccess import DBAccess
 from policy import PolicyManager
 from page import Page
+from link import Link
 import helpers
 import time
 import concurrent.futures
@@ -17,7 +18,7 @@ class Crawler:
         self.pending_resouce_entries = []
         self.pending_metadata_entries = []
         self.pending_performance_traces = []
-        self.pending_links = []
+        self.pending_edges = []
         self.start_time = start_time
 
     def load(self):
@@ -31,36 +32,36 @@ class Crawler:
             self.policy_manager.enable_content_download('css')
             crawl_pages.append(domain)
          
-        self.pending_pages = list(map(lambda p: Page(helpers.domain_to_full_url(p), self.asset_respository), crawl_pages))
+        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository), crawl_pages))
 
     def crawl(self):
-        while len(self.pending_pages) > 0:
-            relevant_child_pages = []
+        while len(self.pending_links) > 0:
+            relevant_children = []
 
-            # Traverse the pages by cleaning them as we go.
-            # Interating all pages causes memory to pile up like crazy
-            pop_size = 10 if len(self.pending_pages) > 10 else len(self.pending_pages)
-            pgs = []
+            # Traverse the links by cleaning them as we go.
+            # Interating all links causes memory to pile up like crazy
+            pop_size = 10 if len(self.pending_links) > 10 else len(self.pending_links)
+            links = []
             while pop_size > 0:
-                pgs.append(self.pending_pages.pop())
+                links.append(self.pending_links.pop())
                 pop_size -= 1
 
-            while pgs:
-                next_pages = []
+            while links:
+                next_links = []
                 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
-                    for pg in pgs:
-                        futures.append(executor.submit(self.process_page, pg, relevant_child_pages))
+                    for link in links:
+                        futures.append(executor.submit(self.process_link, link, relevant_children))
 
                     for future in concurrent.futures.as_completed(futures):
                         result = future.result()
                         if result != None:
-                            next_pages.append(future.result())
+                            next_links.append(future.result())
 
-                if len(next_pages) > 0:
-                    pgs = next_pages
+                if len(next_links) > 0:
+                    links = next_links
                 else:
-                    pgs = None
+                    links = None
 
             with self.db.build_transaction() as transaction:
                 for res in self.pending_resouce_entries:
@@ -72,7 +73,7 @@ class Crawler:
                 for perf in self.pending_performance_traces:
                     self.db.track_performance(perf['url'], perf['appTime'], perf['networkTime'], transaction)
 
-                for link in self.pending_links:
+                for link in self.pending_edges:
                     self.db.add_link(link["sourceUrl"], link["targetUrl"], transaction)
 
                 self.policy_manager.flush_pending_domains()
@@ -80,33 +81,34 @@ class Crawler:
                 self.pending_metadata_entries.clear()
                 self.pending_performance_traces.clear()
 
-            self.pending_pages = relevant_child_pages
+            self.pending_links = relevant_children
 
-    def process_page(self, page: Page, relevant_child_pages: list[Page]):
-        download_child_pages = []
+    def process_link(self, link: Link, relevant_children: list[Link]):
+        download_links = []
         pg_start = time.time()
-        load_page_result = self.record_page(page)
-        network_time = load_page_result[1] 
-        self.process_assets(page)
+        load_link_result = self.record_link(link)
+        network_time = load_link_result[1]
+        if link.is_page() == True:
+            self.process_assets(link.result)
 
-        if load_page_result[0]:
-            if self.pending_pages:
-                return self.pending_pages.pop()
+        if load_link_result[0]:
+            if self.pending_links:
+                return self.pending_links.pop()
             else:
                 return None
         
-        pages = load_page_result[2]
-        for p in pages:
-            self.process_child_page(p, download_child_pages, relevant_child_pages)
+        links = load_link_result[2]
+        for link in links:
+            self.process_child_link(link, download_links, relevant_children)
 
-        self.pending_performance_traces.append({ 'url': page.url, 'appTime': time.time() - pg_start - network_time, 'networkTime': network_time })
+        self.pending_performance_traces.append({ 'url': link.url, 'appTime': time.time() - pg_start - network_time, 'networkTime': network_time })
 
-        for dpg in download_child_pages:
-            self.download_child_page(dpg)
+        for download_link in download_links:
+            self.download_child_link(download_link)
 
-        self.processed.add(page.url)
-        if self.pending_pages:
-            return self.pending_pages.pop()
+        self.processed.add(link.url)
+        if self.pending_links:
+            return self.pending_links.pop()
 
         return None
     
@@ -117,7 +119,7 @@ class Crawler:
         asset_collection = page.get_downloadable_assets()
         if self.policy_manager.should_download_asset('image'):
             for img in asset_collection['image']:
-                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': img.url })
+                self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': img.url })
                 
                 if img.url in self.processed or self.db.get_resource_last_edit(img.url) > self.start_time:
                     continue
@@ -134,7 +136,7 @@ class Crawler:
                 url = js_asset[0]
                 content = js_asset[1]
 
-                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': url })
+                self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
                 if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time:
                     continue
 
@@ -150,7 +152,7 @@ class Crawler:
                 url = css_asset[0]
                 content = css_asset[1]
 
-                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': url })
+                self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
                 if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time:
                     continue
 
@@ -161,53 +163,53 @@ class Crawler:
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css', 'headers': "" })
                 self.processed.add(url)
 
-    def record_page(self, page: Page):
-        network_time = page.load()
-        failed = page.failed == True 
+    def record_link(self, link: Link):
+        network_time = link.load()
+        failed = link.failed == True 
         if failed:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': 'html', 'headers': "" })
-            self.processed.add(page.url)
+            self.pending_resouce_entries.append({ 'url': link.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': link.get_content_type(), 'headers': "" })
+            self.processed.add(link.url)
             return (failed, network_time, [])
-
-        dir_path = f"../contents/{helpers.get_domain(page.url)}"
-        file_id = str(uuid4())
-        file_name = f"{file_id}.html"
-        helpers.write_file(dir_path, file_name, page.content)
-        self.pending_resouce_entries.append({ 'url': page.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': page.text, 'description': page.description, 'title': page.title, 'contentType': "html", 'headers': page.headers })
-        self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.js_bytes, 'htmlBytes': page.html_bytes, 'cssBytes': page.css_bytes, 'compressed': page.compression != None })
         
-        links = page.get_links()
-        for link in links:
-            if link != None:
-                self.pending_links.append({ 'sourceUrl': page.url, 'targetUrl': link.url })
+        pending_resource = link.download()
+        self.pending_resouce_entries.append(pending_resource)
+
+        if link.is_page():
+            page = link.result
+            self.pending_metadata_entries.append({ 'url': page.url, 'jsBytes': page.js_bytes, 'htmlBytes': page.html_bytes, 'cssBytes': page.css_bytes, 'compressed': page.compression != None })
+        
+        links = link.get_links()
+        for child_link in links:
+            if child_link != None:
+                self.pending_edges.append({ 'sourceUrl': link.url, 'targetUrl': link.url })
 
         return (failed, network_time, links)
 
-    def process_child_page(self, page: Page, download_child_pages: list[Page], relevant_child_pages: list[Page]):
-        if page == None:
+    def process_child_link(self, link: Link, download_children: list[Link], relevant_children: list[Link]):
+        if link == None:
             return
 
-        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > self.start_time:
+        if link.url in self.processed or self.db.get_resource_last_edit(link.url) > self.start_time:
             return 
 
-        if self.policy_manager.should_download_url(page.url):
-            download_child_pages.append(page)
+        if self.policy_manager.should_download_url(link.url):
+            download_children.append(link)
             return 
 
-        shouldCrawl = self.policy_manager.should_crawl_url(page.url)
+        shouldCrawl = self.policy_manager.should_crawl_url(link.url)
 
         if shouldCrawl[0] == False:
-            self.pending_resouce_entries.append({ 'url': page.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': "html", 'headers': "" })
+            self.pending_resouce_entries.append({ 'url': link.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': 'unknown', 'headers': "" })
             return 
 
-        relevant_child_pages.append(page)
+        relevant_children.append(link)
 
-    def download_child_page(self, page: Page):
+    def download_child_link(self, link: Link):
         dpgStart = time.time()
 
-        if page.url in self.processed or self.db.get_resource_last_edit(page.url) > self.start_time:
+        if link.url in self.processed or self.db.get_resource_last_edit(link.url) > self.start_time:
             return 
 
-        dpgResult = self.record_page(page)
-        self.pending_performance_traces.append({ 'url': page.url, 'appTime': time.time() - dpgStart - dpgResult[1], 'networkTime': dpgResult[1] })
+        dpgResult = self.record_link(link)
+        self.pending_performance_traces.append({ 'url': link.url, 'appTime': time.time() - dpgStart - dpgResult[1], 'networkTime': dpgResult[1] })
 

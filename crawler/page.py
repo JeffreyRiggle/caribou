@@ -23,7 +23,9 @@ class Page:
         self.headers = ''
 
     def load(self):
-        result = self.get_content(self.url)
+        return self.intialize_from_result(self.get_content(self.url))
+    
+    def intialize_from_result(self, result):
         if result == None:
             self.failed = True
             return 0
@@ -32,6 +34,7 @@ class Page:
         self.html_bytes = result[1]
         self.compression = result[2]
         self.network_time += result[3]
+        self.headers = result[4]
         self.interactive_content = BeautifulSoup(self.content)
         self.text = self.interactive_content.text
         self.get_description()
@@ -142,7 +145,6 @@ class Page:
             req.add_header('Accept-Encoding', 'gzip, deflate, br')
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
-                self.headers = response.headers.as_string()
                 compression = response.getheader('Content-Encoding')
                 if compression == 'br':
                     content = brotli.decompress(raw)
@@ -152,13 +154,10 @@ class Page:
                     content = raw
 
                 total_time = time.time() - start_time
-                return (content, len(raw), compression, total_time)
+                return (content, len(raw), compression, total_time, response.headers.as_string())
         except Exception as ex:
             print(f"Failed to load {url} {ex}")
             return None 
-
-    def get_links(self):
-        return list(set(map(self.process_link, self.interactive_content.select('a'))))
 
     def get_downloadable_assets(self):
         # TODO add support for other types
@@ -167,21 +166,6 @@ class Page:
 
         images = list(set(map(self.process_image, self.interactive_content.select('img'))))
         return { 'image': images, 'javascript': self.js_assets, 'css': self.css_assets }
-
-    def process_link(self, el):
-        link = el.get('href')
-
-        if link == None:
-            return None
-
-        if helpers.is_absolute_url(link):
-            return Page(link, self.asset_respository)
-
-        # Do not include self references
-        if link.startswith("#"):
-            return None
-
-        return Page(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository)
 
     def process_image(self, el):
         domain = helpers.get_domain(self.url)
