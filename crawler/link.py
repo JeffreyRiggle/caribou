@@ -9,6 +9,7 @@ from page import Page
 from image import ImageAsset
 from xml_asset import XmlAsset
 from uuid import uuid4
+from bs4 import Tag
 
 class Link:
     def __init__(self, url: str, asset_respository: AssetRespositoy):
@@ -133,7 +134,7 @@ class Link:
         
         return []
     
-    def process_link(self, el):
+    def process_link(self, el: Tag):
         link = el.get('href')
 
         if link == None:

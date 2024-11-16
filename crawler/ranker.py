@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
 from helpers import get_domain, is_absolute_url
+from dbaccess import DBAccess
 
 class Ranker:
-    def __init__(self, dbaccess):
+    def __init__(self, dbaccess: DBAccess):
         self.tolerance = 0.001
         self.damping = .85
         self.page_references = dict()
@@ -18,7 +19,7 @@ class Ranker:
         self.pages = self.dbaccess.get_processed_pages()
         for page in self.pages:
             with open(page[1]) as file_handle:
-                content = BeautifulSoup(file_handle.read())
+                content = BeautifulSoup(file_handle.read(), features='html.parser')
                 links = list(filter(lambda x: x is not None, list(set(map(lambda el: get_link(el, page[0]), content.select('a'))))))
                 self.page_references[page[0]] = links
                 self.rankings[page[0]] = 1

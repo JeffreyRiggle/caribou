@@ -9,9 +9,9 @@ conn = sqlite3.connect("../grepper.db", check_same_thread=False)
 db = DBAccess(conn)
 db.setup()
  
-crawler = Crawler(db, start_time)
-crawler.load()
-crawler.crawl()
+crawl = Crawler(db, start_time)
+crawl.load()
+crawl.crawl()
 
 ranker = Ranker(db)
 ranker.rank()

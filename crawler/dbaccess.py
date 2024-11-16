@@ -1,9 +1,10 @@
 import time
-import transactions
+from transactions import DBTransaction
 import threading
+from sqlite3 import Connection
 
 class DBAccess:
-    def __init__(self, connection):
+    def __init__(self, connection: Connection):
         self.connection = connection
         self.lock = threading.Lock()
 
@@ -19,9 +20,9 @@ class DBAccess:
         cursor.connection.commit()
 
     def build_transaction(self):
-        return transactions.DBTransaction(self.connection)
+        return DBTransaction(self.connection)
 
-    def add_resource(self, url, path, status, title, summary, description, contentType, headers, transaction):
+    def add_resource(self, url: str, path: str, status: str, title: str, summary: str, description: str, contentType: str, headers: str, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status, headers))
@@ -29,7 +30,7 @@ class DBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
-    def get_resource_last_edit(self, url):
+    def get_resource_last_edit(self, url: str):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("SELECT lastIndex FROM resources WHERE url = ?", (url,))
@@ -40,7 +41,7 @@ class DBAccess:
 
             return result[0]
 
-    def add_metadata(self, url, jsBytes, htmlBytes, cssBytes, compressed, transaction):
+    def add_metadata(self, url: str, jsBytes: int, htmlBytes: int, cssBytes: int, compressed: bool, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT OR REPLACE INTO metadata VALUES (?, ?, ?, ?, ?)", (url, jsBytes, htmlBytes, cssBytes, compressed))
@@ -48,7 +49,7 @@ class DBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
-    def track_performance(self, url, appTime, networkTime, transaction):
+    def track_performance(self, url: str, appTime: float, networkTime: float, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT INTO perf VALUES (?, ?, ?)", (url, appTime, networkTime))
@@ -56,27 +57,27 @@ class DBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
-    def get_pages_by_status(self, status):
+    def get_pages_by_status(self, status: str):
         with self.lock:
             result = self.connection.execute("SELECT domain from domains WHERE Status = ?", (status, ))
             return list(map(lambda r: r[0], result.fetchall()))
 
-    def add_domain(self, domain, status, transaction=None):
+    def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
         with self.lock:
             self.connection.execute("INSERT INTO domains VALUES (?, ?);", (domain, status))
             
             if transaction == None:
                 self.connection.commit()
 
-    def get_domain_status(self, domain):
+    def get_domain_status(self, domain: str):
         with self.lock:
             return self.connection.execute("SELECT Status FROM domains WHERE domain = ?", (domain,)).fetchall()
 
     def get_processed_pages(self):
         with self.lock:
-            return self.connection.execute("SELECT url, path FROM resources where status = 'Processed'").fetchall()
+            return self.connection.execute("SELECT url, path FROM resources where status = 'Processed' AND contentType = 'html'").fetchall()
 
-    def add_page_rank(self, url, rank, transaction):
+    def add_page_rank(self, url: str, rank: float, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT OR REPLACE INTO rank VALUES (?, ?)", (url, rank))
@@ -84,7 +85,7 @@ class DBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
-    def add_link(self, sourceUrl, targetUrl, transaction):
+    def add_link(self, sourceUrl: str, targetUrl: str, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT OR REPLACE INTO links VALUES (?, ?)", (sourceUrl, targetUrl))
@@ -92,7 +93,7 @@ class DBAccess:
             if transaction == None:
                 self.connection.commit()
 
-    def add_download_policy(self, contentType, shouldDownload, transaction):
+    def add_download_policy(self, contentType: str, shouldDownload: bool, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("INSERT OR REPLACE INTO downloadPolicy VALUES (?, ?)", (contentType, 1 if shouldDownload else 0)) 
@@ -100,7 +101,7 @@ class DBAccess:
             if transaction == None:
                 self.connection.commit()
 
-    def get_download_policy(self, contentType):
+    def get_download_policy(self, contentType: str):
         with self.lock:
             return self.connection.execute("SELECT download FROM downloadPolicy WHERE contentType = ?", (contentType,)).fetchall()
 

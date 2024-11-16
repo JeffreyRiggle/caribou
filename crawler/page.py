@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 import urllib.request
 import brotli
 import time
@@ -35,7 +35,7 @@ class Page:
         self.compression = result[2]
         self.network_time += result[3]
         self.headers = result[4]
-        self.interactive_content = BeautifulSoup(self.content)
+        self.interactive_content = BeautifulSoup(self.content, features='html.parser')
         self.text = self.interactive_content.text
         self.get_description()
         self.get_title()
@@ -167,7 +167,7 @@ class Page:
         images = list(set(map(self.process_image, self.interactive_content.select('img'))))
         return { 'image': images, 'javascript': self.js_assets, 'css': self.css_assets }
 
-    def process_image(self, el):
+    def process_image(self, el: Tag):
         domain = helpers.get_domain(self.url)
         return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'))
 

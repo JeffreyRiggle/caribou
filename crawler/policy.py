@@ -1,24 +1,26 @@
 from status import DomainStatus
 from helpers import get_domain
+from dbaccess import DBAccess
+from transactions import DBTransaction
 
 class PolicyManager:
-    def __init__(self, dbaccess):
+    def __init__(self, dbaccess: DBAccess):
         self.pending_domains = set()
         self.dbaccess = dbaccess
 
     def get_crawl_pages(self):
         return self.dbaccess.get_pages_by_status(DomainStatus.Crawl.value)
 
-    def add_crawl_domain(self, domain):
+    def add_crawl_domain(self, domain: str):
         self.add_domain(domain, DomainStatus.Crawl.value)
 
-    def add_domain(self, domain, status, transaction=None):
+    def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
         self.dbaccess.add_domain(domain, status, transaction)
 
-    def enable_content_download(self, contentType, transaction=None):
+    def enable_content_download(self, contentType: str, transaction: DBTransaction | None=None):
         self.dbaccess.add_download_policy(contentType, True, transaction)
 
-    def should_download_url(self, url):
+    def should_download_url(self, url: str):
         domain = get_domain(url)
         result = self.dbaccess.get_domain_status(domain)
 
@@ -27,7 +29,7 @@ class PolicyManager:
 
         return result[0][0] == DomainStatus.Read.value
 
-    def should_download_asset(self, contentType):
+    def should_download_asset(self, contentType: str):
         result = self.dbaccess.get_download_policy(contentType)
 
         if len(result) < 1:
@@ -35,7 +37,7 @@ class PolicyManager:
 
         return result[0][0] == 1
 
-    def should_crawl_url(self, url):
+    def should_crawl_url(self, url: str):
         domain = get_domain(url)
 
         if domain in self.pending_domains:
