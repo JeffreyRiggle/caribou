@@ -5,11 +5,11 @@ import brotli
 import mimetypes
 
 class ImageAsset:
-    def __init__(self, el, domain):
+    def __init__(self, domain: str, url: str, description: str, title: str):
         self.domain = domain
-        self.url = el.get('src')
-        self.description = el.get('alt')
-        self.title = el.get('title')
+        self.url = url
+        self.description = description
+        self.title = title
         self.headers = ''
     
     def download(self):

@@ -7,6 +7,7 @@ from asset_repo import AssetRespositoy
 from status import ResourceStatus
 from page import Page
 from image import ImageAsset
+from xml_asset import XmlAsset
 from uuid import uuid4
 
 class Link:
@@ -24,22 +25,22 @@ class Link:
     def load(self):
         self.loaded = True
         res = self.get_content(self.url)
-        if 'text/html' in self.content_type:
+        if self.is_page():
             page = Page(self.url, self.asset_respository)
             page.intialize_from_result(res)
             self.result = page
-        elif self.content_type.startswith('image'):
-            # Properly handle preloaded image
-            image = ImageAsset(None, None)
-            self.result = image
-        else:
+        elif self.is_image():
+            self.result = ImageAsset(helpers.get_domain(self.url), self.url, '', '')
+        elif self.is_xml():
+            self.result = XmlAsset(self.url, self.content)
+        elif self.failed != True:
             # Add audio support
             print(f"Unable to process link for content type {self.content_type}")
         
         return self.total_time
 
     def download(self):
-        dir_path = f"../contents/{self.get_dowload_folder()}{helpers.get_domain(self.url)}"
+        dir_path = f"../contents/{helpers.get_domain(self.url)}/{self.get_dowload_folder()}"
         file_id = str(uuid4())
         file_name = f"{file_id}{self.get_extension()}"
         helpers.write_file(dir_path, file_name, self.content)
@@ -58,12 +59,18 @@ class Link:
         if self.is_page():
             return ''
         
+        if self.is_xml():
+            return 'data/'
+        
         return self.get_content_type() + '/'
 
     def get_extension(self):
         if self.is_page():
             return '.html'
         
+        if self.is_xml():
+            return '.xml'
+
         return ''
 
     def is_page(self):
@@ -71,15 +78,28 @@ class Link:
             self.load()
         return 'text/html' in self.content_type
     
+    def is_image(self):
+        if self.loaded == False:
+            self.load()
+        return self.content_type.startswith('image')
+    
+    def is_xml(self):
+        if self.loaded == False:
+            self.load()
+        return self.content_type.startswith('application/xml')
+    
     def get_content_type(self):
         if self.loaded == False:
             self.load()
 
-        if 'text/html' in self.content_type:
+        if self.is_page():
             return 'html'
         
-        if self.content_type.startswith('image'):
+        if self.is_image():
             return 'image'
+        
+        if self.is_xml():
+            return 'xml'
         
         return ''
 

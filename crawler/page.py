@@ -169,5 +169,5 @@ class Page:
 
     def process_image(self, el):
         domain = helpers.get_domain(self.url)
-        return ImageAsset(el, domain)
+        return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'))
 
