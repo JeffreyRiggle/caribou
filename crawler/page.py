@@ -105,6 +105,7 @@ class Page:
             js_futures.append(executor.submit(self.download_and_process_static_content, url=link_ref, related_resource="javascript"))
 
     def get_css_bytes(self, executor: concurrent.futures.ThreadPoolExecutor, css_futures: list[concurrent.futures.Future]):
+        #TODO handle style tag
         styles = self.interactive_content.select('link[rel="stylesheet"]')
 
         for style in styles:

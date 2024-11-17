@@ -30,9 +30,11 @@ class Crawler:
             self.policy_manager.enable_content_download("image")
             self.policy_manager.enable_content_download('javascript')
             self.policy_manager.enable_content_download('css')
+            self.policy_manager.enable_content_download('data')
+            self.policy_manager.enable_content_download('audio')
             crawl_pages.append(domain)
          
-        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository), crawl_pages))
+        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), crawl_pages))
 
     def crawl(self):
         while len(self.pending_links) > 0:
@@ -172,6 +174,10 @@ class Crawler:
             return (failed, network_time, [])
         
         pending_resource = link.download()
+
+        if pending_resource == None:
+            return (failed, network_time, [])
+
         self.pending_resouce_entries.append(pending_resource)
 
         if link.is_page():

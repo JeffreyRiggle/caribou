@@ -8,13 +8,18 @@ from status import ResourceStatus
 from page import Page
 from image import ImageAsset
 from xml_asset import XmlAsset
+from json_asset import JsonAsset
+from audio_asset import AudioAsset
 from uuid import uuid4
 from bs4 import Tag
+from policy import PolicyManager
+import mimetypes
 
 class Link:
-    def __init__(self, url: str, asset_respository: AssetRespositoy):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
         self.url = url
         self.asset_respository = asset_respository
+        self.policy_manager = policy_manager
         self.loaded = False
         self.failed = False
         self.content_type = ''
@@ -34,6 +39,10 @@ class Link:
             self.result = ImageAsset(helpers.get_domain(self.url), self.url, '', '')
         elif self.is_xml():
             self.result = XmlAsset(self.url, self.content)
+        elif self.is_json():
+            self.result = JsonAsset(self.url, self.content)
+        elif self.is_audio():
+            self.result = AudioAsset(self.url, self.content)
         elif self.failed != True:
             # Add audio support
             print(f"Unable to process link for content type {self.content_type}")
@@ -41,6 +50,9 @@ class Link:
         return self.total_time
 
     def download(self):
+        if self.should_download() == False:
+            return None
+
         dir_path = f"../contents/{helpers.get_domain(self.url)}/{self.get_dowload_folder()}"
         file_id = str(uuid4())
         file_name = f"{file_id}{self.get_extension()}"
@@ -55,6 +67,19 @@ class Link:
             title = self.result.title
 
         return { 'url': self.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': text, 'description': description, 'title': title, 'contentType': self.get_content_type(), 'headers': self.headers }
+
+    def should_download(self):
+        if self.is_page():
+            return True
+        elif self.is_image():
+            return self.policy_manager.should_download_asset('image')
+        elif self.is_xml() or self.is_json():
+            return self.policy_manager.should_download_asset('data')
+        elif self.is_audio():
+            return self.policy_manager.should_download_asset('audio')
+        
+        print("Not downloading ", self.url)
+        return False
 
     def get_dowload_folder(self):
         if self.is_page():
@@ -71,6 +96,12 @@ class Link:
         
         if self.is_xml():
             return '.xml'
+        
+        if self.is_json():
+            return '.json'
+        
+        if self.is_audio():
+            return '.' + mimetypes.guess_extension(self.content_type)
 
         return ''
 
@@ -87,7 +118,17 @@ class Link:
     def is_xml(self):
         if self.loaded == False:
             self.load()
-        return self.content_type.startswith('application/xml')
+        return self.content_type.startswith('application/xml') or self.url.endswith('.xml')
+    
+    def is_json(self):
+        if self.loaded == False:
+            self.load()
+        return self.content_type.startswith('application/json') or self.url.endswith('.json')
+    
+    def is_audio(self):
+        if self.loaded == False:
+            self.load()
+        return self.content_type.startswith('audio/')
     
     def get_content_type(self):
         if self.loaded == False:
@@ -101,6 +142,9 @@ class Link:
         
         if self.is_xml():
             return 'xml'
+        
+        if self.is_json():
+            return 'json'
         
         return ''
 
@@ -141,10 +185,10 @@ class Link:
             return None
 
         if helpers.is_absolute_url(link):
-            return Link(link, self.asset_respository)
+            return Link(link, self.asset_respository, self.policy_manager)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Link(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository)
+        return Link(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)
