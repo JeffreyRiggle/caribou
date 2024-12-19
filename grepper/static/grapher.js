@@ -10,6 +10,7 @@ async function handleChange(e) {
 	mainScene.setupFromResults(body.results);
 	const header = document.querySelector('.header');
 	header.classList.add('toggle-hide');
+	document.activeElement.blur();
 }
 
 addEventListener('load', () => {

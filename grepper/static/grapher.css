@@ -18,6 +18,10 @@ input {
 	transform: translatey(-150%);
 }
 
+.toggle-hide input {
+	box-shadow: none;
+}
+
 input::placeholder {
 	color: white;
 }
