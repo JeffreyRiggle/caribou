@@ -19,6 +19,7 @@ class Crawler:
         self.pending_metadata_entries = []
         self.pending_performance_traces = []
         self.pending_edges = []
+        self.pending_favicons = []
         self.start_time = start_time
 
     def load(self):
@@ -79,10 +80,15 @@ class Crawler:
                 for link in self.pending_edges:
                     self.db.add_link(link["sourceUrl"], link["targetUrl"], transaction)
 
+                for favicon in self.pending_favicons:
+                    self.db.add_favicon(favicon['docurl'], favicon['url'], favicon['sizes'], favicon['media'], favicon['type'], transaction)
+
                 self.policy_manager.flush_pending_domains()
                 self.pending_resouce_entries.clear()
                 self.pending_metadata_entries.clear()
                 self.pending_performance_traces.clear()
+                self.pending_edges.clear()
+                self.pending_favicons.clear()
 
             self.pending_links = relevant_children
 
@@ -120,6 +126,9 @@ class Crawler:
             return
 
         asset_collection = page.get_downloadable_assets()
+        for favicon in page.favicons:
+            self.pending_favicons.append({ 'docurl': favicon.document_url, 'url': favicon.url, 'type': favicon.type, 'media': favicon.media, 'sizes': favicon.sizes })
+
         if self.policy_manager.should_download_asset('image'):
             for img in asset_collection['image']:
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': img.url })

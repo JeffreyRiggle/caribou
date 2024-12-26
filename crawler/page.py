@@ -1,8 +1,10 @@
+from typing import List
 from bs4 import BeautifulSoup, Tag
 import urllib.request
 import brotli
 import time
 from asset_repo import AssetRespositoy
+from favicon import Favicon
 import helpers
 import concurrent.futures
 from image import ImageAsset
@@ -21,6 +23,7 @@ class Page:
         self.js_assets = []
         self.css_assets = []
         self.headers = ''
+        self.favicons: List[Favicon] = []
 
     def load(self):
         return self.intialize_from_result(self.get_content(self.url))
@@ -39,6 +42,7 @@ class Page:
         self.text = self.interactive_content.text
         self.get_description()
         self.get_title()
+        self.get_favicons()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             js_futures: list[concurrent.futures.Future] = []
@@ -76,6 +80,12 @@ class Page:
             return
 
         self.description = meta_tag.get('content')
+
+    def get_favicons(self):
+        favicons = self.interactive_content.select('link[rel="icon"]')
+        for favicon in favicons:
+            icon_details = Favicon(favicon.get('href'), self.url, favicon.get('media'), favicon.get('type'), favicon.get('sizes'))
+            self.favicons.append(icon_details)
 
     def get_js_bytes(self, executor: concurrent.futures.ThreadPoolExecutor, js_futures: list[concurrent.futures.Future]):
         scripts = self.interactive_content.select("script")
@@ -165,7 +175,6 @@ class Page:
             return None 
 
     def get_downloadable_assets(self):
-        # TODO add support for other types
         if self.interactive_content == None:
             return { 'image': [], 'javascript': self.js_assets, 'css': self.css_assets }
 

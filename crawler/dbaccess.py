@@ -17,6 +17,7 @@ class DBAccess:
         cursor.execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
         cursor.execute("CREATE TABLE IF NOT EXISTS links(sourceUrl TEXT, targetUrl TEXT, PRIMARY KEY (sourceUrl, targetUrl))")
         cursor.execute("CREATE TABLE IF NOT EXISTS downloadPolicy(contentType TEXT PRIMARY KEY, download INTEGER)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS favicon(url TEXT, documentUrl TEXT PRIMARY KEY, sizes TEXT, media TEXT, type TEXT)")
         cursor.connection.commit()
 
     def build_transaction(self):
@@ -40,6 +41,14 @@ class DBAccess:
                 return 0
 
             return result[0]
+        
+    def add_favicon(self, document_url: str, url: str, sizes: str, media: str, type: str, transaction: DBTransaction | None):
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT OR REPLACE INTO favicon VALUES (?, ?, ?, ?, ?)", (url, document_url, sizes, media, type))
+
+            if transaction == None:
+                cursor.connection.commit()
 
     def add_metadata(self, url: str, jsBytes: int, htmlBytes: int, cssBytes: int, compressed: bool, transaction: DBTransaction | None):
         with self.lock:
