@@ -174,7 +174,10 @@ class Link:
         
     def get_links(self):
         if self.is_page():
-            return list(set(map(self.process_link, self.result.interactive_content.select('a'))))
+            anchors = self.result.interactive_content.select('a')
+            links = self.result.interactive_content.select('link')
+            all_links = anchors + links
+            return list(set(map(self.process_link, all_links)))
         
         return []
     
