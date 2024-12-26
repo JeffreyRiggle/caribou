@@ -32,6 +32,7 @@ class Crawler:
             self.policy_manager.enable_content_download('css')
             self.policy_manager.enable_content_download('data')
             self.policy_manager.enable_content_download('audio')
+            self.policy_manager.enable_content_download('font')
             crawl_pages.append(domain)
          
         self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), crawl_pages))

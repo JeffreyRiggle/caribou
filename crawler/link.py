@@ -1,5 +1,6 @@
 import brotli
 import urllib.request
+from font import FontAsset
 import helpers
 import gzip
 import time
@@ -43,8 +44,9 @@ class Link:
             self.result = JsonAsset(self.url, self.content)
         elif self.is_audio():
             self.result = AudioAsset(self.url, self.content)
+        elif self.is_font():
+            self.result = FontAsset(self.url, self.content)
         elif self.failed != True:
-            # Add audio support
             print(f"Unable to process link for content type {self.content_type}")
         
         return self.total_time
@@ -77,6 +79,8 @@ class Link:
             return self.policy_manager.should_download_asset('data')
         elif self.is_audio():
             return self.policy_manager.should_download_asset('audio')
+        elif self.is_font():
+            return self.policy_manager.should_download_asset('font')
         
         print("Not downloading ", self.url)
         return False
@@ -87,6 +91,9 @@ class Link:
         
         if self.is_xml():
             return 'data/'
+        
+        if self.is_font():
+            return 'font/'
         
         return self.get_content_type() + '/'
 
@@ -100,7 +107,7 @@ class Link:
         if self.is_json():
             return '.json'
         
-        if self.is_audio():
+        if self.is_audio() or self.is_font():
             return '.' + mimetypes.guess_extension(self.content_type)
 
         return ''
@@ -130,6 +137,11 @@ class Link:
             self.load()
         return self.content_type.startswith('audio/')
     
+    def is_font(self):
+        if self.loaded == False:
+            self.load()
+        return self.content_type.startswith('font')
+    
     def get_content_type(self):
         if self.loaded == False:
             self.load()
@@ -145,6 +157,12 @@ class Link:
         
         if self.is_json():
             return 'json'
+        
+        if self.is_audio():
+            return 'audio'
+        
+        if self.is_font():
+            return 'font'
         
         return ''
 
