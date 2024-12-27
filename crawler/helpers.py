@@ -11,7 +11,10 @@ def write_file(file_path: str, file_name: str, contents):
 
     file = f"{file_path}/{file_name}"
     with open(file, 'wb') as fHandle:
-        fHandle.write(contents)
+        if isinstance(contents, str):
+            fHandle.write(contents.encode())
+        else:
+            fHandle.write(contents)
 
 def get_domain(url: str):
     return re.search(r'^https?:\/\/([^\/]+)|^[^.]+\.([^\/]+)', url).group(1)

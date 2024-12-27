@@ -27,6 +27,9 @@ class ImageAsset:
     def get_content(self):
         target_url = self.url
 
+        if target_url == None:
+            return None
+
         if helpers.is_absolute_url(target_url) == False:
             target_url = f"https://{self.domain}/{self.url}"
 

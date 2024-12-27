@@ -149,7 +149,7 @@ class Crawler:
                 content = js_asset[1]
 
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
-                if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time:
+                if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time or content == None:
                     continue
 
                 dir_path = f"../contents/{helpers.get_domain(page.url)}/javascript"

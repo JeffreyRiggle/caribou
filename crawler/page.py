@@ -106,7 +106,7 @@ class Page:
         links = self.interactive_content.select('link')
         for link in links:
             link_ref = link.get('href')
-            if link_ref.endswith('.js') != True:
+            if link_ref == None or link_ref.endswith('.js') != True:
                 continue
 
             if helpers.is_absolute_url(link_ref) == False:
