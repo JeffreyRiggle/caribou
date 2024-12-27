@@ -17,7 +17,7 @@ class DBAccess:
         cursor.execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
         cursor.execute("CREATE TABLE IF NOT EXISTS links(sourceUrl TEXT, targetUrl TEXT, PRIMARY KEY (sourceUrl, targetUrl))")
         cursor.execute("CREATE TABLE IF NOT EXISTS downloadPolicy(contentType TEXT PRIMARY KEY, download INTEGER)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS favicon(url TEXT, documentUrl TEXT PRIMARY KEY, sizes TEXT, media TEXT, type TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS favicon(url TEXT, documentUrl TEXT, sizes TEXT, media TEXT, type TEXT, PRIMARY KEY(url, documentUrl))")
         cursor.connection.commit()
 
     def build_transaction(self):
