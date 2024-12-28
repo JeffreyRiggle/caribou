@@ -20,7 +20,7 @@ class ImageAsset:
         if res == None:
             return None
 
-        file_name = f"{file_id}.{res[1]}"
+        file_name = f"{file_id}{res[1]}"
         helpers.write_file(dir_path, file_name, res[0])
         return f"{dir_path}/{file_name}"
 

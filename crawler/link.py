@@ -108,7 +108,7 @@ class Link:
             return '.json'
         
         if self.is_audio() or self.is_font():
-            return '.' + mimetypes.guess_extension(self.content_type)
+            return mimetypes.guess_extension(self.content_type)
 
         return ''
 
