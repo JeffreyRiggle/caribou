@@ -168,6 +168,11 @@ class Link:
 
     def get_content(self, url: str):
         start_time = time.time()
+
+        if self.policy_manager.should_download_url(url) == False:
+            self.failed = True
+            return None
+
         try:
             req = urllib.request.Request(url, headers={ 'Accept-Encoding': 'gzip, deflate, br', 'User-Agent': 'CaribouCrawler' })
             with urllib.request.urlopen(req) as response:
@@ -205,10 +210,7 @@ class Link:
             return None
 
         if helpers.is_absolute_url(link):
-            if self.policy_manager.should_download_url(link) == True:
-                return Link(link, self.asset_respository, self.policy_manager)
-            else:
-                return None
+            return Link(link, self.asset_respository, self.policy_manager)
 
         # Do not include self references
         if link.startswith("#"):

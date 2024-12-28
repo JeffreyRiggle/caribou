@@ -27,7 +27,8 @@ class PolicyManager:
         if len(result) < 1:
             return False
 
-        return result[0][0] == DomainStatus.Read.value
+        domain_status = result[0][0]
+        return domain_status == DomainStatus.Read.value or domain_status == DomainStatus.Crawl.value
 
     def should_download_asset(self, contentType: str):
         result = self.dbaccess.get_download_policy(contentType)
