@@ -34,8 +34,7 @@ class ImageAsset:
             target_url = f"https://{self.domain}/{self.url}"
 
         try:
-            req = urllib.request.Request(target_url)
-            req.add_header('Accept-Encoding', 'gzip, deflate, br')
+            req = urllib.request.Request(target_url, headers={ 'Accept-Encoding': 'gzip, deflate, br', 'User-Agent': 'CaribouCrawler' })
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
                 self.headers = response.headers.as_string()

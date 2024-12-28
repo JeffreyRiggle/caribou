@@ -169,8 +169,7 @@ class Link:
     def get_content(self, url: str):
         start_time = time.time()
         try:
-            req = urllib.request.Request(url)
-            req.add_header('Accept-Encoding', 'gzip, deflate, br')
+            req = urllib.request.Request(url, headers={ 'Accept-Encoding': 'gzip, deflate, br', 'User-Agent': 'CaribouCrawler' })
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
                 compression = response.getheader('Content-Encoding')
@@ -206,7 +205,10 @@ class Link:
             return None
 
         if helpers.is_absolute_url(link):
-            return Link(link, self.asset_respository, self.policy_manager)
+            if self.policy_manager.should_download_url(link) == True:
+                return Link(link, self.asset_respository, self.policy_manager)
+            else:
+                return None
 
         # Do not include self references
         if link.startswith("#"):

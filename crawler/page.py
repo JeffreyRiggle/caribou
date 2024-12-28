@@ -156,8 +156,7 @@ class Page:
     def get_content(self, url: str):
         try:
             start_time = time.time()
-            req = urllib.request.Request(url)
-            req.add_header('Accept-Encoding', 'gzip, deflate, br')
+            req = urllib.request.Request(url, headers={ 'Accept-Encoding': 'gzip, deflate, br', 'User-Agent': 'CaribouCrawler' })
             with urllib.request.urlopen(req) as response:
                 raw = response.read()
                 compression = response.getheader('Content-Encoding')

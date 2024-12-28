@@ -138,9 +138,9 @@ class Crawler:
 
                 file_path = img.download()
                 if file_path == None:
-                    continue
-
-                self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image", 'headers': img.headers })
+                    self.pending_resouce_entries.append({ 'url': img.url, 'file': '', "status": ResourceStatus.Failed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image", 'headers': img.headers })
+                else:
+                    self.pending_resouce_entries.append({ 'url': img.url, 'file': file_path, "status": ResourceStatus.Processed.value, 'text': '', 'description': img.description, 'title': img.title, 'contentType': "image", 'headers': img.headers })
                 self.processed.add(img.url)
 
         if self.policy_manager.should_download_asset('javascript'):
