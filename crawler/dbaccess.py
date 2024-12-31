@@ -2,6 +2,7 @@ import time
 from transactions import DBTransaction
 import threading
 from sqlite3 import Connection
+import re
 
 class DBAccess:
     def __init__(self, connection: Connection):
@@ -10,7 +11,7 @@ class DBAccess:
 
     def setup(self):
         cursor = self.connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT, headers TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT, headers TEXT, expires NUM)")
         cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
@@ -26,7 +27,28 @@ class DBAccess:
     def add_resource(self, url: str, path: str, status: str, title: str, summary: str, description: str, contentType: str, headers: str, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()
-            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status, headers))
+            now = time.time()
+            all_headers = headers.split('\n')
+            expires = None
+            for header in all_headers:
+                if header.startswith("Cache-Control") == False:
+                    continue
+
+                age_match = re.search(r'max-age=(\d+)', header)
+                if age_match == None:
+                    break
+
+                try:
+                    age = age_match.group(1)
+                    expires = time.time() + (int(age) * 1000)
+                except:
+                    print(f"Failed to get expire time from {header}")
+                    expires = None
+
+                break
+                
+            expires = now if expires == None or expires <= 0 else expires
+            cursor.execute("INSERT OR REPLACE INTO resources VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (url, path, contentType, time.time(), title, summary, description, status, headers, expires))
 
             if transaction == None:
                 cursor.connection.commit()
@@ -35,6 +57,17 @@ class DBAccess:
         with self.lock:
             cursor = self.connection.cursor()
             cursor.execute("SELECT lastIndex FROM resources WHERE url = ?", (url,))
+            result = list(map(lambda r: r[0], cursor.fetchall()))
+
+            if len(result) < 1:
+                return 0
+
+            return result[0]
+        
+    def get_resource_expire_time(self, url: str):
+        with self.lock:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT expires FROM resources WHERE url = ?", (url,))
             result = list(map(lambda r: r[0], cursor.fetchall()))
 
             if len(result) < 1:

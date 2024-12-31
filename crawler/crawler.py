@@ -133,7 +133,7 @@ class Crawler:
             for img in asset_collection['image']:
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': img.url })
                 
-                if img.url in self.processed or self.db.get_resource_last_edit(img.url) > self.start_time:
+                if self.asset_processed(img.url):
                     continue
 
                 file_path = img.download()
@@ -149,7 +149,7 @@ class Crawler:
                 content = js_asset[1]
 
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
-                if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time or content == None:
+                if url == None or self.asset_processed(url):
                     continue
 
                 dir_path = f"../contents/{helpers.get_domain(page.url)}/javascript"
@@ -165,7 +165,7 @@ class Crawler:
                 content = css_asset[1]
 
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
-                if url == None or url in self.processed or self.db.get_resource_last_edit(url) > self.start_time:
+                if url == None or self.asset_processed(url):
                     continue
 
                 dir_path = f"../contents/{helpers.get_domain(page.url)}/css"
@@ -205,7 +205,7 @@ class Crawler:
         if link == None:
             return
 
-        if link.url in self.processed or self.db.get_resource_last_edit(link.url) > self.start_time:
+        if self.asset_processed(link.url):
             return 
 
         if self.policy_manager.should_download_url(link.url):
@@ -223,9 +223,11 @@ class Crawler:
     def download_child_link(self, link: Link):
         dpgStart = time.time()
 
-        if link.url in self.processed or self.db.get_resource_last_edit(link.url) > self.start_time:
+        if self.asset_processed(link.url):
             return 
 
         dpgResult = self.record_link(link)
         self.pending_performance_traces.append({ 'url': link.url, 'appTime': time.time() - dpgStart - dpgResult[1], 'networkTime': dpgResult[1] })
 
+    def asset_processed(self, url: str):
+        return url in self.processed or self.db.get_resource_last_edit(url) > self.start_time or self.db.get_resource_expire_time(url) > time.time()
