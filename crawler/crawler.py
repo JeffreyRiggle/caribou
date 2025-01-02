@@ -26,15 +26,17 @@ class Crawler:
         crawl_pages = self.policy_manager.get_crawl_pages()
 
         if (len(crawl_pages) < 1):
-            domain = input("No crawl pages set select a starting domain: ")
-            self.policy_manager.add_crawl_domain(domain)
+            domains = input("No crawl pages set select a starting domain (can add multiple with ,): ")
+            crawl_domains = domains.split(",")
+            for crawl_domain in crawl_domains:
+                self.policy_manager.add_crawl_domain(crawl_domain)
+                crawl_pages.append(crawl_domain)
             self.policy_manager.enable_content_download("image")
             self.policy_manager.enable_content_download('javascript')
             self.policy_manager.enable_content_download('css')
             self.policy_manager.enable_content_download('data')
             self.policy_manager.enable_content_download('audio')
             self.policy_manager.enable_content_download('font')
-            crawl_pages.append(domain)
          
         self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), crawl_pages))
 
