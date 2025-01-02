@@ -93,3 +93,18 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Form<Domai
         .body("✓")
 }
 
+#[get("/configure")]
+async fn get_configuration_page() -> HttpResponse {
+    let page = match TEMPLATES.render("settings.html", &Context::new()) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load page {}", e);
+            "<html><body><h1>Internal Server Error</h1></body></html>".to_string()
+        }
+    };
+
+    HttpResponse::Ok()
+       .content_type("text/html; charset=utf-8")
+       .body(page)
+}
+
