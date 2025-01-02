@@ -3,6 +3,10 @@ html {
 	color: green;
 }
 
+body {
+	margin: 0;
+}
+
 input {
 	margin: 4px;
 	border-color: green;
