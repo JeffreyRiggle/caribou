@@ -94,8 +94,8 @@ class Page:
             script_src = script.get('src')
             if script_src == None:
                 inline_content = script.encode_contents()
-                inlin_acript_size = len(inline_content)
-                self.js_bytes += inlin_acript_size
+                inline_script_size = len(inline_content)
+                self.js_bytes += inline_script_size
                 continue
 
             if helpers.is_absolute_url(script_src) == False:
@@ -150,7 +150,12 @@ class Page:
             self.asset_respository.set_asset(url, '')
             return (0, 0)
 
-        self.asset_respository.set_asset(url, result[0])
+        asset = result[0]
+        self.asset_respository.set_asset(url, asset)
+        if related_resource == "javascript":
+            self.js_assets.append((url, asset))
+        if related_resource == "css":
+            self.css_assets.append((url, asset))
         return (result[1], result[3])
 
     def get_content(self, url: str):
