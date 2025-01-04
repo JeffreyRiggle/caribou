@@ -5,6 +5,7 @@ mod api;
 mod models;
 mod domain;
 mod performance;
+mod content;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,6 +18,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::get_performance_page)
             .service(views::update_domain_status)
             .service(views::get_configuration_page)
+            .service(views::update_download_policy)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

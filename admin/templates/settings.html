@@ -8,8 +8,49 @@
 				grid-template-columns: 25% 75%;
 			}
 
-            ul {
+			ul {
 				list-style: none;
+			}
+
+			main ul {
+				padding: 0;
+			}
+
+			.content-card {
+				padding: 8px;
+				border-radius: 2px;
+				width: 95%;
+				border: 1px solid black;
+				margin-bottom: 4px;
+			}
+
+			label {
+				display: block;
+				font-weight: bold;
+				margin-bottom: 2px;
+			}
+
+			li span {
+				margin-left: 4px;
+			}
+
+		    .content-card:has(.htmx-request) {
+				animation: loading 250ms ease infinite;
+			}
+
+			@keyframes loading {
+				0% {
+				    background: linear-gradient(90deg, blue 0%, transparent 25%);
+				}
+				25% {
+				    background: linear-gradient(90deg, transparent 0%, blue 25%, transparent 50%);
+				}
+				50% {
+				    background: linear-gradient(90deg, transparent 40%, blue 65%, transparent 85%);
+				}
+				100% {
+				    background: linear-gradient(90deg, transparent 75%, blue 100%);
+				}
 			}
 		</style>
 		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
@@ -25,7 +66,18 @@
 		<main>
 			<h1>Configuration</h1>
 			<div>
-				Hello world
+				<ul>
+					{% for contentStatus in contentStatuses %}
+						<li class="content-card">
+							<label>Download {{contentStatus.contentType}}</label>
+							<select name="download" hx-put="/view/content/{{contentStatus.contentType}}/shouldDownload" hx-target="#content-status-{{loop.index}}">
+								<option value="true" {% if contentStatus.download %} selected="true" {% endif %}>Yes</option>
+								<option value="false" {% if contentStatus.download == false %} selected="true" {% endif %}>No</option>
+							</select>
+							<span id="content-status-{{loop.index}}"></span>
+						</li>
+					{% endfor %}
+				</ul>
 			</div>
 		<main>
 	</body>

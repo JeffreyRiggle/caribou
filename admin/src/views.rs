@@ -3,8 +3,9 @@ use tera::{Context, Tera};
 use lazy_static::lazy_static;
 use rusqlite::Connection;
 
+use crate::content::get_content_statuses;
 use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages};
-use crate::models::DomainStatus;
+use crate::models::{ContentStatusUpdate, DomainStatus};
 
 use super::domain::get_domains;
 
@@ -93,9 +94,23 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Form<Domai
         .body("✓")
 }
 
+#[put("view/content/{content_type}/shouldDownload")]
+async fn update_download_policy(content_type: web::Path<String>, update: web::Form<ContentStatusUpdate>) -> HttpResponse { 
+    let conn = Connection::open("../grepper.db").unwrap();
+    let mut stmt = conn.prepare("UPDATE downloadPolicy SET download = ?1 WHERE contentType = ?2").unwrap();
+    stmt.execute((update.download.clone(), content_type.as_str())).unwrap();
+    
+    HttpResponse::Ok()
+        .content_type("text/html; chartset=utf-8")
+        .body("✓")
+}
+
 #[get("/configure")]
 async fn get_configuration_page() -> HttpResponse {
-    let page = match TEMPLATES.render("settings.html", &Context::new()) {
+    let mut context = Context::new();
+    context.insert("contentStatuses", &get_content_statuses());
+
+    let page = match TEMPLATES.render("settings.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
             println!("Failed to load page {}", e);
