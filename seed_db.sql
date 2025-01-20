@@ -54,3 +54,10 @@ CREATE TABLE IF NOT EXISTS favicon(
     type TEXT,
     PRIMARY KEY(url, documentUrl)
 );
+
+INSERT INTO downloadPolicy values('image', 1);
+INSERT INTO downloadPolicy values('javascript', 1);
+INSERT INTO downloadPolicy values('css', 1);
+INSERT INTO downloadPolicy values('data', 1);
+INSERT INTO downloadPolicy values('audio', 1);
+INSERT INTO downloadPolicy values('font', 1);
