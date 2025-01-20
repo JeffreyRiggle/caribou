@@ -52,6 +52,21 @@
 				    background: linear-gradient(90deg, transparent 75%, blue 100%);
 				}
 			}
+
+			.form-section {
+				display: flex;
+				flex-direction: row;
+				margin-bottom: 4px;
+			}
+
+			.form-section label {
+				margin-right: 4px;
+			}
+
+			.form-section input,
+			.form-section select {
+				flex: 1 1 auto;
+			}
 		</style>
 		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 	</head>
@@ -66,21 +81,25 @@
 		<main>
 			<h1>Domain Management</h1>
 			<div>
+				<h2>Add Domain</h2>
 				<form method="POST" action="/view/domains">
-					<label>Add Domain</label>
-					<label for="domain">Domain Name</label>
-					<input type="text" name="domain" id="domain"/>
-					<label for="status">Crawl policy</label>
-					<select name="status" id="status">
-						<option value="Read">Read</option>
-						<option value="Crawl">Crawl</option>
-						<option value="Block">Block</option>
-					</select>
+					<div class="form-section">
+						<label for="domain">Domain Name</label>
+						<input type="text" name="domain" id="domain"/>
+					</div>
+					<div class="form-section">
+						<label for="status">Crawl policy</label>
+						<select name="status" id="status">
+							<option value="Read">Read</option>
+							<option value="Crawl">Crawl</option>
+							<option value="Block">Block</option>
+						</select>
+					</div>
 					<input type="submit" value="Add"></button>
 				</form>
 				<ul>
 					{% for domain in domains %}
-						<li class="domain-card">
+						<li class="domain-card form-section">
 							<label>{{domain.domain}}</label>
 							<select name="status" hx-put="/view/domains/{{domain.domain}}/status" hx-target="#domain-status-{{loop.index}}">
 								<option value="Read" {% if domain.status == "Read" %} selected="true" {% endif %}>Read</option>
