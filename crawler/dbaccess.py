@@ -1,25 +1,25 @@
+import sqlite3
 import time
 from transactions import DBTransaction
 import threading
-from sqlite3 import Connection
 import re
+from os.path import isfile
 
 class DBAccess:
-    def __init__(self, connection: Connection):
-        self.connection = connection
+    def __init__(self):
         self.lock = threading.Lock()
 
     def setup(self):
-        cursor = self.connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS resources(url TEXT PRIMARY KEY, path TEXT, contentType TEXT, lastIndex NUM, title TEXT, summary TEXT, description TEXT, status TEXT, headers TEXT, expires NUM)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS domains(domain TEXT PRIMARY KEY, status TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS metadata(url TEXT PRIMARY KEY, jsBytes NUM, htmlBytes NUM, cssBytes NUM, compressed TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS perf(url TEXT, appTime NUM, networkTime NUM)") 
-        cursor.execute("CREATE TABLE IF NOT EXISTS rank(url TEXT PRIMARY KEY, pageRank NUM)") 
-        cursor.execute("CREATE TABLE IF NOT EXISTS links(sourceUrl TEXT, targetUrl TEXT, PRIMARY KEY (sourceUrl, targetUrl))")
-        cursor.execute("CREATE TABLE IF NOT EXISTS downloadPolicy(contentType TEXT PRIMARY KEY, download INTEGER)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS favicon(url TEXT, documentUrl TEXT, sizes TEXT, media TEXT, type TEXT, PRIMARY KEY(url, documentUrl))")
-        cursor.connection.commit()
+        should_initialize = isfile("../grepper.db") == False
+        self.connection = sqlite3.connect("../grepper.db", check_same_thread=False)
+
+        if should_initialize == False:
+            return
+
+        with open("../seed_db.sql", "r") as sql_script:
+            cursor = self.connection.cursor()
+            cursor.executescript(sql_script.read())
+            cursor.connection.commit()
 
     def build_transaction(self):
         return DBTransaction(self.connection)

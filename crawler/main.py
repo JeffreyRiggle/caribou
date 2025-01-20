@@ -1,12 +1,10 @@
 import time
-import sqlite3
 from crawler import Crawler
 from dbaccess import DBAccess
 from ranker import Ranker
 
 start_time = time.time()
-conn = sqlite3.connect("../grepper.db", check_same_thread=False)
-db = DBAccess(conn)
+db = DBAccess()
 db.setup()
  
 crawl = Crawler(db, start_time)
