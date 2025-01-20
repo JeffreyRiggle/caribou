@@ -1,16 +1,7 @@
-use rusqlite::Connection;
-
-use crate::models::ContentStatus;
+use crate::{dbaccess::get_database_connection, models::ContentStatus};
 
 pub fn get_content_statuses() -> Vec<ContentStatus> {
-    let conn = match Connection::open("../grepper.db") {
-        Ok(c) => c,
-        Err(e) => {
-            // TODO in this case return default value
-            println!("Failed to create connection {}", e);
-            panic!("Failed to connect to database")
-        }
-    };
+    let conn = get_database_connection().unwrap();
 
     // TODO handle failures better
     let mut stmt = conn.prepare("SELECT * from downloadPolicy").unwrap();

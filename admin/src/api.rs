@@ -1,5 +1,5 @@
 use actix_web::{get, put, web, Responder, Result};
-use rusqlite::Connection;
+use rusqlite::{Connection, OpenFlags};
 use super::domain::get_domains;
 use super::models::{DomainData, DomainStatus, DomainsResponse};
 
@@ -14,7 +14,7 @@ async fn handle_get_domains() -> Result<impl Responder> {
 
 #[put("/domains/{domain}/status")]
 async fn update_domain_status(domain: web::Path<String>, update: web::Json<DomainStatus>) -> Result<impl Responder> { 
-    let conn = Connection::open("../grepper.db").unwrap();
+    let conn = Connection::open_with_flags("../grepper.db", OpenFlags::SQLITE_OPEN_READ_WRITE).unwrap();
     let mut stmt = conn.prepare("UPDATE domains SET status = ?1 WHERE domain = ?2").unwrap();
     stmt.execute((update.status.clone(), domain.as_str())).unwrap();
     Ok(web::Json(DomainData {

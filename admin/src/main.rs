@@ -6,6 +6,7 @@ mod models;
 mod domain;
 mod performance;
 mod content;
+mod dbaccess;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

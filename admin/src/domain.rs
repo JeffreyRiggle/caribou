@@ -1,14 +1,9 @@
-use rusqlite::Connection;
+use crate::dbaccess::get_database_connection;
+
 use super::models::DomainData;
 
 pub fn get_domains() -> Vec<DomainData> {
-    let conn = match Connection::open("../grepper.db") {
-        Ok(c) => c,
-        Err(e) => {
-            println!("Failed to create connection {}", e);
-            panic!("Failed to connect to database")
-        }
-    };
+    let conn = get_database_connection().unwrap();
     let mut stmt = conn.prepare("SELECT * from domains WHERE domain IS NOT NULL").unwrap();
     let rows = stmt.query_map([], |row| {
         Ok(DomainData {
