@@ -20,6 +20,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::update_domain_status)
             .service(views::get_configuration_page)
             .service(views::update_download_policy)
+            .service(views::add_domain)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

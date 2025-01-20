@@ -1,11 +1,12 @@
-use actix_web::{get, HttpResponse, put, web};
+use actix_web::web::Redirect;
+use actix_web::{get, post, put, web, HttpResponse, Responder};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
 use crate::content::get_content_statuses;
 use crate::dbaccess::get_database_connection;
 use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages};
-use crate::models::{ContentStatusUpdate, DomainStatus};
+use crate::models::{ContentStatusUpdate, DomainData, DomainStatus};
 
 use super::domain::get_domains;
 
@@ -92,6 +93,15 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Form<Domai
     HttpResponse::Ok()
         .content_type("text/html; chartset=utf-8")
         .body("✓")
+}
+
+#[post("view/domains")]
+async fn add_domain(add: web::Form<DomainData>) -> impl Responder { 
+    let conn = get_database_connection().unwrap();
+    let mut stmt = conn.prepare("INSERT INTO domains values(?1, ?2)").unwrap();
+    stmt.execute((add.domain.clone(), add.status.clone())).unwrap();
+    
+    Redirect::to("../domain-management").see_other()
 }
 
 #[put("view/content/{content_type}/shouldDownload")]

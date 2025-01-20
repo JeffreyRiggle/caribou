@@ -66,6 +66,18 @@
 		<main>
 			<h1>Domain Management</h1>
 			<div>
+				<form method="POST" action="/view/domains">
+					<label>Add Domain</label>
+					<label for="domain">Domain Name</label>
+					<input type="text" name="domain" id="domain"/>
+					<label for="status">Crawl policy</label>
+					<select name="status" id="status">
+						<option value="Read">Read</option>
+						<option value="Crawl">Crawl</option>
+						<option value="Block">Block</option>
+					</select>
+					<input type="submit" value="Add"></button>
+				</form>
 				<ul>
 					{% for domain in domains %}
 						<li class="domain-card">
