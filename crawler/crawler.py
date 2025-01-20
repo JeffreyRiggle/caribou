@@ -23,16 +23,20 @@ class Crawler:
         self.start_time = start_time
 
     def load(self):
-        crawl_pages = self.policy_manager.get_crawl_pages()
+        start_pages = self.policy_manager.get_crawl_pages()
 
-        if (len(crawl_pages) < 1):
+        if (len(start_pages) < 1):
             domains = input("No crawl pages set select a starting domain (can add multiple with ,): ")
             crawl_domains = domains.split(",")
             for crawl_domain in crawl_domains:
                 self.policy_manager.add_crawl_domain(crawl_domain)
-                crawl_pages.append(crawl_domain)
+                start_pages.append(crawl_domain)
+        else:
+            for pending_page in self.policy_manager.get_needs_status_pages():
+                if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
+                    start_pages.append(pending_page)
          
-        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), crawl_pages))
+        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), start_pages))
 
     def crawl(self):
         while len(self.pending_links) > 0:

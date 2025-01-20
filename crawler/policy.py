@@ -10,6 +10,9 @@ class PolicyManager:
 
     def get_crawl_pages(self):
         return self.dbaccess.get_pages_by_status(DomainStatus.Crawl.value)
+    
+    def get_needs_status_pages(self):
+        return self.dbaccess.get_pages_by_status(DomainStatus.NeedsStatus.value)
 
     def add_crawl_domain(self, domain: str):
         self.add_domain(domain, DomainStatus.Crawl.value)
