@@ -1,8 +1,47 @@
+from core.crawler import Crawler
+from core.dbaccess import DBAccess
+from core.policy import PolicyManager
+from core.ranker import Ranker
+from jobs.job import Job
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
+
+executor = ThreadPoolExecutor(1)
+
+jobs = {}
+db = DBAccess()
+db.setup()
+
+policy_manager = PolicyManager(db)
 
 app = Flask(__name__)
 
-# TODO import crawler and add crawl endpoint
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+@app.route("/execute")
+def execute():
+    job = Job()
+    jobs[str(job.id)] = job
+    executor.submit(run_job, job)
+    return f"<p>Job {job.id} has been queued!</p>"
+
+@app.route("/status/<job_id>")
+def status(job_id):
+    job = jobs.get(job_id)
+
+    if job == None:
+        return f"<p>Job {job_id} was not found!</p>"
+
+    return f"<p>Job status is {job.status}</p>"
+
+def run_job(job: Job):
+    job.start()
+    try:
+        crawl = Crawler(db, policy_manager, job.start_time)
+        crawl.load()
+        crawl.crawl()
+
+        ranker = Ranker(db)
+        ranker.rank()
+    except:
+        job.fail()
+
+    job.complete()
