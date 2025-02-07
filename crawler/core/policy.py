@@ -1,7 +1,7 @@
-from status import DomainStatus
-from helpers import get_domain
-from dbaccess import DBAccess
-from transactions import DBTransaction
+from core.dbaccess import DBAccess
+from core.helpers import get_domain
+from core.status import DomainStatus
+from core.transactions import DBTransaction
 
 class PolicyManager:
     def __init__(self, dbaccess: DBAccess):

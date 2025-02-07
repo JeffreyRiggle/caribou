@@ -1,18 +1,18 @@
-from dbaccess import DBAccess
-from policy import PolicyManager
-from page import Page
-from link import Link
-import helpers
-import time
+from core.asset_repo import AssetRespositoy
+from core.dbaccess import DBAccess
+from core.helpers import domain_to_full_url, get_domain, write_file
+from core.link import Link
+from core.policy import PolicyManager
+from core.page import Page
+from core.status import ResourceStatus
 import concurrent.futures
-from asset_repo import AssetRespositoy
-from status import ResourceStatus
+import time
 from uuid import uuid4
 
 class Crawler:
-    def __init__(self, db: DBAccess, start_time: float):
+    def __init__(self, db: DBAccess, policy_manager: PolicyManager, start_time: float):
         self.db = db
-        self.policy_manager = PolicyManager(self.db)
+        self.policy_manager = policy_manager
         self.processed = set()
         self.asset_respository = AssetRespositoy()
         self.pending_resouce_entries = []
@@ -25,18 +25,11 @@ class Crawler:
     def load(self):
         start_pages = self.policy_manager.get_crawl_pages()
 
-        if (len(start_pages) < 1):
-            domains = input("No crawl pages set select a starting domain (can add multiple with ,): ")
-            crawl_domains = domains.split(",")
-            for crawl_domain in crawl_domains:
-                self.policy_manager.add_crawl_domain(crawl_domain)
-                start_pages.append(crawl_domain)
-        else:
-            for pending_page in self.policy_manager.get_needs_status_pages():
-                if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
-                    start_pages.append(pending_page)
+        for pending_page in self.policy_manager.get_needs_status_pages():
+            if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
+                start_pages.append(pending_page)
          
-        self.pending_links = list(map(lambda p: Link(helpers.domain_to_full_url(p), self.asset_respository, self.policy_manager), start_pages))
+        self.pending_links = list(map(lambda p: Link(domain_to_full_url(p), self.asset_respository, self.policy_manager), start_pages))
 
     def crawl(self):
         while len(self.pending_links) > 0:
@@ -152,10 +145,10 @@ class Crawler:
                 if url == None or self.asset_processed(url):
                     continue
 
-                dir_path = f"../contents/{helpers.get_domain(page.url)}/javascript"
+                dir_path = f"../contents/{get_domain(page.url)}/javascript"
                 file_id = str(uuid4())
                 file_name = f"{file_id}.js"
-                helpers.write_file(dir_path, file_name, content)
+                write_file(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript', 'headers': "" })
                 self.processed.add(url)
 
@@ -168,10 +161,10 @@ class Crawler:
                 if url == None or self.asset_processed(url):
                     continue
 
-                dir_path = f"../contents/{helpers.get_domain(page.url)}/css"
+                dir_path = f"../contents/{get_domain(page.url)}/css"
                 file_id = str(uuid4())
                 file_name = f"{file_id}.css"
-                helpers.write_file(dir_path, file_name, content)
+                write_file(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css', 'headers': "" })
                 self.processed.add(url)
 

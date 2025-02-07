@@ -1,6 +1,6 @@
+from core.dbaccess import DBAccess
+from core.helpers import get_domain, is_absolute_url
 from bs4 import BeautifulSoup
-from helpers import get_domain, is_absolute_url
-from dbaccess import DBAccess
 
 class Ranker:
     def __init__(self, dbaccess: DBAccess):

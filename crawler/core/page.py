@@ -1,14 +1,14 @@
-from typing import List
-from bs4 import BeautifulSoup, Tag
+from core.asset_repo import AssetRespositoy
+from core.favicon import Favicon
+from core.helpers import is_absolute_url, get_domain
+from core.image import ImageAsset
+import concurrent.futures
 import urllib.request
 import brotli
-import time
-from asset_repo import AssetRespositoy
-from favicon import Favicon
-import helpers
-import concurrent.futures
-from image import ImageAsset
+from bs4 import BeautifulSoup, Tag
 import gzip
+import time
+from typing import List
 
 class Page:
     def __init__(self, url: str, asset_respository: AssetRespositoy):
@@ -98,8 +98,8 @@ class Page:
                 self.js_bytes += inline_script_size
                 continue
 
-            if helpers.is_absolute_url(script_src) == False:
-                script_src = f"https://{helpers.get_domain(self.url)}{script_src}"
+            if is_absolute_url(script_src) == False:
+                script_src = f"https://{get_domain(self.url)}{script_src}"
 
             js_futures.append(executor.submit(self.download_and_process_static_content, url=script_src, related_resource="javascript"))
 
@@ -109,8 +109,8 @@ class Page:
             if link_ref == None or link_ref.endswith('.js') != True:
                 continue
 
-            if helpers.is_absolute_url(link_ref) == False:
-                link_ref = f"https://{helpers.get_domain(self.url)}{link_ref}"
+            if is_absolute_url(link_ref) == False:
+                link_ref = f"https://{get_domain(self.url)}{link_ref}"
 
             js_futures.append(executor.submit(self.download_and_process_static_content, url=link_ref, related_resource="javascript"))
 
@@ -130,8 +130,8 @@ class Page:
                 self.css_bytes += inline_style_size
                 continue
 
-            if helpers.is_absolute_url(style_src) == False:
-                style_src = f"https://{helpers.get_domain(self.url)}{style_src}"
+            if is_absolute_url(style_src) == False:
+                style_src = f"https://{get_domain(self.url)}{style_src}"
 
             css_futures.append(executor.submit(self.download_and_process_static_content, url=style_src, related_resource="css"))
 
@@ -186,6 +186,6 @@ class Page:
         return { 'image': images, 'javascript': self.js_assets, 'css': self.css_assets }
 
     def process_image(self, el: Tag):
-        domain = helpers.get_domain(self.url)
+        domain = get_domain(self.url)
         return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'))
 

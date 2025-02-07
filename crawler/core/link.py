@@ -1,20 +1,20 @@
-import brotli
+from core.asset_repo import AssetRespositoy
+from core.audio_asset import AudioAsset
+from core.font import FontAsset
+from core.helpers import get_domain, write_file, is_absolute_url
+from core.image import ImageAsset
+from core.json_asset import JsonAsset
+from core.page import Page
+from core.policy import PolicyManager
+from core.status import ResourceStatus
+from core.xml_asset import XmlAsset
 import urllib.request
-from font import FontAsset
-import helpers
-import gzip
-import time
-from asset_repo import AssetRespositoy
-from status import ResourceStatus
-from page import Page
-from image import ImageAsset
-from xml_asset import XmlAsset
-from json_asset import JsonAsset
-from audio_asset import AudioAsset
-from uuid import uuid4
+import brotli
 from bs4 import Tag
-from policy import PolicyManager
+import gzip
 import mimetypes
+import time
+from uuid import uuid4
 
 class Link:
     def __init__(self, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
@@ -37,7 +37,7 @@ class Link:
             page.intialize_from_result(res)
             self.result = page
         elif self.is_image():
-            self.result = ImageAsset(helpers.get_domain(self.url), self.url, '', '')
+            self.result = ImageAsset(get_domain(self.url), self.url, '', '')
         elif self.is_xml():
             self.result = XmlAsset(self.url, self.content)
         elif self.is_json():
@@ -55,10 +55,10 @@ class Link:
         if self.should_download() == False:
             return None
 
-        dir_path = f"../contents/{helpers.get_domain(self.url)}/{self.get_dowload_folder()}"
+        dir_path = f"../contents/{get_domain(self.url)}/{self.get_dowload_folder()}"
         file_id = str(uuid4())
         file_name = f"{file_id}{self.get_extension()}"
-        helpers.write_file(dir_path, file_name, self.content)
+        write_file(dir_path, file_name, self.content)
         text = ''
         description = ''
         title = ''
@@ -209,11 +209,11 @@ class Link:
         if link == None:
             return None
 
-        if helpers.is_absolute_url(link):
+        if is_absolute_url(link):
             return Link(link, self.asset_respository, self.policy_manager)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Link(f"https://{helpers.get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)
+        return Link(f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)

@@ -1,8 +1,8 @@
-import helpers
-from uuid import uuid4
+from core.helpers import write_file, is_absolute_url
 import urllib.request
 import brotli
 import mimetypes
+from uuid import uuid4
 
 class ImageAsset:
     def __init__(self, domain: str, url: str, description: str, title: str):
@@ -21,7 +21,7 @@ class ImageAsset:
             return None
 
         file_name = f"{file_id}{res[1]}"
-        helpers.write_file(dir_path, file_name, res[0])
+        write_file(dir_path, file_name, res[0])
         return f"{dir_path}/{file_name}"
 
     def get_content(self):
@@ -30,7 +30,7 @@ class ImageAsset:
         if target_url == None:
             return None
 
-        if helpers.is_absolute_url(target_url) == False:
+        if is_absolute_url(target_url) == False:
             target_url = f"https://{self.domain}/{self.url}"
 
         try:

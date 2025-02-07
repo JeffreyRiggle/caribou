@@ -1,5 +1,5 @@
-import re
 import os
+import re
 
 def domain_to_full_url(domain: str):
     return f'https://{domain}'

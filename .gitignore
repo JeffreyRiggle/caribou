@@ -6,6 +6,5 @@ contents/**
 admin/target/**
 grepper/target/**
 crawler/contents/**
-crawler/.crawlerenv
-crawler/.crawler
+.crawler
 .DS_Store
