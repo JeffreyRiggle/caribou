@@ -4,11 +4,12 @@ from core.policy import PolicyManager
 from core.ranker import Ranker
 from jobs.job import Job
 from concurrent.futures import ThreadPoolExecutor
-from flask import Flask
+from flask import Flask, jsonify
+import typing
 
 executor = ThreadPoolExecutor(1)
 
-jobs = {}
+jobs: typing.Dict[str, Job] = {}
 db = DBAccess()
 db.setup()
 
@@ -21,16 +22,16 @@ def execute():
     job = Job()
     jobs[str(job.id)] = job
     executor.submit(run_job, job)
-    return f"<p>Job {job.id} has been queued!</p>"
+    return jsonify(job.to_dict()), 201
 
 @app.route("/status/<job_id>")
 def status(job_id):
     job = jobs.get(job_id)
 
     if job == None:
-        return f"<p>Job {job_id} was not found!</p>"
+        return jsonify({ "jobId": job_id }), 404
 
-    return f"<p>Job status is {job.status}</p>"
+    return jsonify(job.to_dict()), 200
 
 def run_job(job: Job):
     job.start()
