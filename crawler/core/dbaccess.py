@@ -1,5 +1,6 @@
 from core.transactions import DBTransaction
-from os.path import isfile
+from os import listdir
+from os.path import isfile, join
 import re
 import sqlite3
 import threading
@@ -16,7 +17,17 @@ class DBAccess:
         if should_initialize == False:
             return
 
-        with open("../seed_db.sql", "r") as sql_script:
+        self.execute_sql_file("../db/seed_db.sql")
+
+    def run_migrations(self):
+        migrations_dir = "../db/migrations"
+        migration_files = [f for f in listdir(migrations_dir) if isfile(join(migrations_dir, f))]
+
+        for migration in migration_files:
+            self.execute_sql_file(join(migrations_dir, migration))
+
+    def execute_sql_file(self, sql_file):
+        with open(sql_file, "r") as sql_script:
             cursor = self.connection.cursor()
             cursor.executescript(sql_script.read())
             cursor.connection.commit()

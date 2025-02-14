@@ -146,7 +146,8 @@ async fn get_jobs_page() -> HttpResponse {
             HashMap::<String, JobResponse>::new()
         }
     };
-    let jobs_list = jobs.values().cloned().collect::<Vec<JobResponse>>();
+    let mut jobs_list = jobs.values().cloned().collect::<Vec<JobResponse>>();
+    jobs_list.sort_by(|a, b| a.start_time.partial_cmp(&b.start_time).unwrap());
     context.insert("jobs", &jobs_list);
 
     let page = match TEMPLATES.render("jobs.html", &context) {

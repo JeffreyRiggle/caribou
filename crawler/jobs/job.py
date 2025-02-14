@@ -1,5 +1,6 @@
 from jobs.job_status import JobStatus
 import time
+import typing
 from uuid import uuid4, UUID
 
 class Job:
@@ -23,3 +24,13 @@ class Job:
 
     def to_dict(self):
         return { 'id': str(self.id), 'status': self.status, 'startTime': self.start_time, 'totalTime': self.total_time }
+    
+    @staticmethod
+    def from_dict(dict: typing.Dict):
+        res = Job()
+        res.id = UUID(str(dict["id"]))
+        res.status = dict["status"]
+        res.total_time = dict["totalTime"]
+        res.start_time = dict["startTime"]
+
+        return res
