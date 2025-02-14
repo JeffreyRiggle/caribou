@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 use crate::content::get_content_statuses;
 use crate::dbaccess::get_database_connection;
 use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages, PerformancePageResult};
-use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobResponse};
+use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobDisplay, JobResponse, ToJobDisplay};
 use crate::apiclient::{proxy_get, proxy_post};
 
 use super::domain::get_domains;
@@ -146,7 +146,7 @@ async fn get_jobs_page() -> HttpResponse {
             HashMap::<String, JobResponse>::new()
         }
     };
-    let mut jobs_list = jobs.values().cloned().collect::<Vec<JobResponse>>();
+    let mut jobs_list = jobs.values().map(|j| JobResponse::convert_to_job_display(j.clone())).collect::<Vec<JobDisplay>>();
     jobs_list.sort_by(|a, b| a.start_time.partial_cmp(&b.start_time).unwrap());
     context.insert("jobs", &jobs_list);
 

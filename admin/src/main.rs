@@ -8,6 +8,7 @@ mod performance;
 mod content;
 mod dbaccess;
 mod apiclient;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

@@ -1,10 +1,9 @@
-use std::time::{Duration , UNIX_EPOCH};
+
 use serde::Serialize;
 use rusqlite::Error;
-use chrono::prelude::DateTime;
-use chrono::Utc;
 
 use crate::dbaccess::get_database_connection;
+use crate::utils::format_time;
 
 #[derive(Debug, Serialize)]
 pub struct PerformancePageResult {
@@ -104,10 +103,4 @@ pub fn bytes_to_display(bytes: u64) -> String {
     }
 
     (bytes / 1000000000u64).to_string() + "Gb"
-}
-
-fn format_time(time: f64) -> String {
-    let date = UNIX_EPOCH + Duration::from_secs_f64(time);
-    let date_time = DateTime::<Utc>::from(date);
-    date_time.format("%m-%d-%Y %H:%M:%S").to_string()
 }

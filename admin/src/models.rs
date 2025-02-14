@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::utils::{format_time, format_time_span};
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DomainData {
     pub domain: String,
@@ -54,6 +56,31 @@ impl Default for JobResponse {
             status: JobStatus::Unknown,
             start_time: 0_f64,
             total_time: 0_f64
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JobDisplay {
+    pub id: String,
+    pub status: JobStatus,
+    #[serde(rename="startTime")]
+    pub start_time: String,
+    #[serde(rename="totalTime")]
+    pub total_time: String
+}
+
+pub trait ToJobDisplay {
+    fn convert_to_job_display(job: JobResponse) -> JobDisplay;
+}
+
+impl ToJobDisplay for JobResponse {
+    fn convert_to_job_display(job: JobResponse) -> JobDisplay {
+        JobDisplay {
+            id: job.id,
+            status: job.status,
+            start_time: format_time(job.start_time),
+            total_time: format_time_span(job.total_time)
         }
     }
 }
