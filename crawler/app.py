@@ -9,7 +9,8 @@ import typing
 
 executor = ThreadPoolExecutor(1)
 
-jobs: typing.Dict[str, Job] = {}
+known_jobs: typing.Dict[str, Job] = {}
+
 db = DBAccess()
 db.setup()
 
@@ -17,16 +18,24 @@ policy_manager = PolicyManager(db)
 
 app = Flask(__name__)
 
-@app.route("/execute")
-def execute():
+@app.get("/jobs")
+def get_jobs():
+    result: typing.Dict[str, str] = {}
+    for key, value in known_jobs.items():
+        result[key] = value.to_dict()
+
+    return jsonify(result), 200
+
+@app.post("/execute")
+def execute_job():
     job = Job()
-    jobs[str(job.id)] = job
+    known_jobs[str(job.id)] = job
     executor.submit(run_job, job)
     return jsonify(job.to_dict()), 201
 
-@app.route("/status/<job_id>")
-def status(job_id):
-    job = jobs.get(job_id)
+@app.get("/status/<job_id>")
+def get_job_status(job_id):
+    job = known_jobs.get(job_id)
 
     if job == None:
         return jsonify({ "jobId": job_id }), 404

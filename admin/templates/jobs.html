@@ -1,0 +1,51 @@
+<html>
+	<head>
+		<title>Jobs</title>
+		<style>
+			body {
+				font-family: 'Arial';
+				display: grid;
+				grid-template-columns: 25% 75%;
+			}
+
+			ul {
+				list-style: none;
+			}
+
+			main ul {
+				padding: 0;
+			}
+
+			.domain-card {
+				padding: 8px;
+				border-radius: 2px;
+				width: 95%;
+				border: 1px solid black;
+				margin-bottom: 4px;
+			}
+		</style>
+		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<nav>
+			<ul>
+				<li><a href="/">Home</a></li>
+                <li><a href="performance">Performance Statistics</a></li>
+				<li><a href="domain-management">Domain Management</a></li>
+				<li><a href="configure">Crawl Settings</a></li>
+			</ul>
+		</nav>
+		<main>
+			<h1>Jobs</h1>
+            <button hx-post="/view/execute-job" hx-target="body">Start Job</button>
+			<h2>Jobs Status</h2>
+			<ul>
+				{% for job in jobs %}
+					<li class="job-card form-section">
+						Job Id: {{job.id}}, Job Status: {{job.status}}, Start Time: {{job.startTime}}, Total Time: {{job.totalTime}}
+					</li>
+				{% endfor %}
+			</ul>
+		<main>
+	</body>
+</html>

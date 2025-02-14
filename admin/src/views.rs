@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::web::Redirect;
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use tera::{Context, Tera};
@@ -6,7 +8,8 @@ use lazy_static::lazy_static;
 use crate::content::get_content_statuses;
 use crate::dbaccess::get_database_connection;
 use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages, PerformancePageResult};
-use crate::models::{ContentStatusUpdate, DomainData, DomainStatus};
+use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobResponse};
+use crate::apiclient::{proxy_get, proxy_post};
 
 use super::domain::get_domains;
 
@@ -131,5 +134,44 @@ async fn get_configuration_page() -> HttpResponse {
     HttpResponse::Ok()
        .content_type("text/html; charset=utf-8")
        .body(page)
+}
+
+#[get("/jobs")]
+async fn get_jobs_page() -> HttpResponse {
+    let mut context = Context::new();
+    let jobs = match proxy_get::<HashMap<String, JobResponse>>("http://127.0.0.1:5000/jobs").await {
+        Ok(jobs) => jobs,
+        Err(e) => {
+            println!("Failed to get jobs {}", e);
+            HashMap::<String, JobResponse>::new()
+        }
+    };
+    let jobs_list = jobs.values().cloned().collect::<Vec<JobResponse>>();
+    context.insert("jobs", &jobs_list);
+
+    let page = match TEMPLATES.render("jobs.html", &context) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load page {}", e);
+            "<html><body><h1>Internal Server Error</h1></body></html>".to_string()
+        }
+    };
+
+    HttpResponse::Ok()
+       .content_type("text/html; charset=utf-8")
+       .body(page)
+}
+
+#[post("view/execute-job")]
+async fn start_job() -> impl Responder { 
+    match proxy_post::<JobResponse>("http://127.0.0.1:5000/execute").await {
+        Ok(job) => {
+            println!("Created job: {job:#?}")
+        },
+        Err(e) => {
+            println!("Failed to create job: {}", e)
+        }
+    }
+    Redirect::to("../jobs").see_other()
 }
 
