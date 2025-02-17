@@ -1,5 +1,6 @@
 from core.asset_repo import AssetRespositoy
-from core.dbaccess import DBAccess
+from core.dbaccess.postgres_access import PostgresDBAccess
+from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.helpers import domain_to_full_url, get_domain, write_file
 from core.link import Link
 from core.policy import PolicyManager
@@ -10,7 +11,7 @@ import time
 from uuid import uuid4
 
 class Crawler:
-    def __init__(self, db: DBAccess, policy_manager: PolicyManager, start_time: float):
+    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, start_time: float):
         self.db = db
         self.policy_manager = policy_manager
         self.processed = set()

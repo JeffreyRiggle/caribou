@@ -1,11 +1,17 @@
-from core.dbaccess import DBAccess
+from core.dbaccess.postgres_access import PostgresDBAccess
+from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.crawler import Crawler
 from core.ranker import Ranker
 from core.policy import PolicyManager
 import time
+import sys
 
 start_time = time.time()
-db = DBAccess()
+db = None
+if '--postgres' in sys.argv:
+    db = PostgresDBAccess()
+else:
+    db = SQLiteDBAccess()
 db.setup()
 
 policy_manager = PolicyManager(db)

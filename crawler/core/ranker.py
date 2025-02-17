@@ -1,9 +1,10 @@
-from core.dbaccess import DBAccess
+from core.dbaccess.postgres_access import PostgresDBAccess
+from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.helpers import get_domain, is_absolute_url
 from bs4 import BeautifulSoup
 
 class Ranker:
-    def __init__(self, dbaccess: DBAccess):
+    def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess):
         self.tolerance = 0.001
         self.damping = .85
         self.page_references = dict()

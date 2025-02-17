@@ -8,7 +8,7 @@ pub fn get_database_connection() -> std::io::Result<Connection> {
         Err(_) => {
             match Connection::open("../grepper.db") {
                 Ok(c) => {
-                    let sql = fs::read_to_string("../db/seed_db.sql").expect("Unable to read initialization file");
+                    let sql = fs::read_to_string("../db/sqlite/seed_db.sql").expect("Unable to read initialization file");
                     match c.execute_batch(&sql) {
                         Ok(_) => Ok(c),
                         Err(_) => Err(Error::new(ErrorKind::Other, "failed to initialize database"))

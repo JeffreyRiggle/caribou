@@ -1,8 +1,8 @@
-from core.dbaccess import DBAccess
+from core.dbaccess.sqlite_access import SQLiteDBAccess
 from jobs.job import Job
 
-class JobRepository:
-    def __init__(self, db_access: DBAccess):
+class JobRepositorySQLite:
+    def __init__(self, db_access: SQLiteDBAccess):
         self.db_access = db_access
 
     def get_job(self, id: str):

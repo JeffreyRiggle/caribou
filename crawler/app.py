@@ -1,21 +1,36 @@
 from core.crawler import Crawler
-from core.dbaccess import DBAccess
+from core.dbaccess.postgres_access import PostgresDBAccess
+from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.policy import PolicyManager
 from core.ranker import Ranker
 from jobs.job import Job
-from jobs.job_respository import JobRepository
+from jobs.job_respository_sqlite import JobRepositorySQLite
+from jobs.job_repository_postgres import JobRepositoryPostgres
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, jsonify
+import os
 import typing
 
 executor = ThreadPoolExecutor(1)
 
-db = DBAccess()
+is_postgres = os.environ['USE_POSTGRES'] == '1'
+db = None
+
+if is_postgres:
+    db = PostgresDBAccess()
+else:
+    db = SQLiteDBAccess()
+
 db.setup()
 db.run_migrations()
 
 policy_manager = PolicyManager(db)
-job_repo = JobRepository(db)
+
+job_repo = None
+if is_postgres:
+    job_repo = JobRepositoryPostgres(db)
+else:
+    job_repo = JobRepositorySQLite(db)
 
 app = Flask(__name__)
 
@@ -45,9 +60,9 @@ def get_job_status(job_id):
     return jsonify(job.to_dict()), 200
 
 def run_job(job: Job):
-    job.start()
-    job_repo.update_job(job)
     try:
+        job.start()
+        job_repo.update_job(job)
         crawl = Crawler(db, policy_manager, job.start_time)
         crawl.load()
         crawl.crawl()

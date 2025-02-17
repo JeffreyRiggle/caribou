@@ -6,7 +6,7 @@ import sqlite3
 import threading
 import time
 
-class DBAccess:
+class SQLiteDBAccess:
     def __init__(self):
         self.lock = threading.Lock()
 
@@ -17,10 +17,10 @@ class DBAccess:
         if should_initialize == False:
             return
 
-        self.execute_sql_file("../db/seed_db.sql")
+        self.execute_sql_file("../db/sqlite/seed_db.sql")
 
     def run_migrations(self):
-        migrations_dir = "../db/migrations"
+        migrations_dir = "../db/sqlite/migrations"
         migration_files = [f for f in listdir(migrations_dir) if isfile(join(migrations_dir, f))]
 
         for migration in migration_files:
