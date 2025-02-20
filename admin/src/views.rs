@@ -5,13 +5,14 @@ use actix_web::{get, post, put, web, HttpResponse, Responder};
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::content::get_content_statuses;
-use crate::dbaccess::get_database_connection;
-use crate::performance::{bytes_to_display, get_average_css, get_average_html, get_average_js, get_last_run_time, get_max_css, get_max_html, get_max_js, get_total_pages, get_total_processed_pages, PerformancePageResult};
+use crate::content_repository::ContentStatusRepository;
+use crate::dbaccess::get_sqlite_database_connection;
+use crate::domain_repository::DomainRepository;
+use crate::performance_model::PerformancePageResult;
+use crate::performance_repository::PerformanceRepository;
 use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobDisplay, JobResponse, ToJobDisplay};
 use crate::apiclient::{proxy_get, proxy_post};
-
-use super::domain::get_domains;
+use crate::utils::bytes_to_display;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -44,7 +45,7 @@ async fn get_page() -> HttpResponse {
 #[get("/domain-management")]
 async fn get_domain_management_page() -> HttpResponse {
     let mut context = Context::new();
-    context.insert("domains", &get_domains());
+    context.insert("domains", &get_sqlite_database_connection().unwrap().get_domains());
 
     let page = match TEMPLATES.render("domains.html", &context) {
         Ok(p) => p.to_string(),
@@ -62,17 +63,18 @@ async fn get_domain_management_page() -> HttpResponse {
 #[get("/performance")]
 async fn get_performance_page() -> HttpResponse {
     let mut context = Context::new();
-    context.insert("totalPages", &get_total_pages().unwrap_or(0));
-    context.insert("processedPages", &get_total_processed_pages().unwrap_or(0));
-    context.insert("lastRun", &get_last_run_time().unwrap_or(String::from("")));
-    context.insert("maxJs", &get_max_js().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageJs", &bytes_to_display(get_average_js().unwrap_or(0)));
+    let mut connection = get_sqlite_database_connection().unwrap();
+    context.insert("totalPages", &connection.get_total_pages().unwrap_or(0));
+    context.insert("processedPages", &connection.get_total_processed_pages().unwrap_or(0));
+    context.insert("lastRun", &connection.get_last_run_time().unwrap_or(String::from("")));
+    context.insert("maxJs", &connection.get_max_js().unwrap_or(PerformancePageResult::default()));
+    context.insert("averageJs", &bytes_to_display(connection.get_average_js().unwrap_or(0)));
     
-    context.insert("maxCss", &get_max_css().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageCss", &bytes_to_display(get_average_css().unwrap_or(0)));
+    context.insert("maxCss", &connection.get_max_css().unwrap_or(PerformancePageResult::default()));
+    context.insert("averageCss", &bytes_to_display(connection.get_average_css().unwrap_or(0)));
 
-    context.insert("maxHtml", &get_max_html().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageHtml", &bytes_to_display(get_average_html().unwrap_or(0)));
+    context.insert("maxHtml", &connection.get_max_html().unwrap_or(PerformancePageResult::default()));
+    context.insert("averageHtml", &bytes_to_display(connection.get_average_html().unwrap_or(0)));
 
     let page = match TEMPLATES.render("performance.html", &context) {
         Ok(p) => p.to_string(),
@@ -88,11 +90,9 @@ async fn get_performance_page() -> HttpResponse {
 }
 
 #[put("view/domains/{domain}/status")]
-async fn update_domain_status(domain: web::Path<String>, update: web::Form<DomainStatus>) -> HttpResponse { 
-    let conn = get_database_connection().unwrap();
-    let mut stmt = conn.prepare("UPDATE domains SET status = ?1 WHERE domain = ?2").unwrap();
-    stmt.execute((update.status.clone(), domain.as_str())).unwrap();
-    
+async fn update_domain_status(domain: web::Path<String>, update: web::Form<DomainStatus>) -> HttpResponse {
+    get_sqlite_database_connection().unwrap().set_domain_status(domain.to_string(), update.clone());
+
     HttpResponse::Ok()
         .content_type("text/html; chartset=utf-8")
         .body("✓")
@@ -100,18 +100,13 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Form<Domai
 
 #[post("view/domains")]
 async fn add_domain(add: web::Form<DomainData>) -> impl Responder { 
-    let conn = get_database_connection().unwrap();
-    let mut stmt = conn.prepare("INSERT INTO domains values(?1, ?2)").unwrap();
-    stmt.execute((add.domain.clone(), add.status.clone())).unwrap();
-    
+    get_sqlite_database_connection().unwrap().add_domain(add.clone());
     Redirect::to("../domain-management").see_other()
 }
 
 #[put("view/content/{content_type}/shouldDownload")]
 async fn update_download_policy(content_type: web::Path<String>, update: web::Form<ContentStatusUpdate>) -> HttpResponse { 
-    let conn = get_database_connection().unwrap();
-    let mut stmt = conn.prepare("UPDATE downloadPolicy SET download = ?1 WHERE contentType = ?2").unwrap();
-    stmt.execute((update.download.clone(), content_type.as_str())).unwrap();
+    get_sqlite_database_connection().unwrap().set_content_status(content_type.to_string(), update.clone());
     
     HttpResponse::Ok()
         .content_type("text/html; chartset=utf-8")
@@ -121,7 +116,7 @@ async fn update_download_policy(content_type: web::Path<String>, update: web::Fo
 #[get("/configure")]
 async fn get_configuration_page() -> HttpResponse {
     let mut context = Context::new();
-    context.insert("contentStatuses", &get_content_statuses());
+    context.insert("contentStatuses", &get_sqlite_database_connection().unwrap().get_content_statuses());
 
     let page = match TEMPLATES.render("settings.html", &context) {
         Ok(p) => p.to_string(),

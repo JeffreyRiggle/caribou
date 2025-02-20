@@ -15,3 +15,19 @@ pub fn format_time_span(time: f64) -> String {
     let hours = (duration.as_secs() / 60) / 60;
     format!("{}:{}:{}", hours, minutes, seconds)
 }
+
+pub fn bytes_to_display(bytes: i64) -> String {
+    if bytes < 1000i64 {
+        return bytes.to_string() + "B";
+    }
+
+    if bytes < 1000000i64 {
+        return (bytes as f64 / 1000f64).to_string() + "Kb";
+    }
+
+    if bytes < 1000000000i64 {
+        return (bytes as f64 / 1000000f64).to_string() + "Mb";
+    }
+
+    (bytes / 1000000000i64).to_string() + "Gb"
+}

@@ -3,12 +3,13 @@ use actix_web::{App, HttpServer};
 mod views;
 mod api;
 mod models;
-mod domain;
-mod performance;
-mod content;
+mod performance_repository;
+mod content_repository;
 mod dbaccess;
 mod apiclient;
 mod utils;
+mod domain_repository;
+mod performance_model;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
