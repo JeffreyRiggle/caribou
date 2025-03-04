@@ -65,6 +65,6 @@ impl DomainRepository for PostgresConnection {
     }
     
     fn add_domain(&mut self, domain: DomainData) {
-        self.client.execute("INSERT INTO domains values(?1, ?2)", &[&domain.status.clone(), &domain.domain.as_str()]).unwrap();
+        self.client.execute("INSERT INTO domains values($1, $2)", &[&domain.domain.clone(), &domain.status.as_str()]).unwrap();
     }
 }

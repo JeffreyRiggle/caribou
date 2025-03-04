@@ -2,17 +2,15 @@ use std::collections::HashMap;
 
 use actix_web::web::Redirect;
 use actix_web::{get, post, put, web, HttpResponse, Responder};
+use r2d2::Pool;
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::content_repository::ContentStatusRepository;
-use crate::dbaccess::get_sqlite_database_connection;
-use crate::domain_repository::DomainRepository;
 use crate::performance_model::PerformancePageResult;
-use crate::performance_repository::PerformanceRepository;
 use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobDisplay, JobResponse, ToJobDisplay};
 use crate::apiclient::{proxy_get, proxy_post};
 use crate::utils::bytes_to_display;
+use crate::dbaccess::DbConfig;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -43,9 +41,13 @@ async fn get_page() -> HttpResponse {
 }
 
 #[get("/domain-management")]
-async fn get_domain_management_page() -> HttpResponse {
-    let mut context = Context::new();
-    context.insert("domains", &get_sqlite_database_connection().unwrap().get_domains());
+async fn get_domain_management_page(pool: web::Data<Pool<DbConfig>>) -> HttpResponse {
+    let context = web::block(move || {
+        let mut context = Context::new();
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        context.insert("domains", &repository.get_domains());
+        context
+    }).await.unwrap();
 
     let page = match TEMPLATES.render("domains.html", &context) {
         Ok(p) => p.to_string(),
@@ -61,20 +63,23 @@ async fn get_domain_management_page() -> HttpResponse {
 }
 
 #[get("/performance")]
-async fn get_performance_page() -> HttpResponse {
-    let mut context = Context::new();
-    let mut connection = get_sqlite_database_connection().unwrap();
-    context.insert("totalPages", &connection.get_total_pages().unwrap_or(0));
-    context.insert("processedPages", &connection.get_total_processed_pages().unwrap_or(0));
-    context.insert("lastRun", &connection.get_last_run_time().unwrap_or(String::from("")));
-    context.insert("maxJs", &connection.get_max_js().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageJs", &bytes_to_display(connection.get_average_js().unwrap_or(0)));
-    
-    context.insert("maxCss", &connection.get_max_css().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageCss", &bytes_to_display(connection.get_average_css().unwrap_or(0)));
+async fn get_performance_page(pool: web::Data<Pool<DbConfig>>) -> HttpResponse {
+    let context = web::block(move || {
+        let mut context = Context::new();
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        context.insert("totalPages", &repository.get_total_pages().unwrap_or(0));
+        context.insert("processedPages", &repository.get_total_processed_pages().unwrap_or(0));
+        context.insert("lastRun", &repository.get_last_run_time().unwrap_or(String::from("")));
+        context.insert("maxJs", &repository.get_max_js().unwrap_or(PerformancePageResult::default()));
+        context.insert("averageJs", &bytes_to_display(repository.get_average_js().unwrap_or(0f64)));
+        
+        context.insert("maxCss", &repository.get_max_css().unwrap_or(PerformancePageResult::default()));
+        context.insert("averageCss", &bytes_to_display(repository.get_average_css().unwrap_or(0f64)));
 
-    context.insert("maxHtml", &connection.get_max_html().unwrap_or(PerformancePageResult::default()));
-    context.insert("averageHtml", &bytes_to_display(connection.get_average_html().unwrap_or(0)));
+        context.insert("maxHtml", &repository.get_max_html().unwrap_or(PerformancePageResult::default()));
+        context.insert("averageHtml", &bytes_to_display(repository.get_average_html().unwrap_or(0f64)));
+        context
+    }).await.unwrap();
 
     let page = match TEMPLATES.render("performance.html", &context) {
         Ok(p) => p.to_string(),
@@ -90,8 +95,11 @@ async fn get_performance_page() -> HttpResponse {
 }
 
 #[put("view/domains/{domain}/status")]
-async fn update_domain_status(domain: web::Path<String>, update: web::Form<DomainStatus>) -> HttpResponse {
-    get_sqlite_database_connection().unwrap().set_domain_status(domain.to_string(), update.clone());
+async fn update_domain_status(pool: web::Data<Pool<DbConfig>>, domain: web::Path<String>, update: web::Form<DomainStatus>) -> HttpResponse {
+    web::block(move || {
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        repository.set_domain_status(domain.to_string(), update.clone());
+    }).await.unwrap();
 
     HttpResponse::Ok()
         .content_type("text/html; chartset=utf-8")
@@ -99,14 +107,20 @@ async fn update_domain_status(domain: web::Path<String>, update: web::Form<Domai
 }
 
 #[post("view/domains")]
-async fn add_domain(add: web::Form<DomainData>) -> impl Responder { 
-    get_sqlite_database_connection().unwrap().add_domain(add.clone());
+async fn add_domain(pool: web::Data<Pool<DbConfig>>, add: web::Form<DomainData>) -> impl Responder {
+    web::block(move || {
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        repository.add_domain(add.clone());
+    }).await.unwrap();
     Redirect::to("../domain-management").see_other()
 }
 
 #[put("view/content/{content_type}/shouldDownload")]
-async fn update_download_policy(content_type: web::Path<String>, update: web::Form<ContentStatusUpdate>) -> HttpResponse { 
-    get_sqlite_database_connection().unwrap().set_content_status(content_type.to_string(), update.clone());
+async fn update_download_policy(pool: web::Data<Pool<DbConfig>>, content_type: web::Path<String>, update: web::Form<ContentStatusUpdate>) -> HttpResponse { 
+    web::block(move || {
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        repository.set_content_status(content_type.to_string(), update.clone());
+    }).await.unwrap();
     
     HttpResponse::Ok()
         .content_type("text/html; chartset=utf-8")
@@ -114,9 +128,13 @@ async fn update_download_policy(content_type: web::Path<String>, update: web::Fo
 }
 
 #[get("/configure")]
-async fn get_configuration_page() -> HttpResponse {
-    let mut context = Context::new();
-    context.insert("contentStatuses", &get_sqlite_database_connection().unwrap().get_content_statuses());
+async fn get_configuration_page(pool: web::Data<Pool<DbConfig>>) -> HttpResponse {
+    let context = web::block(move || {
+        let mut context = Context::new();
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        context.insert("contentStatuses", &repository.get_content_statuses());
+        context
+    }).await.unwrap();
 
     let page = match TEMPLATES.render("settings.html", &context) {
         Ok(p) => p.to_string(),

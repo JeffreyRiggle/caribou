@@ -2,13 +2,13 @@ CREATE TABLE IF NOT EXISTS resources(
     url TEXT PRIMARY KEY,
     path TEXT,
     contentType TEXT,
-    lastIndex NUMERIC,
+    lastIndex DOUBLE PRECISION,
     title TEXT,
     summary TEXT,
     description TEXT,
     status TEXT,
     headers TEXT,
-    expires NUMERIC
+    expires DOUBLE PRECISION
 );
 
 CREATE TABLE IF NOT EXISTS domains(
@@ -18,21 +18,21 @@ CREATE TABLE IF NOT EXISTS domains(
 
 CREATE TABLE IF NOT EXISTS metadata(
     url TEXT PRIMARY KEY,
-    jsBytes NUMERIC,
-    htmlBytes NUMERIC,
-    cssBytes NUMERIC,
+    jsBytes DOUBLE PRECISION,
+    htmlBytes DOUBLE PRECISION,
+    cssBytes DOUBLE PRECISION,
     compressed TEXT
 );
 
 CREATE TABLE IF NOT EXISTS perf(
     url TEXT,
-    appTime NUMERIC,
-    networkTime NUMERIC
+    appTime DOUBLE PRECISION,
+    networkTime DOUBLE PRECISION
 );
 
 CREATE TABLE IF NOT EXISTS rank(
     url TEXT PRIMARY KEY,
-    pageRank NUMERIC
+    pageRank DOUBLE PRECISION
 );
 
 CREATE TABLE IF NOT EXISTS links(

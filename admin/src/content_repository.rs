@@ -40,7 +40,7 @@ impl ContentStatusRepository for PostgresConnection {
         for row in self.client.query("SELECT * from downloadPolicy", &[]).unwrap() {
             result.push(ContentStatus {
                 content_type: row.get(0),
-                download: row.get(1)
+                download: row.get::<usize, i32>(1) == 1
             });
         }
     

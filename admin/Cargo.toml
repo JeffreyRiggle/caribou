@@ -8,10 +8,11 @@ edition = "2021"
 [dependencies]
 actix-web = "4.5.1"
 lazy_static = "1.4.0"
-rusqlite = { version = "0.31.0", features = ["bundled"] }
+rusqlite = { version = "0.33.0", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
 tera = "1.19.1"
 chrono = "0.4.35"
 reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 postgres = "0.19.10"
+r2d2 = "0.8.10"

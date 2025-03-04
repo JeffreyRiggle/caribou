@@ -1,12 +1,15 @@
 use actix_web::{get, put, web, Responder, Result};
-
-use crate::{dbaccess::get_sqlite_database_connection, domain_repository::DomainRepository};
+use r2d2::Pool;
 
 use super::models::{DomainStatus, DomainsResponse};
+use super::dbaccess::DbConfig;
 
 #[get("/domains")]
-async fn handle_get_domains() -> Result<impl Responder> {
-   let result = get_sqlite_database_connection().unwrap().get_domains();
+async fn handle_get_domains(pool: web::Data<Pool<DbConfig>>) -> Result<impl Responder> {
+    let result = web::block(move || {
+        let mut conn = pool.get().expect("Couldn't get connection from pool");
+        conn.get_domains()
+    }).await.unwrap();
 
     Ok(web::Json(DomainsResponse {
         domains: result
@@ -14,7 +17,12 @@ async fn handle_get_domains() -> Result<impl Responder> {
 }
 
 #[put("/domains/{domain}/status")]
-async fn update_domain_status(domain: web::Path<String>, update: web::Json<DomainStatus>) -> Result<impl Responder> {
-    Ok(web::Json(get_sqlite_database_connection().unwrap().set_domain_status(domain.to_string(), update.clone())))
+async fn update_domain_status(pool: web::Data<Pool<DbConfig>>, domain: web::Path<String>, update: web::Json<DomainStatus>) -> Result<impl Responder> {
+    let result = web::block(move || {
+        let mut conn = pool.get().expect("Couldn't get connection from pool");
+        conn.set_domain_status(domain.to_string(), update.clone())
+    }).await.unwrap();
+    
+    Ok(web::Json(result))
 }
 
