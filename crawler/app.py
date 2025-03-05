@@ -13,7 +13,7 @@ import typing
 
 executor = ThreadPoolExecutor(1)
 
-is_postgres = os.environ['USE_POSTGRES'] == '1'
+is_postgres = 'USE_POSTGRES' in os.environ
 db = None
 
 if is_postgres:
