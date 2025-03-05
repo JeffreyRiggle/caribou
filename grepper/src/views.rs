@@ -1,8 +1,9 @@
 use actix_web::{get, web, HttpResponse};
+use r2d2::Pool;
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::{repository::get_results, models::QueryRequest};
+use crate::{dbaccess::DbConfig, models::QueryRequest};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -48,10 +49,15 @@ async fn get_graph_page() -> HttpResponse {
 }
 
 #[get("/query")]
-async fn query_data(q: web::Query<QueryRequest>) -> HttpResponse {
-    let results = get_results(q.into_inner().q);
-    let mut context = Context::new();
-    context.insert("results", &results.results);
+async fn query_data(pool: web::Data<Pool<DbConfig>>, q: web::Query<QueryRequest>) -> HttpResponse {
+    let context= web::block(move || {
+        let mut context = Context::new();
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        let results = repository.get_results(q.into_inner().q);
+        context.insert("results", &results.results);
+        context
+    }).await.unwrap();
+
     let page = match TEMPLATES.render("result-list.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
