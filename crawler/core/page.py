@@ -84,7 +84,11 @@ class Page:
     def get_favicons(self):
         favicons = self.interactive_content.select('link[rel="icon"]')
         for favicon in favicons:
-            icon_details = Favicon(favicon.get('href'), self.url, favicon.get('media'), favicon.get('type'), favicon.get('sizes'))
+            icon_ref = favicon.get('href')
+            if is_absolute_url(icon_ref) == False:
+                icon_ref = f"https://{get_domain(self.url)}{icon_ref}"
+
+            icon_details = Favicon(icon_ref, self.url, favicon.get('media'), favicon.get('type'), favicon.get('sizes'))
             self.favicons.append(icon_details)
 
     def get_js_bytes(self, executor: concurrent.futures.ThreadPoolExecutor, js_futures: list[concurrent.futures.Future]):

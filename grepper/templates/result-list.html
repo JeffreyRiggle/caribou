@@ -1,6 +1,7 @@
 <ul>
 	{% for result in results %}
 		<li class="card">
+		  {% if result.favicon %} <img width="16" height="16" src="{{result.favicon}}" /> {% endif %}
 		  <a href="{{result.url}}" target="_blank">{{result.title}}</a>
 		  <p>{{result.summary}}</p>
 		  <p>{{result.description}}</p>

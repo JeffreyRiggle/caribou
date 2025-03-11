@@ -21,7 +21,8 @@ impl ResultRepository for SQLiteConnection {
                 url: row.get(0)?,
                 title: row.get(1)?,
                 description: row.get(2)?,
-                summary: row.get(3)?
+                summary: row.get(3)?,
+                favicon: String::new()
             })
         }).unwrap();
 
@@ -159,21 +160,31 @@ impl ResultRepository for PostgresConnection {
         let mut result = Vec::new();
         let query_string = "
 WITH res as (
-	SELECT resources.url, resources.title, resources.summary, resources.description FROM resources
-	JOIN rank 
-	ON rank.url = resources.url WHERE Status = 'Processed' 
+	SELECT resources.url as url, resources.title, resources.summary, resources.description, favicon.url as favicon 
+	FROM resources
+	inner JOIN rank 
+	ON rank.url = resources.url
+	left join favicon
+	on resources.url = favicon.documenturl
+	WHERE Status = 'Processed'
 	AND contentType = 'html' 
 	AND (summary LIKE $1 OR description LIKE $1)
 	ORDER BY pageRank desc
 )
-SELECT url, title, summary, description FROM res";
+SELECT url, title, summary, description, favicon FROM res";
 
         for domain_result in self.client.query(query_string, &[&format!("%{}%", query)]).unwrap() {
+            let optional_icon: Option<String> = domain_result.get(4);
+            let favicon = match optional_icon {
+                Some(v) => v,
+                None => String::new()
+            };
             result.push(ResultData {
                 url: domain_result.get(0),
                 title: domain_result.get(1),
                 description: domain_result.get(2),
-                summary: domain_result.get(3)
+                summary: domain_result.get(3),
+                favicon: favicon
             });
         }
 

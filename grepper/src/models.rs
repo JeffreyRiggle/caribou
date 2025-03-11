@@ -8,6 +8,7 @@ pub struct ResultData {
     pub description: String,
     pub summary: String,
     pub title: String,
+    pub favicon: String
 }
 
 #[derive(Debug, Serialize)]
