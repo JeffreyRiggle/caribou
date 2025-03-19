@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
 pub struct ResultData {
+    pub id: String,
     pub url: String,
     pub description: String,
     pub summary: String,

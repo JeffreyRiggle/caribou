@@ -1,5 +1,5 @@
 use std::fs;
-
+use base64::prelude::*;
 use rusqlite::params;
 use crate::{dbaccess::{PostgresConnection, SQLiteConnection}, models::{AssetResult, DBAsset, GraphResult, GraphResultReponse, PageAssets}};
 
@@ -17,8 +17,10 @@ impl ResultRepository for SQLiteConnection {
     fn get_results(&mut self, query: String) -> ResultsResponse {
         let mut stmt = self.connection.prepare("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND contentType = 'html' AND (summary LIKE ?1 OR description LIKE ?1) ORDER BY pageRank DESC) SELECT url, title, summary, description FROM res").unwrap();
         let rows = stmt.query_map(params![format!("%{}%", query)], |row| {
+            let url: String = row.get(0)?;
             Ok(ResultData {
-                url: row.get(0)?,
+                id: BASE64_STANDARD.encode(url.as_str()),
+                url,
                 title: row.get(1)?,
                 description: row.get(2)?,
                 summary: row.get(3)?,
@@ -179,8 +181,10 @@ SELECT url, title, summary, description, favicon FROM res";
                 Some(v) => v,
                 None => String::new()
             };
+            let url: String = domain_result.get(0);
             result.push(ResultData {
-                url: domain_result.get(0),
+                id: BASE64_STANDARD.encode(url.as_str()),
+                url,
                 title: domain_result.get(1),
                 description: domain_result.get(2),
                 summary: domain_result.get(3),
