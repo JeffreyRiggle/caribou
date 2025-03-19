@@ -27,7 +27,7 @@
 					color: #d6a876;
 				  }
 
-				  .header {
+				  header {
 					color: #ffffff;
 				    text-align: center;
 				  }
@@ -50,7 +50,7 @@
 				</style>
 		</head>
 		</body>
-				<div class="header">
+				<header>
 						<h1>Grepper</h1>
 						<input type="text" 
 							   hx-get="/query"
@@ -59,8 +59,8 @@
 							   hx-target="#results"
 							   hx-swap="innerHtml"
 							   autofocus>
-				</div>
-				<div id="results"></div>
+				</header>
+				<main id="results"></main>
 		</body>
 		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 </html>
