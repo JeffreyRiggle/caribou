@@ -38,6 +38,7 @@ pub struct GraphResultReponse {
 
 #[derive(Debug, Serialize)]
 pub struct AssetResult {
+    pub id: String,
     pub url: String,
     pub bytes: u64,
     #[serde(rename="contentType")]

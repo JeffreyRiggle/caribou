@@ -4,6 +4,7 @@ use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use dbaccess::{DbConfig, PostgresConfig};
 
+mod asset_processor;
 mod views;
 mod models;
 mod repository;
@@ -38,6 +39,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::query_data)
             .service(views::get_graph_page)
             .service(views::get_page_details)
+            .service(views::get_asset_details)
             .service(api::query_graph_data)
             .service(api::query_url_data)
             .service(api::get_page_assets)

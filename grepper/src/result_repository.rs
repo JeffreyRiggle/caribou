@@ -131,6 +131,7 @@ impl ResultRepository for SQLiteConnection {
             let file_size = metadata.len();
 
             resulting_assets.push(AssetResult {
+                id: BASE64_STANDARD.encode(resulting_row.url.as_str()),
                 url: resulting_row.url,
                 bytes: file_size,
                 content_type: resulting_row.content_type
@@ -284,6 +285,7 @@ SELECT url, title, summary, pageRank FROM res";
             let file_size = metadata.len();
 
             resulting_assets.push(AssetResult {
+                id: BASE64_STANDARD.encode(resulting_row.url.as_str()),
                 url: resulting_row.url,
                 bytes: file_size,
                 content_type: resulting_row.content_type

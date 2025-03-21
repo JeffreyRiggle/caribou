@@ -1,0 +1,109 @@
+<div id="details-content">
+    <h3>{{targetUrl}} Details</h3>
+    {% if assetDetails.image %}
+    <p>Image is of type {{assetDetails.image.imageType}}</p>
+    {% endif %}
+
+    {% if assetDetails.css %}
+    <details>
+        <summary>External Links ({{assetDetails.css.externalLinks | length }})</summary>
+        <ul>
+            {% for link in assetDetails.css.externalLinks %}
+            <li><a href="{{link}}" target="_blank">{{link}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used functions ({{assetDetails.css.functions | length}})</summary>
+        <ul>
+            {% for function in assetDetails.css.functions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used css attributes ({{assetDetails.css.attributes | length}})</summary>
+        <ul>
+            {% for attribute in assetDetails.css.attributes %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{attribute}}" target="_blank">{{attribute}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used css selectors ({{assetDetails.css.selected | length}})</summary>
+        <ul>
+            {% for selected in assetDetails.css.selected %}
+            <li>{{selected}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Targeted Ids ({{assetDetails.css.selectedIds | length}})</summary>
+        <ul>
+            {% for id in assetDetails.css.selectedIds %}
+            <li>{{id}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Targeted classes ({{assetDetails.css.selectedClasses | length}})</summary>
+        <ul>
+            {% for class in assetDetails.css.selectedClasses %}
+            <li>{{class}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endif %}
+
+    {% if assetDetails.javascript %}
+    <details>
+        <summary>Properties defined on window ({{assetDetails.javascript.windowProps | length }})</summary>
+        <ul>
+            {% for prop in assetDetails.javascript.windowProps %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q=window.{{prop}}" target="_blank">{{prop}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Functions used on window ({{assetDetails.javascript.windowFunctions | length}})</summary>
+        <ul>
+            {% for function in assetDetails.javascript.windowFunctions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Properties defined on document ({{assetDetails.javascript.documentProps | length}})</summary>
+        <ul>
+            {% for prop in assetDetails.javascript.documentProps %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q=document.{{prop}}" target="_blank">{{prop}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Functions used on document ({{assetDetails.javascript.documentFunctions | length}})</summary>
+        <ul>
+            {% for function in assetDetails.javascript.documentFunctions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Raw strings ({{assetDetails.javascript.strings | length}})</summary>
+        <ul>
+            {% for str in assetDetails.javascript.strings %}
+            <li>{{str}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endif %}
+</div>

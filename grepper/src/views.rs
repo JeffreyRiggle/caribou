@@ -4,7 +4,7 @@ use r2d2::Pool;
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::{dbaccess::DbConfig, models::QueryRequest};
+use crate::{asset_processor::process_asset, dbaccess::DbConfig, models::QueryRequest};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -41,12 +41,38 @@ async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path
         let mut repository = pool.get().expect("Couldn't get connection from pool");
         let target_url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str()).unwrap()).unwrap();
         let results = repository.get_assets(target_url.clone());
-        println!("Getting results for {:?}, resulted in {:?}", target_url, results);
         context.insert("assets", &results.assets);
+        context.insert("targetUrl", &target_url);
         context
     }).await.unwrap();
 
     let page = match TEMPLATES.render("page-details.html", &context) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("Failed to load result list {}", e);
+            "Failed to load".to_string()
+        }
+    };
+
+    HttpResponse::Ok()
+       .content_type("text/html; charset=utf-8")
+       .body(page)
+}
+
+#[get("/asset-details/{base64_url}")]
+async fn get_asset_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> HttpResponse {
+    let url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str()).unwrap()).unwrap();
+    let context = web::block(move || {
+        let mut context = Context::new();
+        let mut repository = pool.get().expect("Couldn't get connection from pool");
+        let page_details = repository.get_page_data(url.clone());
+        let asset_details = process_asset(page_details).unwrap();
+        context.insert("assetDetails", &asset_details);
+        context.insert("targetUrl", &url);
+        context
+    }).await.unwrap();
+
+    let page = match TEMPLATES.render("asset-details.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
             println!("Failed to load result list {}", e);

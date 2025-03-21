@@ -9,6 +9,11 @@
 					font-family: courier;
 				  }
 
+				  main {
+					position: relative;
+					display: grid;
+				  }
+
 				  input {
 					background-color: #969593;
 					font-size: 18px;
@@ -46,6 +51,25 @@
 
 				  li {
 				    list-style: none;
+				  }
+
+				  #page-details:has(#details-content) {
+					position: sticky;
+					top: 0;
+					right:0;
+					max-height: 100vh;
+					background-color: rgba(0,0,0,.7);
+					padding: 8px;
+					overflow: scroll;
+				  }
+
+				  main:has(#details-content) {
+					grid-template-columns: 1fr 1fr;
+				  }
+
+				  summary {
+					color: #ffffff;
+					padding: 8px;
 				  }
 				</style>
 		</head>

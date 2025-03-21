@@ -1,5 +1,8 @@
-<div>
+<div id="details-content">
+    <h3>{{targetUrl}} Assets</h3>
     {% for asset in assets %}
-    <p>Url: {{asset.url}}, Type: {{asset.contentType}}, Bytes: {{asset.bytes}}</p>
+    <a href="{{asset.url}}" target="_blank">{{asset.url}}</a>
+    <p> Type: {{asset.contentType}}, Bytes: {{asset.bytes}}</p>
+    <button hx-get="/asset-details/{{asset.id}}" hx-target="#page-details">Inspect</button>
     {% endfor %}
 </div>
