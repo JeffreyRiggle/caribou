@@ -106,4 +106,53 @@
         </ul>
     </details>
     {% endif %}
+
+    {% if assetDetails.html %}
+    <details>
+        <summary>External Links ({{assetDetails.html.externalLinks | length }})</summary>
+        <ul>
+            {% for link in assetDetails.html.externalLinks %}
+            <li><a href="{{link}}" target="_blank">{{link}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>HTML nodes used ({{assetDetails.html.nodes | length}})</summary>
+        <ul>
+            {% for key, value in assetDetails.html.nodes %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q=<{{key}}>" target="_blank">{{key}} ({{value}})</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>HTML attributes used ({{assetDetails.html.attributes | length}})</summary>
+        <ul>
+            {% for key, value in assetDetails.html.attributes %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{key}}" target="_blank">{{key}} ({{value}})</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Ids defined in document ({{assetDetails.html.ids | length}})</summary>
+        <ul>
+            {% for id in assetDetails.html.ids %}
+            <li>{{id}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Classes defined in document ({{assetDetails.html.classes | length}})</summary>
+        <ul>
+            {% for class in assetDetails.html.classes %}
+            <li>{{class}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <!-- TODO inline javascript -->
+    {% endif %}
 </div>
