@@ -153,6 +153,52 @@
         </ul>
     </details>
 
-    <!-- TODO inline javascript -->
+    {% for details in assetDetails.html.inlineJavascriptDetails %}
+    <p>Inline Javascript #{{loop.index}}</p>
+    <details>
+        <summary>Properties defined on window ({{details.windowProps | length }})</summary>
+        <ul>
+            {% for prop in details.windowProps %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q=window.{{prop}}" target="_blank">{{prop}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Functions used on window ({{details.windowFunctions | length}})</summary>
+        <ul>
+            {% for function in details.windowFunctions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Properties defined on document ({{details.documentProps | length}})</summary>
+        <ul>
+            {% for prop in details.documentProps %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q=document.{{prop}}" target="_blank">{{prop}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Functions used on document ({{details.documentFunctions | length}})</summary>
+        <ul>
+            {% for function in details.documentFunctions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Raw strings ({{details.strings | length}})</summary>
+        <ul>
+            {% for str in details.strings %}
+            <li>{{str}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endfor %}
     {% endif %}
 </div>
