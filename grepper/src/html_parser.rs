@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use select::{document::Document, predicate::{Any, Name}};
-use crate::{javascript_parser::get_js_details, models::HtmlAssetDetails};
+use crate::{css_parser::get_css_details, javascript_parser::get_js_details, models::HtmlAssetDetails};
 
 pub fn get_html_details(html_string: String) -> HtmlAssetDetails {
     let mut external_links = HashSet::new();
@@ -72,12 +72,22 @@ pub fn get_html_details(html_string: String) -> HtmlAssetDetails {
             js_details.push(get_js_details(text.as_str()));
         });
 
+    let mut css_details = Vec::new();
+
+    document
+        .find(Name("style"))
+        .for_each(|node| {
+            let text = node.text();
+            css_details.push(get_css_details(text.as_str()));
+        });
+
      HtmlAssetDetails {
         external_links: external_links.into_iter().collect(),
         nodes: used_nodes.into_iter().collect(),
         attributes: used_attrs.into_iter().collect(),
         ids: ids.into_iter().collect(),
         classes: classes.into_iter().collect(),
-        inline_javascript_details: js_details
+        inline_javascript_details: js_details,
+        inline_css_details: css_details
     }
 }

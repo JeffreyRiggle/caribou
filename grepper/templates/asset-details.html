@@ -200,5 +200,62 @@
         </ul>
     </details>
     {% endfor %}
+
+    {% for details in assetDetails.html.inlineCssDetails %}
+    <p>Inline CSS #{{loop.index}}</p>
+    <details>
+        <summary>External Links ({{details.externalLinks | length }})</summary>
+        <ul>
+            {% for link in details.externalLinks %}
+            <li><a href="{{link}}" target="_blank">{{link}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used functions ({{details.functions | length}})</summary>
+        <ul>
+            {% for function in details.functions %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{function}}()" target="_blank">{{function}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used css attributes ({{details.attributes | length}})</summary>
+        <ul>
+            {% for attribute in details.attributes %}
+            <li><a href="https://developer.mozilla.org/en-US/search?q={{attribute}}" target="_blank">{{attribute}}</a></li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Used css selectors ({{details.selected | length}})</summary>
+        <ul>
+            {% for selected in details.selected %}
+            <li>{{selected}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Targeted Ids ({{details.selectedIds | length}})</summary>
+        <ul>
+            {% for id in details.selectedIds %}
+            <li>{{id}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+
+    <details>
+        <summary>Targeted classes ({{details.selectedClasses | length}})</summary>
+        <ul>
+            {% for class in details.selectedClasses %}
+            <li>{{class}}</li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endfor %}
     {% endif %}
 </div>

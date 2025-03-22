@@ -80,7 +80,9 @@ pub struct HtmlAssetDetails {
     pub ids: Vec<String>,
     pub classes: Vec<String>,
     #[serde(rename="inlineJavascriptDetails")]
-    pub inline_javascript_details: Vec<JavascriptAssetDetails>
+    pub inline_javascript_details: Vec<JavascriptAssetDetails>,
+    #[serde(rename="inlineCssDetails")]
+    pub inline_css_details: Vec<CssAssetDetails>
 }
 
 #[derive(Debug, Serialize)]
