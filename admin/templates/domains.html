@@ -54,8 +54,6 @@
 			}
 
 			.form-section {
-				display: flex;
-				flex-direction: row;
 				margin-bottom: 4px;
 			}
 
@@ -65,10 +63,9 @@
 
 			.form-section input,
 			.form-section select {
-				flex: 1 1 auto;
+				display: inline;
 			}
 		</style>
-		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 	</head>
 	<body>
 		<nav>
@@ -115,4 +112,5 @@
 			</div>
 		<main>
 	</body>
+	<script src="./static/htmx.min.js"></script>
 </html>

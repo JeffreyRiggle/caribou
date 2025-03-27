@@ -2,6 +2,7 @@ use std::env;
 
 use actix_web::{web, App, HttpServer};
 use dbaccess::{DbConfig, PostgresConfig};
+use actix_files as fs;
 
 mod views;
 mod api;
@@ -33,6 +34,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .service(fs::Files::new("/static", "./static").show_files_listing())
             .service(api::handle_get_domains)
             .service(api::update_domain_status)
             .service(views::get_page)
