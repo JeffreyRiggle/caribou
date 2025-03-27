@@ -1,12 +1,15 @@
-<ul>
-	{% for result in results %}
-		<li class="card">
-		  {% if result.favicon %} <img width="16" height="16" src="{{result.favicon}}" /> {% endif %}
-		  <a href="{{result.url}}" target="_blank">{{result.title}}</a>
-		  <button hx-get="/page-details/{{result.id}}" hx-target="#page-details">View Details</button>
-		  <button hx-get="/asset-details/{{result.id}}" hx-target="#page-details">Inspect</button>
-		  <p>{{result.summary}}</p>
-		  <p>{{result.description}}</p>
-		</li>
-	{% endfor %}
-</ul>
+<div id="results">
+	<ul>
+		{% for result in results %}
+			<li class="card">
+			  {% if result.favicon %} <img width="16" height="16" src="{{result.favicon}}" /> {% endif %}
+			  <a href="{{result.url}}" target="_blank">{{result.title}}</a>
+			  <button hx-get="/page-details/{{result.id}}" hx-target="#page-details">View Details</button>
+			  <button hx-get="/asset-details/{{result.id}}" hx-target="#page-details">Inspect</button>
+			  <p>{{result.summary}}</p>
+			  <p>{{result.description}}</p>
+			</li>
+		{% endfor %}
+	</ul>
+</div>
+<div id="page-details"></div>
