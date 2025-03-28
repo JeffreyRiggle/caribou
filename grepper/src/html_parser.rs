@@ -68,6 +68,10 @@ pub fn get_html_details(html_string: String) -> HtmlAssetDetails {
                 return
             }
 
+            if node.attr("type").is_some_and(|t| !t.contains("javascript")) {
+                return
+            }
+
             let text = node.text();
             js_details.push(get_js_details(text.as_str()));
         });

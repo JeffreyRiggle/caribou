@@ -119,23 +119,36 @@ pub fn get_js_details(js_string: &str) -> JavascriptAssetDetails {
 
     let mut parser = Parser::new_from(lexer);
 
-    let module = parser.parse_module().expect("Parsing failed");
-    let mut finder = PropertyFinder { 
-        window_properties: HashSet::new(),
-        document_properties: HashSet::new(),
-        window_functions: HashSet::new(),
-        document_functions: HashSet::new(),
-        strings: HashSet::new(),
-        window_aliases: Vec::new(),
-        document_aliases: Vec::new()
-    };
-    module.visit_with(&mut finder);
-
-    JavascriptAssetDetails {
-        window_props: finder.window_properties.into_iter().collect(),
-        document_props: finder.document_properties.into_iter().collect(),
-        document_functions: finder.document_functions.into_iter().collect(),
-        window_functions: finder.window_functions.into_iter().collect(),
-        strings: finder.strings.into_iter().collect()
+    match parser.parse_module() {
+        Ok(module) => {
+            let mut finder = PropertyFinder { 
+                window_properties: HashSet::new(),
+                document_properties: HashSet::new(),
+                window_functions: HashSet::new(),
+                document_functions: HashSet::new(),
+                strings: HashSet::new(),
+                window_aliases: Vec::new(),
+                document_aliases: Vec::new()
+            };
+            module.visit_with(&mut finder);
+        
+            JavascriptAssetDetails {
+                window_props: finder.window_properties.into_iter().collect(),
+                document_props: finder.document_properties.into_iter().collect(),
+                document_functions: finder.document_functions.into_iter().collect(),
+                window_functions: finder.window_functions.into_iter().collect(),
+                strings: finder.strings.into_iter().collect()
+            }
+        },
+        Err(err) => {
+            println!("Failed to parse model error {:?}. Origin javascript {:?}", err, js_string);
+            JavascriptAssetDetails {
+                window_props: Vec::new(),
+                document_props: Vec::new(),
+                document_functions: Vec::new(),
+                window_functions: Vec::new(),
+                strings: Vec::new()
+            }
+        }
     }
 }
