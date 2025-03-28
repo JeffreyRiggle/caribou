@@ -16,7 +16,7 @@ async fn query_graph_data(pool: web::Data<Pool<DbConfig>>, q: web::Query<QueryRe
 
 #[get("/api/v1/graph/{base64_url}")]
 async fn query_url_data(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> Result<impl Responder> {
-    let url = BASE64_STANDARD.decode(base64_url.as_str()).unwrap();
+    let url = BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap();
     let result = web::block(move || {
         let mut repository = pool.get().expect("Couldn't get connection from pool");
         repository.get_graph_result(String::from_utf8(url).unwrap())
@@ -26,7 +26,7 @@ async fn query_url_data(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<S
 
 #[get("/api/v1/{base64_url}/assets")]
 async fn get_page_assets(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> Result<impl Responder> {
-    let url = BASE64_STANDARD.decode(base64_url.as_str()).unwrap();
+    let url = BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap();
     let result = web::block(move || {
         let mut repository = pool.get().expect("Couldn't get connection from pool");
         repository.get_assets(String::from_utf8(url).unwrap())
@@ -36,7 +36,7 @@ async fn get_page_assets(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<
 
 #[get("/api/v1/{base64_url}/details")]
 async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> Result<Json<AssetDetail>, ApiError> {
-    let url = BASE64_STANDARD.decode(base64_url.as_str()).unwrap();
+    let url = BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap();
     let page_details = web::block(move || {
         let mut repository = pool.get().expect("Couldn't get connection from pool");
         repository.get_page_data(String::from_utf8(url).unwrap())

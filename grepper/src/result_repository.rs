@@ -19,7 +19,7 @@ impl ResultRepository for SQLiteConnection {
         let rows = stmt.query_map(params![format!("%{}%", query)], |row| {
             let url: String = row.get(0)?;
             Ok(ResultData {
-                id: BASE64_STANDARD.encode(url.as_str()),
+                id: BASE64_STANDARD.encode(url.as_str()).replace("/", "%2F"),
                 url,
                 title: row.get(1)?,
                 description: row.get(2)?,
@@ -131,7 +131,7 @@ impl ResultRepository for SQLiteConnection {
             let file_size = metadata.len();
 
             resulting_assets.push(AssetResult {
-                id: BASE64_STANDARD.encode(resulting_row.url.as_str()),
+                id: BASE64_STANDARD.encode(resulting_row.url.as_str()).replace("/", "%2F"),
                 url: resulting_row.url,
                 bytes: file_size,
                 content_type: resulting_row.content_type
@@ -184,7 +184,7 @@ SELECT url, title, summary, description, favicon FROM res";
             };
             let url: String = domain_result.get(0);
             result.push(ResultData {
-                id: BASE64_STANDARD.encode(url.as_str()),
+                id: BASE64_STANDARD.encode(url.as_str()).replace("/", "%2F"),
                 url,
                 title: domain_result.get(1),
                 description: domain_result.get(2),
@@ -285,7 +285,7 @@ SELECT url, title, summary, pageRank FROM res";
             let file_size = metadata.len();
 
             resulting_assets.push(AssetResult {
-                id: BASE64_STANDARD.encode(resulting_row.url.as_str()),
+                id: BASE64_STANDARD.encode(resulting_row.url.as_str()).replace("/", "%2F"),
                 url: resulting_row.url,
                 bytes: file_size,
                 content_type: resulting_row.content_type

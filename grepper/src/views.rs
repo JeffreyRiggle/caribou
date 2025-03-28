@@ -39,7 +39,7 @@ async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path
     let context= web::block(move || {
         let mut context = Context::new();
         let mut repository = pool.get().expect("Couldn't get connection from pool");
-        let target_url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str()).unwrap()).unwrap();
+        let target_url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap()).unwrap();
         let results = repository.get_assets(target_url.clone());
         context.insert("assets", &results.assets);
         context.insert("targetUrl", &target_url);
@@ -61,7 +61,7 @@ async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path
 
 #[get("/asset-details/{base64_url}")]
 async fn get_asset_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> HttpResponse {
-    let url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str()).unwrap()).unwrap();
+    let url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap()).unwrap();
     let context = web::block(move || {
         let mut context = Context::new();
         let mut repository = pool.get().expect("Couldn't get connection from pool");
