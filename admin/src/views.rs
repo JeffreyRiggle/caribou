@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 
 use actix_web::web::Redirect;
 use actix_web::{get, post, put, web, HttpResponse, Responder};
@@ -14,7 +15,14 @@ use crate::dbaccess::DbConfig;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
-         let tera = match Tera::new("templates/**/*") {
+        let template_dir = match env::var("TEMPLATE_DIR") {
+            Ok(dir) => dir,
+            Err(_) => "templates/**/*".to_string()
+        };
+
+        println!("Loading templates from {:?}", template_dir);
+
+        let tera = match Tera::new(&template_dir) {
             Ok(t) => t,
             Err(e) => {
                 println!("Parsing error {}!", e);

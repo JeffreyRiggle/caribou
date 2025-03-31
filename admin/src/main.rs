@@ -31,6 +31,12 @@ async fn main() -> std::io::Result<()> {
         .build(config)
         .expect("database URL should be valid path to SQLite DB file");
 
+    let address = match env::var("PROD_BUILD") {
+        Ok(_) => "0.0.0.0",
+        Err(_) => "127.0.0.1"
+    };
+
+    println!("Starting app on address {:?}", address);
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
@@ -47,7 +53,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::get_jobs_page)
             .service(views::start_job)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind((address, 8080))?
     .run()
     .await
 }
