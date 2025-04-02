@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 
 use crate::performance_model::PerformancePageResult;
 use crate::models::{ContentStatusUpdate, DomainData, DomainStatus, JobDisplay, JobResponse, ToJobDisplay};
-use crate::apiclient::{proxy_get, proxy_post};
+use crate::apiclient::{get_crawler_endpoint, proxy_get, proxy_post};
 use crate::utils::bytes_to_display;
 use crate::dbaccess::DbConfig;
 
@@ -160,7 +160,7 @@ async fn get_configuration_page(pool: web::Data<Pool<DbConfig>>) -> HttpResponse
 #[get("/jobs")]
 async fn get_jobs_page() -> HttpResponse {
     let mut context = Context::new();
-    let jobs = match proxy_get::<HashMap<String, JobResponse>>("http://127.0.0.1:5000/jobs").await {
+    let jobs = match proxy_get::<HashMap<String, JobResponse>>(format!("{}/jobs", get_crawler_endpoint()).as_str()).await {
         Ok(jobs) => jobs,
         Err(e) => {
             println!("Failed to get jobs {}", e);
@@ -186,7 +186,9 @@ async fn get_jobs_page() -> HttpResponse {
 
 #[post("view/execute-job")]
 async fn start_job() -> impl Responder { 
-    match proxy_post::<JobResponse>("http://127.0.0.1:5000/execute").await {
+    let job_execute_endpoint = format!("{}/execute", get_crawler_endpoint());
+    println!("Executing job via: {:?}", job_execute_endpoint);
+    match proxy_post::<JobResponse>(&job_execute_endpoint.as_str()).await {
         Ok(job) => {
             println!("Created job: {job:#?}")
         },

@@ -20,8 +20,6 @@ pub fn get_sqlite_database_connection() -> std::io::Result<SQLiteConnection> {
         Err(_) => "../grepper.db".to_string()
     };
 
-    println!("Reading SQLite from {:?}", db_file);
-
     let conn: Result<SQLiteConnection, Error> = match Connection::open_with_flags(db_file.clone(), OpenFlags::SQLITE_OPEN_READ_WRITE) {
         Ok(c) => Ok(SQLiteConnection{ connection: c }),
         Err(_) => {

@@ -17,5 +17,6 @@ ENV DB_FILES="/usr/src/db"
 ENV PROD_BUILD="true"
 ENV SQLITE_FILE="/usr/src/grepper.db"
 ENV TEMPLATE_DIR="/usr/src/caribou-admin/templates/**/*"
+ENV STATIC_DIR="/usr/src/caribou-admin/static"
 EXPOSE 8080
 CMD [ "caribou-admin" ]
