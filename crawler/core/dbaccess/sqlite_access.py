@@ -7,12 +7,14 @@ import threading
 import time
 
 class SQLiteDBAccess:
-    def __init__(self):
+    def __init__(self, db_file: str = "../grepper.db"):
+        self.db_file = db_file
         self.lock = threading.Lock()
 
     def setup(self):
-        should_initialize = isfile("../grepper.db") == False
-        self.connection = sqlite3.connect("../grepper.db", check_same_thread=False)
+        print(f"Setting up database at path {self.db_file}")
+        should_initialize = isfile(self.db_file) == False
+        self.connection = sqlite3.connect(self.db_file, check_same_thread=False)
 
         if should_initialize == False:
             return

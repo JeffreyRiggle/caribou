@@ -15,11 +15,12 @@ executor = ThreadPoolExecutor(1)
 
 is_postgres = 'USE_POSTGRES' in os.environ
 db = None
-
+contents_path = os.environ['CONTENT_PATH'] if 'CONTENT_PATH' in os.environ else "../contents"
 if is_postgres:
-    db = PostgresDBAccess()
+    db = PostgresDBAccess( )
 else:
-    db = SQLiteDBAccess()
+    has_file_set = 'SQLITE_FILE' in os.environ
+    db = SQLiteDBAccess(os.environ['SQLITE_FILE'] if has_file_set else "../grepper.db")
 
 db.setup()
 db.run_migrations()
@@ -63,16 +64,20 @@ def run_job(job: Job):
     try:
         job.start()
         job_repo.update_job(job)
-        crawl = Crawler(db, policy_manager, job.start_time)
+        crawl = Crawler(db, policy_manager, job.start_time, contents_path)
         crawl.load()
         crawl.crawl()
 
         ranker = Ranker(db)
         ranker.rank()
-    except:
+    except Exception as e:
+        app.logger.error("Failed to run job: %s", e)
         job.fail()
         job_repo.update_job(job)
         return
 
     job.complete()
     job_repo.update_job(job)
+
+if __name__ == "__main__":
+   app.run(host='0.0.0.0',port=5001) 

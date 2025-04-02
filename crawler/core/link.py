@@ -17,7 +17,7 @@ import time
 from uuid import uuid4
 
 class Link:
-    def __init__(self, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager, contents_path: str):
         self.url = url
         self.asset_respository = asset_respository
         self.policy_manager = policy_manager
@@ -28,16 +28,17 @@ class Link:
         self.content = None
         self.headers = ''
         self.total_time = 0
+        self.contents_path = contents_path
 
     def load(self):
         self.loaded = True
         res = self.get_content(self.url)
         if self.is_page():
-            page = Page(self.url, self.asset_respository)
+            page = Page(self.url, self.asset_respository, self.contents_path)
             page.intialize_from_result(res)
             self.result = page
         elif self.is_image():
-            self.result = ImageAsset(get_domain(self.url), self.url, '', '')
+            self.result = ImageAsset(get_domain(self.url), self.url, '', '', self.contents_path)
         elif self.is_xml():
             self.result = XmlAsset(self.url, self.content)
         elif self.is_json():
@@ -55,7 +56,7 @@ class Link:
         if self.should_download() == False:
             return None
 
-        dir_path = f"../contents/{get_domain(self.url)}/{self.get_dowload_folder()}"
+        dir_path = f"{self.contents_path}/{get_domain(self.url)}/{self.get_dowload_folder()}"
         file_id = str(uuid4())
         file_name = f"{file_id}{self.get_extension()}"
         write_file(dir_path, file_name, self.content)
@@ -210,10 +211,10 @@ class Link:
             return None
 
         if is_absolute_url(link):
-            return Link(link, self.asset_respository, self.policy_manager)
+            return Link(link, self.asset_respository, self.policy_manager, self.contents_path)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Link(f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)
+        return Link(f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager, self.contents_path)

@@ -1,0 +1,8 @@
+# Python caches
+__pycache__
+
+# Python venvs
+.crawler
+
+# rust targets
+admin/target

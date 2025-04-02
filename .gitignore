@@ -8,3 +8,6 @@ grepper/target/**
 crawler/contents/**
 .crawler
 .DS_Store
+
+# test area for volume sharing
+db_test

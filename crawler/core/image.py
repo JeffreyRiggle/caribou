@@ -5,15 +5,16 @@ import mimetypes
 from uuid import uuid4
 
 class ImageAsset:
-    def __init__(self, domain: str, url: str, description: str, title: str):
+    def __init__(self, domain: str, url: str, description: str, title: str, contents_path: str):
         self.domain = domain
         self.url = url
         self.description = description
         self.title = title
         self.headers = ''
+        self.contents_path = contents_path
     
     def download(self):
-        dir_path = f"../contents/{self.domain}/image"
+        dir_path = f"{self.contents_path}/{self.domain}/image"
         file_id = str(uuid4())
         res = self.get_content()
 

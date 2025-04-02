@@ -11,7 +11,7 @@ import time
 from typing import List
 
 class Page:
-    def __init__(self, url: str, asset_respository: AssetRespositoy):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, contents_path: str):
         self.url = url
         self.asset_respository = asset_respository
         self.failed = False
@@ -24,6 +24,7 @@ class Page:
         self.css_assets = []
         self.headers = ''
         self.favicons: List[Favicon] = []
+        self.contents_path = contents_path
 
     def load(self):
         return self.intialize_from_result(self.get_content(self.url))
@@ -191,5 +192,5 @@ class Page:
 
     def process_image(self, el: Tag):
         domain = get_domain(self.url)
-        return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'))
+        return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'), self.contents_path)
 

@@ -1,0 +1,23 @@
+services:
+  admin:
+    build: 
+      context: .
+      dockerfile: ./admin/Dockerfile
+    ports: 
+      - "8080:8080"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - SQLITE_FILE=/usr/src/data/grepper.db
+      - CRAWLER_ENDPOINT=http://crawler:5001
+  crawler:
+    build: 
+      context: .
+      dockerfile: ./crawler/Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - SQLITE_FILE=/usr/src/data/grepper.db
+      - CONTENT_PATH=/usr/src/data/contents
