@@ -21,3 +21,13 @@ services:
     environment:
       - SQLITE_FILE=/usr/src/data/grepper.db
       - CONTENT_PATH=/usr/src/data/contents
+  grepper:
+    build:
+      context: .
+      dockerfile: ./grepper/Dockerfile
+    ports:
+      - "4080:4080"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - SQLITE_FILE=/usr/src/data/grepper.db

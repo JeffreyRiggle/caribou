@@ -1,4 +1,4 @@
-use std::{fs, io::{Error, ErrorKind}};
+use std::{env, fs, io::{Error, ErrorKind}};
 
 use rusqlite::{Connection, OpenFlags};
 use postgres::{Client, NoTls};
@@ -15,12 +15,26 @@ pub struct PostgresConnection {
 }
 
 pub fn get_sqlite_database_connection() -> std::io::Result<SQLiteConnection> {
-    let conn: Result<SQLiteConnection, Error> = match Connection::open_with_flags("../grepper.db", OpenFlags::SQLITE_OPEN_READ_WRITE) {
+    let db_file = match env::var("SQLITE_FILE") {
+        Ok(f) => f,
+        Err(_) => "../grepper.db".to_string()
+    };
+
+    let conn: Result<SQLiteConnection, Error> = match Connection::open_with_flags(db_file.clone(), OpenFlags::SQLITE_OPEN_READ_WRITE) {
         Ok(c) => Ok(SQLiteConnection{ connection: c }),
         Err(_) => {
-            match Connection::open("../grepper.db") {
+            match Connection::open(db_file) {
                 Ok(c) => {
-                    let sql = fs::read_to_string("../db/sqlite/seed_db.sql").expect("Unable to read initialization file");
+                    let file_path = match env::var("DB_FILES") {
+                        Ok(p) => {
+                            p
+                        },
+                        Err(_) => {
+                            "../db".to_string()
+                        }
+                    };
+                    let seed_file = file_path + "/sqlite/seed_db.sql";
+                    let sql = fs::read_to_string(seed_file).expect("Unable to read initialization file");
                     match c.execute_batch(&sql) {
                         Ok(_) => Ok(SQLiteConnection { connection: c }),
                         Err(_) => Err(Error::new(ErrorKind::Other, "failed to initialize database"))

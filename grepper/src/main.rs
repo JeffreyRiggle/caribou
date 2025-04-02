@@ -31,10 +31,24 @@ async fn main() -> std::io::Result<()> {
         .build(config)
         .expect("database URL should be valid path to SQLite DB file");
 
+    let address = match env::var("PROD_BUILD") {
+        Ok(_) => "0.0.0.0",
+        Err(_) => "127.0.0.1"
+    };
+
+    println!("Starting app on address {:?}", address);
+
+    let static_dir = match env::var("STATIC_DIR") {
+        Ok(dir) => dir,
+        Err(_) => "/static".to_string()
+    };
+
+    println!("Loading static assets from {:?}", static_dir);
+
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(fs::Files::new("/static", "./static").show_files_listing())
+            .service(fs::Files::new("/static", static_dir.as_str()).show_files_listing())
             .service(views::get_page)
             .service(views::query_data)
             .service(views::get_graph_page)
@@ -45,7 +59,7 @@ async fn main() -> std::io::Result<()> {
             .service(api::get_page_assets)
             .service(api::get_page_details)
     })
-    .bind(("127.0.0.1", 4080))?
+    .bind((address, 4080))?
     .run()
     .await
 }

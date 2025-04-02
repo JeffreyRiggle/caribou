@@ -1,3 +1,5 @@
+use std::env;
+
 use actix_web::{get, web, HttpResponse};
 use base64::prelude::*;
 use r2d2::Pool;
@@ -8,7 +10,11 @@ use crate::{asset_processor::process_asset, dbaccess::DbConfig, models::QueryReq
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
-         let tera = match Tera::new("templates/**/*") {
+        let template_dir = match env::var("TEMPLATE_DIR") {
+            Ok(dir) => dir,
+            Err(_) => "templates/**/*".to_string()
+        };
+        let tera = match Tera::new(&template_dir) {
             Ok(t) => t,
             Err(e) => {
                 println!("Parsing error {}!", e);
