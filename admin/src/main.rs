@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
 
     let static_dir = match env::var("STATIC_DIR") {
         Ok(dir) => dir,
-        Err(_) => "/static".to_string()
+        Err(_) => "./static".to_string()
     };
 
     println!("Loading static assets from {:?}", static_dir);

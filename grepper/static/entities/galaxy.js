@@ -59,7 +59,7 @@ export class Galaxy {
 
     buildStars() {
         this.stars = [];
-        const growRate = .25;
+        const growRate = .75;
         let rad = this.innerRadius + growRate;
         let angle = 0;
         while (rad < this.radius) {

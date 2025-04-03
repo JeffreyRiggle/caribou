@@ -76,7 +76,7 @@ impl ResultRepository for SQLiteConnection {
     }
 
     fn get_graph_results(&mut self, query: String) -> GraphResultReponse {
-        let mut stmt = self.connection.prepare("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND contentType = 'html' AND (summary LIKE ?1 OR description LIKE ?1) ORDER BY pageRank DESC) SELECT url, title, summary, pageRank FROM res").unwrap();
+        let mut stmt = self.connection.prepare("WITH res as (SELECT * FROM resources JOIN rank ON rank.url = resources.url WHERE Status = 'Processed' AND contentType = 'html' AND (summary LIKE ?1 OR description LIKE ?1) ORDER BY pageRank DESC) SELECT url, title, summary, pageRank FROM res limit 10").unwrap();
         let rows = stmt.query_map(params![format!("%{}%", query)], |row| {
             Ok(GraphResult {
                 url: row.get(0)?,
@@ -244,7 +244,7 @@ WITH res as (
 	AND (summary LIKE $1 OR description LIKE $1)
 	ORDER BY pageRank desc
 ) 
-SELECT url, title, summary, pageRank FROM res";
+SELECT url, title, summary, pageRank FROM res limit 10";
 
         for domain_result in self.client.query(query_string, &[&format!("%{}%", query)]).unwrap() {
             let dresult = GraphResult {
