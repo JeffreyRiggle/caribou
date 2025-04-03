@@ -50,7 +50,7 @@ export class ExploreScene {
 			anySelected = anySelected || p.selected;
 		});
 		context.lineWidth = 3;
-		this.planetWarps.values().forEach(pWarp => {
+		Array.from(this.planetWarps.values()).forEach(pWarp => {
 			pWarp.update();
 			pWarp.draw(context);
 		});
