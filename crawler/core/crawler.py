@@ -202,12 +202,13 @@ class Crawler:
 
         if self.asset_processed(link.url):
             return 
-
-        if self.policy_manager.should_download_url(link.url):
-            download_children.append(link)
-            return 
-
+        
         shouldCrawl = self.policy_manager.should_crawl_url(link.url)
+
+        if shouldCrawl[0] == False and self.policy_manager.should_download_url(link.url):
+            download_children.append(link)
+            return
+
 
         if shouldCrawl[0] == False:
             self.pending_resouce_entries.append({ 'url': link.url, 'file': "", 'status': shouldCrawl[1], 'text': "",  'description': "", 'title': "", 'contentType': 'unknown', 'headers': "" })
