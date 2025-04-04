@@ -118,6 +118,10 @@ class SQLiteDBAccess:
             return list(map(lambda r: r[0], result.fetchall()))
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
+        if domain == None:
+            print(f"Invalid domain {domain} provided not adding to domains")
+            return
+
         with self.lock:
             self.connection.execute("INSERT INTO domains VALUES (?, ?);", (domain, status))
             

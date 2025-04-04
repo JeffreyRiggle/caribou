@@ -10,6 +10,25 @@ services:
     environment:
       - SQLITE_FILE=/usr/src/data/grepper.db
       - CRAWLER_ENDPOINT=http://crawler:5001
+    profiles:
+      - sqlite-backed
+  admin-pg:
+    build: 
+      context: .
+      dockerfile: ./admin/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: 
+      - "8080:8080"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - CRAWLER_ENDPOINT=http://crawler-pg:5001
+      - USE_POSTGRES=true
+      - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
+    profiles:
+      - postgres-backed
   crawler:
     build: 
       context: .
@@ -21,6 +40,25 @@ services:
     environment:
       - SQLITE_FILE=/usr/src/data/grepper.db
       - CONTENT_PATH=/usr/src/data/contents
+    profiles:
+      - sqlite-backed
+  crawler-pg:
+    build: 
+      context: .
+      dockerfile: ./crawler/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - USE_POSTGRES=true
+      - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
+      - CONTENT_PATH=/usr/src/data/contents
+    profiles:
+      - postgres-backed
   grepper:
     build:
       context: .
@@ -31,3 +69,39 @@ services:
       - "./db_test:/usr/src/data"
     environment:
       - SQLITE_FILE=/usr/src/data/grepper.db
+    profiles:
+      - sqlite-backed
+  grepper-pg:
+    build:
+      context: .
+      dockerfile: ./grepper/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4080:4080"
+    volumes:
+      - "./db_test:/usr/src/data"
+    environment:
+      - USE_POSTGRES=true
+      - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
+    profiles:
+      - postgres-backed
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    volumes:
+      - ./db/postgres/seed_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - postgres-backed

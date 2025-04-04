@@ -17,7 +17,7 @@ is_postgres = 'USE_POSTGRES' in os.environ
 db = None
 contents_path = os.environ['CONTENT_PATH'] if 'CONTENT_PATH' in os.environ else "../contents"
 if is_postgres:
-    db = PostgresDBAccess( )
+    db = PostgresDBAccess()
 else:
     has_file_set = 'SQLITE_FILE' in os.environ
     db = SQLiteDBAccess(os.environ['SQLITE_FILE'] if has_file_set else "../grepper.db")

@@ -1,3 +1,8 @@
+CREATE USER caribou_admin WITH PASSWORD 'itsasecret';
+CREATE DATABASE caribou WITH OWNER caribou_admin;
+
+\c caribou caribou_admin
+
 CREATE TABLE IF NOT EXISTS resources(
     url TEXT PRIMARY KEY,
     path TEXT,

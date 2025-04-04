@@ -14,13 +14,19 @@ The admin application is a general admin application that allows of the configur
 This is a search engine based on the results from the crawler. This has two modes a basic search engine look and an interactive star map for exploring the crawled content.
 
 ## Running
-This can be run by running each individual component as listed below or alternatively the entire application can be run via docker compose.
+
+### Using docker
+You can run the full application in docker using docker compose. This assumes that you have a folder called `db_test` in the source directory. Depending on profile this will either use sqlite or postgres as the backing store.
+
+#### Backed by sqlite
 ```sh
-$ docker compose build
-$ docker compose up
+$ docker compose --profile sqlite-backed up --build
 ```
 
-This assumes that you have a folder called `db_test` in the source directory.
+#### Backed by postgres
+```sh
+$ docker compose --profile postgres-backed up --build
+```
 
 ### Running the crawler API
 1. Change directories to `crawler`

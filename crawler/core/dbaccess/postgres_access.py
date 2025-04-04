@@ -12,14 +12,6 @@ class PostgresDBAccess:
 
     def setup(self):
         self.connection = psycopg2.connect(environ['DB_CONNECTION_STRING'])
-        # TODO how can this be done
-        #should_initialize = isfile("../grepper.db") == False
-        #self.connection = sqlite3.connect("../grepper.db", check_same_thread=False)
-
-        #if should_initialize == False:
-        #    return
-
-        self.execute_sql_file("../db/postgres/seed_db.sql")
 
     def run_migrations(self):
         migrations_dir = "../db/postgres/migrations"
@@ -153,6 +145,10 @@ class PostgresDBAccess:
         return list(map(lambda r: r[0], cursor.fetchall()))
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
+        if domain == None:
+            print(f"Invalid domain {domain} provided not adding to domains")
+            return
+
         cursor = self.connection.cursor()
         params = { 'domain': domain, 'status': status }
         cursor.execute("INSERT INTO domains VALUES (%(domain)s, %(status)s) ON CONFLICT DO NOTHING", params)
