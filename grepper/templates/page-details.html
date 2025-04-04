@@ -3,6 +3,6 @@
     {% for asset in assets %}
     <a href="{{asset.url}}" target="_blank">{{asset.url}}</a>
     <p> Type: {{asset.contentType}}, Bytes: {{asset.bytes}}</p>
-    <button hx-get="/asset-details/{{asset.id}}" hx-target="#page-details">Inspect</button>
+    <button hx-get="/asset-details/{{asset.id}}" hx-target="#page-details" class="inspect-button" title="See asset details"></button>
     {% endfor %}
 </div>
