@@ -8,4 +8,6 @@ test('Caribou created', () => {
    const template = Template.fromStack(stack);
 
    template.hasResource('AWS::ECR::Repository', {});
+   template.hasResource('AWS::EC2::VPC', {});
+   template.hasResource('AWS::RDS::DBInstance', {});
 });

@@ -4,10 +4,18 @@ import { Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecrdeploy from 'cdk-ecr-deployment';
 import * as path from "path";
-import { ArnPrincipal, Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { ArnPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { DockerImageCode } from 'aws-cdk-lib/aws-lambda';
+import { createHash } from 'crypto';
+import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { Credentials, DatabaseSecret } from 'aws-cdk-lib/aws-rds';
 
 export class DeployStack extends cdk.Stack {
   private containerRepository: Repository;
+  private vpc: ec2.Vpc;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -15,11 +23,8 @@ export class DeployStack extends cdk.Stack {
     this.buildAdminContainer();
     this.buildCrawlerContainer();
     this.buildGrepperContainer();
-
-    // vpc
-    // const vpc = new Vpc(this, 'CaribouAdminVPC', {
-    //   ipAddresses: IpAddresses.cidr('10.0.0.0/16')
-    // });
+    this.buildVPC();
+    this.deployPostgres();
 
     // const adminCluster = new Cluster(this, 'CaribouAdminCluster', {
     //   vpc
@@ -29,7 +34,6 @@ export class DeployStack extends cdk.Stack {
     // admin.addContainer('AdminContainer', {
     //   image: 
     // })
-    // postgres
     // ecs or eks with admin and crawler
     // ecs or eks with grepper
   }
@@ -37,6 +41,8 @@ export class DeployStack extends cdk.Stack {
   private buildContainerRepository() {
     this.containerRepository = new Repository(this, 'CaribouRegistry', {
       repositoryName: 'caribou-image-assets',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      emptyOnDelete: true
     });
 
     const accountId = process.env.CDK_DEFAULT_ACCOUNT;
@@ -87,6 +93,88 @@ export class DeployStack extends cdk.Stack {
     const grepperImageDeploy = new ecrdeploy.ECRDeployment(this, 'DeployCaribouGrepperImage', {
       src: new ecrdeploy.DockerImageName(grepperContainerAsset.imageUri),
       dest: new ecrdeploy.DockerImageName(`${this.containerRepository.repositoryUri}:${grepperContainerAsset.assetHash}`),
+    });
+  }
+
+  private buildVPC() {
+    this.vpc = new ec2.Vpc(this, 'CaribouAdminVPC', {
+       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16')
+    });
+  }
+
+  private deployPostgres() {
+    const databaseCreds = new DatabaseSecret(this, 'CaribouDatabaseCredentials', {
+      secretName: 'CaribouPostgresSecrets',
+      username: 'postgres'
+    });
+
+    const dbServer = new rds.DatabaseInstance(this, 'CaribouPostgresInstance', {
+      engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_17_4 }),
+      vpc: this.vpc,
+      credentials: Credentials.fromSecret(databaseCreds),
+      instanceType: new ec2.InstanceType('t4g.micro'),
+      databaseName: 'caribou'
+    });
+
+    const databaseInitializer = new lambda.DockerImageFunction(this, 'ResourceInitializerFn', {
+      memorySize: 128,
+      functionName: `CaribouPostgres-ResInit${this.stackName}`,
+      code: DockerImageCode.fromImageAsset(path.join(__dirname, '../..'), {
+        file: './deploy/initializers/postgres-initializer/Dockerfile'
+      }),
+      vpc: this.vpc,
+      timeout: cdk.Duration.minutes(2),
+      allowAllOutbound: true
+    });
+
+    databaseCreds.grantRead(databaseInitializer);
+
+    const payload: string = JSON.stringify({
+      params: {
+        config: {
+          secretName: 'CaribouPostgresSecrets'
+        }
+      }
+    });
+
+    const payloadHashPrefix = createHash('md5').update(payload).digest('hex').substring(0, 6);
+
+    const sdkCall: AwsSdkCall = {
+      service: 'Lambda',
+      action: 'invoke',
+      parameters: {
+        FunctionName: databaseInitializer.functionName,
+        Payload: payload
+      },
+      physicalResourceId: PhysicalResourceId.of(`$CaribouPostgresInitializer-AwsSdkCall-${databaseInitializer.currentVersion.version + payloadHashPrefix}`)
+    };
+    
+    const customResourceFnRole = new Role(this, 'AwsCustomResourceRole', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+    });
+
+    customResourceFnRole.addToPolicy(
+      new PolicyStatement({
+        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:*-ResInit${this.stackName}`],
+        actions: ['lambda:InvokeFunction']
+      })
+    );
+
+    const customResource = new AwsCustomResource(this, 'AwsCustomResource', {
+      policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: AwsCustomResourcePolicy.ANY_RESOURCE }),
+      onUpdate: sdkCall,
+      timeout: cdk.Duration.minutes(10),
+      role: customResourceFnRole
+    });
+
+    const response = customResource.getResponseField('Payload');
+
+    customResource.node.addDependency(dbServer);
+
+    dbServer.connections.allowFrom(databaseInitializer, ec2.Port.tcp(5432));
+
+    new cdk.CfnOutput(this, 'RdsInitFnResponse', {
+      value: cdk.Token.asString(response)
     });
   }
 }

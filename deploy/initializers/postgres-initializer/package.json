@@ -1,0 +1,13 @@
+{
+    "name": "postgres-initializer",
+    "version": "1.0.0",
+    "description": "Run initialization script for postgres",
+    "main": "index.js",
+    "scripts": {},
+    "keywords": [],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "postgres": "^3.4.5"
+    }
+}
