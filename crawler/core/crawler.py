@@ -27,7 +27,11 @@ class Crawler:
     def load(self):
         start_pages = self.policy_manager.get_crawl_pages()
 
-        for pending_page in self.policy_manager.get_needs_status_pages():
+        needs_status_pages = self.policy_manager.get_needs_status_pages()
+        rate_limited_pages = self.policy_manager.get_rate_limited_pages()
+        print(f"Starting crawler with {len(needs_status_pages)} needs status pages and {len(rate_limited_pages)} rate limited pages")
+        
+        for pending_page in [*needs_status_pages, *rate_limited_pages]:
             if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
                 start_pages.append(pending_page)
          
@@ -172,7 +176,14 @@ class Crawler:
 
     def record_link(self, link: Link):
         network_time = link.load()
-        failed = link.failed == True 
+
+        failed = link.failed == True
+        if link.rate_limited == True:
+            self.policy_manager.set_rate_limited(link.url)
+            self.pending_resouce_entries.append({ 'url': link.url, 'file': "", 'status': ResourceStatus.RateLimited.value, 'text': "", 'description': "", 'title' : "", 'contentType': link.get_content_type(), 'headers': "" })
+            self.processed.add(link.url)
+            return (failed, network_time, [])
+
         if failed:
             self.pending_resouce_entries.append({ 'url': link.url, 'file': "", 'status': ResourceStatus.Failed.value, 'text': "", 'description': "", 'title' : "", 'contentType': link.get_content_type(), 'headers': "" })
             self.processed.add(link.url)

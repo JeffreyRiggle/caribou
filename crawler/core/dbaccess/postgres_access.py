@@ -139,9 +139,14 @@ class PostgresDBAccess:
         if transaction == None:
             cursor.connection.commit()
 
-    def get_pages_by_status(self, status: str):
+    def get_domains_by_status(self, status: str):
         cursor = self.connection.cursor()
         cursor.execute("SELECT domain from domains WHERE Status = %(status)s", { 'status': status })
+        return list(map(lambda r: r[0], cursor.fetchall()))
+    
+    def get_resources_by_status(self, status: str):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT url from resources WHERE Status = %(status)s", { 'status': status })
         return list(map(lambda r: r[0], cursor.fetchall()))
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):

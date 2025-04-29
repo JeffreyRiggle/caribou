@@ -112,9 +112,14 @@ class SQLiteDBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
-    def get_pages_by_status(self, status: str):
+    def get_domains_by_status(self, status: str):
         with self.lock:
             result = self.connection.execute("SELECT domain from domains WHERE Status = ?", (status, ))
+            return list(map(lambda r: r[0], result.fetchall()))
+        
+    def get_resources_by_status(self, status: str):
+        with self.lock:
+            result = self.connection.execute("SELECT url from resources WHERE Status = ?", (status, ))
             return list(map(lambda r: r[0], result.fetchall()))
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):

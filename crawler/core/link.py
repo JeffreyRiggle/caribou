@@ -9,6 +9,7 @@ from core.policy import PolicyManager
 from core.status import ResourceStatus
 from core.xml_asset import XmlAsset
 import urllib.request
+from urllib.error import HTTPError
 import brotli
 from bs4 import Tag
 import gzip
@@ -23,6 +24,7 @@ class Link:
         self.policy_manager = policy_manager
         self.loaded = False
         self.failed = False
+        self.rate_limited = False
         self.content_type = ''
         self.result = None
         self.content = None
@@ -170,6 +172,11 @@ class Link:
     def get_content(self, url: str):
         start_time = time.time()
 
+        if self.policy_manager.is_rate_limited(url) == True:
+            self.failed = True
+            self.rate_limited = True
+            return None
+
         if self.policy_manager.should_download_url(url) == False:
             self.failed = True
             return None
@@ -190,6 +197,13 @@ class Link:
                 self.content_type = response.getheader('Content-Type')
                 self.headers = response.headers.as_string()
                 return (self.content, len(raw), compression, self.total_time, self.headers)
+        except HTTPError as httpEx:
+            if httpEx.code == 429:
+                self.rate_limited = True
+
+            print(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.failed = True
+            return None
         except Exception as ex:
             print(f"Failed to load {url} {ex}")
             self.failed = True

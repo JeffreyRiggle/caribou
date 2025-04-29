@@ -4,6 +4,7 @@ from core.helpers import is_absolute_url, get_domain
 from core.image import ImageAsset
 import concurrent.futures
 import urllib.request
+from urllib.error import HTTPError
 import brotli
 from bs4 import BeautifulSoup, Tag
 import gzip
@@ -15,6 +16,7 @@ class Page:
         self.url = url
         self.asset_respository = asset_respository
         self.failed = False
+        self.rate_limited = False
         self.js_bytes = 0
         self.network_time = 0
         self.css_bytes = 0
@@ -179,6 +181,13 @@ class Page:
 
                 total_time = time.time() - start_time
                 return (content, len(raw), compression, total_time, response.headers.as_string())
+        except HTTPError as httpEx:
+            if httpEx.code == 429:
+                self.rate_limited = True
+
+            print(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.failed = True
+            return None
         except Exception as ex:
             print(f"Failed to load {url} {ex}")
             return None 

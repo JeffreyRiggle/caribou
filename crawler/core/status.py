@@ -10,5 +10,6 @@ class DomainStatus(Enum):
 class ResourceStatus(Enum):
     Processed = "Processed"
     Failed = "Failed"
-    Pending = "Pending"
+    Pending = "Pending",
+    RateLimited = "RateLimited"
 

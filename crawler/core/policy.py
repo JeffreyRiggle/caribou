@@ -1,19 +1,25 @@
 from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.helpers import get_domain
-from core.status import DomainStatus
+from core.status import DomainStatus, ResourceStatus
 from core.transactions import DBTransaction
+from typing import Dict
+import time
 
 class PolicyManager:
     def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess):
         self.pending_domains = set()
+        self.rate_limited_domains: Dict[str, float] = {}
         self.dbaccess = dbaccess
 
     def get_crawl_pages(self):
-        return self.dbaccess.get_pages_by_status(DomainStatus.Crawl.value)
+        return self.dbaccess.get_domains_by_status(DomainStatus.Crawl.value)
     
     def get_needs_status_pages(self):
-        return self.dbaccess.get_pages_by_status(DomainStatus.NeedsStatus.value)
+        return self.dbaccess.get_domains_by_status(DomainStatus.NeedsStatus.value)
+    
+    def get_rate_limited_pages(self):
+        return self.dbaccess.get_resources_by_status(ResourceStatus.RateLimited.value)
 
     def add_crawl_domain(self, domain: str):
         self.add_domain(domain, DomainStatus.Crawl.value)
@@ -23,6 +29,23 @@ class PolicyManager:
 
     def enable_content_download(self, contentType: str, transaction: DBTransaction | None=None):
         self.dbaccess.add_download_policy(contentType, True, transaction)
+
+    def set_rate_limited(self, url: str):
+        domain = get_domain(url)
+        if self.rate_limited_domains.get(domain):
+            return
+        
+        self.rate_limited_domains[domain] = time.time()
+
+    def is_rate_limited(self, url: str):
+        domain = get_domain(url)
+
+        # TODO should this clear after some time
+        if self.rate_limited_domains.get(domain):
+            return True
+        
+        return False
+        
 
     def should_download_url(self, url: str):
         domain = get_domain(url)
@@ -47,7 +70,6 @@ class PolicyManager:
 
         if domain in self.pending_domains:
             return (False, DomainStatus.NeedsStatus.value)
-
 
         result = self.dbaccess.get_domain_status(domain)
         
