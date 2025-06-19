@@ -1,4 +1,4 @@
-FROM rust:latest AS builder
+FROM --platform=linux/amd64 rust:latest AS builder
 
 WORKDIR /usr/src/caribou-admin
 COPY ./admin /usr/src/caribou-admin
@@ -6,7 +6,7 @@ COPY ./db /usr/src/db
 
 RUN cargo install --path .
 
-FROM debian:bookworm-slim
+FROM --platform=linux/amd64 debian:bookworm-slim
 
 RUN apt-get update && apt install -y openssl && rm -rf /var/lib/apt/lists/*
 

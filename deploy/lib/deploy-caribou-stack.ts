@@ -1,10 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Repository } from 'aws-cdk-lib/aws-ecr';
-import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
-import * as ecrdeploy from 'cdk-ecr-deployment';
+import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import * as path from "path";
-import { ArnPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -12,87 +10,52 @@ import { DockerImageCode } from 'aws-cdk-lib/aws-lambda';
 import { createHash } from 'crypto';
 import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { Credentials, DatabaseSecret } from 'aws-cdk-lib/aws-rds';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import { Size } from 'aws-cdk-lib';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 export class DeployStack extends cdk.Stack {
-  private containerRepository: Repository;
   private vpc: ec2.Vpc;
+  private adminImage: DockerImageAsset;
+  private crawlerImage: DockerImageAsset;
+  private grepperImage: DockerImageAsset;
+  private dbSecret: DatabaseSecret;
+  private dbServer: rds.DatabaseInstance;
+  private adminService: ecs.FargateService;
+  private grepperService: ecs.FargateService;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    this.buildContainerRepository();
     this.buildAdminContainer();
     this.buildCrawlerContainer();
     this.buildGrepperContainer();
     this.buildVPC();
-    this.deployPostgres();
-
-    // const adminCluster = new Cluster(this, 'CaribouAdminCluster', {
-    //   vpc
-    // });
-
-    // const admin = new Ec2TaskDefinition(this, 'AdminTaskDefinition');
-    // admin.addContainer('AdminContainer', {
-    //   image: 
-    // })
-    // ecs or eks with admin and crawler
-    // ecs or eks with grepper
-  }
-
-  private buildContainerRepository() {
-    this.containerRepository = new Repository(this, 'CaribouRegistry', {
-      repositoryName: 'caribou-image-assets',
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      emptyOnDelete: true
-    });
-
-    const accountId = process.env.CDK_DEFAULT_ACCOUNT;
-    const accountPrincipal = new ArnPrincipal(`arn:aws:iam::${accountId}:root`);
-    this.containerRepository.addToResourcePolicy(new PolicyStatement({
-      sid: 'AllowCrossAccountPull',
-      effect: Effect.ALLOW,
-      actions: [
-        'ecr:GetDownloadUrlForLayer',
-        'ecr:BatchCheckLayerAvailability',
-        'ecr:BatchGetImage'
-      ],
-      principals: [ accountPrincipal ]
-    }));
-    this.containerRepository.grantPull(accountPrincipal);
+    // this.deployPostgres();
+    this.deployApps();
+    this.deployLoadBalancer();
   }
 
   private buildAdminContainer() {
-    const adminContainerAsset = new DockerImageAsset(this, 'CaribouAdminImage', {
+    this.adminImage = new DockerImageAsset(this, 'CaribouAdminImage', {
       directory: path.join(__dirname, '../..'),
       file: './admin/Dockerfile',
-    });
-
-    const adminImageDeploy = new ecrdeploy.ECRDeployment(this, 'DeployCaribouAdminImage', {
-      src: new ecrdeploy.DockerImageName(adminContainerAsset.imageUri),
-      dest: new ecrdeploy.DockerImageName(`${this.containerRepository.repositoryUri}:${adminContainerAsset.assetHash}`),
+      platform: Platform.LINUX_ARM64
     });
   }
 
   private buildCrawlerContainer() {
-    const crawlerContainerAsset = new DockerImageAsset(this, 'CaribouCrawlerImage', {
+    this.crawlerImage = new DockerImageAsset(this, 'CaribouCrawlerImage', {
       directory: path.join(__dirname, '../..'),
       file: './crawler/Dockerfile',
-    });
-
-    const crawlerImageDeploy = new ecrdeploy.ECRDeployment(this, 'DeployCaribouCrawlerImage', {
-      src: new ecrdeploy.DockerImageName(crawlerContainerAsset.imageUri),
-      dest: new ecrdeploy.DockerImageName(`${this.containerRepository.repositoryUri}:${crawlerContainerAsset.assetHash}`),
+      platform: Platform.LINUX_ARM64
     });
   }
 
   private buildGrepperContainer() {
-    const grepperContainerAsset = new DockerImageAsset(this, 'CaribouGrepperImage', {
+    this.grepperImage = new DockerImageAsset(this, 'CaribouGrepperImage', {
       directory: path.join(__dirname, '../..'),
       file: './grepper/Dockerfile',
-    });
-
-    const grepperImageDeploy = new ecrdeploy.ECRDeployment(this, 'DeployCaribouGrepperImage', {
-      src: new ecrdeploy.DockerImageName(grepperContainerAsset.imageUri),
-      dest: new ecrdeploy.DockerImageName(`${this.containerRepository.repositoryUri}:${grepperContainerAsset.assetHash}`),
+      platform: Platform.LINUX_ARM64
     });
   }
 
@@ -103,15 +66,15 @@ export class DeployStack extends cdk.Stack {
   }
 
   private deployPostgres() {
-    const databaseCreds = new DatabaseSecret(this, 'CaribouDatabaseCredentials', {
+    this.dbSecret = new DatabaseSecret(this, 'CaribouDatabaseCredentials', {
       secretName: 'CaribouPostgresSecrets',
       username: 'postgres'
     });
 
-    const dbServer = new rds.DatabaseInstance(this, 'CaribouPostgresInstance', {
+    this.dbServer = new rds.DatabaseInstance(this, 'CaribouPostgresInstance', {
       engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_17_4 }),
       vpc: this.vpc,
-      credentials: Credentials.fromSecret(databaseCreds),
+      credentials: Credentials.fromSecret(this.dbSecret),
       instanceType: new ec2.InstanceType('t4g.micro'),
       databaseName: 'caribou'
     });
@@ -127,7 +90,7 @@ export class DeployStack extends cdk.Stack {
       allowAllOutbound: true
     });
 
-    databaseCreds.grantRead(databaseInitializer);
+    this.dbSecret.grantRead(databaseInitializer);
 
     const payload: string = JSON.stringify({
       params: {
@@ -169,12 +132,157 @@ export class DeployStack extends cdk.Stack {
 
     const response = customResource.getResponseField('Payload');
 
-    customResource.node.addDependency(dbServer);
+    customResource.node.addDependency(this.dbServer);
 
-    dbServer.connections.allowFrom(databaseInitializer, ec2.Port.tcp(5432));
+    this.dbServer.connections.allowFrom(databaseInitializer, ec2.Port.tcp(5432));
 
     new cdk.CfnOutput(this, 'RdsInitFnResponse', {
       value: cdk.Token.asString(response)
+    });
+  }
+
+  private deployApps() {
+    const cluster = new ecs.Cluster(this, 'CaribouCluster', {
+      vpc: this.vpc
+    });
+
+    //cluster.node.addDependency(this.dbServer);
+
+    cluster.addCapacity('DefaultAutoScalingGroupCapacity', {
+      instanceType: new ec2.InstanceType("t3.medium"),
+      machineImage: ecs.EcsOptimizedImage.amazonLinux()
+    });
+
+    //const dbDetails = this.dbSecret.secretValue.toJSON();
+    //const dbConnectionString = `host='${dbDetails.host}' port=5432 user='${dbDetails.username}' password='${dbDetails.password}'`;
+
+    const adminTaskDefinition = new ecs.FargateTaskDefinition(this, 'CaribouTaskDef', {
+      memoryLimitMiB: 4096,
+      cpu: 2048
+    });
+    const grepperTaskDefinition = new ecs.FargateTaskDefinition(this, 'GrepperTaskDef', {
+      memoryLimitMiB: 512
+    });
+    const volume = new ecs.ServiceManagedVolume(this, 'CaribouFiles', {
+      name: 'CaribouFiles',
+      managedEBSVolume: {
+        size: Size.gibibytes(15),
+        volumeType: ec2.EbsDeviceVolumeType.GP3,
+        fileSystemType: ecs.FileSystemType.XFS
+      },
+    });
+    adminTaskDefinition.addVolume(volume);
+    grepperTaskDefinition.addVolume(volume);
+
+    const adminContainer = adminTaskDefinition.addContainer('AdminContainer', {
+      image: ecs.ContainerImage.fromDockerImageAsset(this.adminImage),
+      memoryLimitMiB: 512,
+      portMappings: [{ containerPort: 8080 }],
+      logging: ecs.LogDriver.awsLogs({
+        streamPrefix: 'admin-container-logs'
+      }),
+      environment: {
+        // USE_POSTGRES: 'true',
+        // DB_CONNECTION_STRING: dbConnectionString,
+        CRAWLER_ENDPOINT: 'http://127.0.0.1:5001',
+        SQLITE_FILE: '/usr/src/data/grepper.db'
+      },
+    });
+
+    volume.mountIn(adminContainer, {
+      containerPath: '/usr/src/data',
+      readOnly: false
+    });
+
+    const crawlerContainer = adminTaskDefinition.addContainer('CrawlerContainer', {
+      image: ecs.ContainerImage.fromDockerImageAsset(this.crawlerImage),
+      memoryLimitMiB: 1024,
+      portMappings: [{ containerPort: 5001 }],
+      logging: ecs.LogDriver.awsLogs({
+        streamPrefix: 'crawler-container-logs'
+      }),
+      environment: {
+        //USE_POSTGRES: 'true',
+        //DB_CONNECTION_STRING: dbConnectionString,
+        CONTENT_PATH: '/usr/src/data/contents',
+        SQLITE_FILE: '/usr/src/data/grepper.db'
+      },
+    });
+
+    const grepperContainer = grepperTaskDefinition.addContainer('GrepperContainer', {
+      image: ecs.ContainerImage.fromDockerImageAsset(this.grepperImage),
+      memoryLimitMiB: 512,
+      portMappings: [{ containerPort: 4080 }],
+      logging: ecs.LogDriver.awsLogs({
+        streamPrefix: 'grepper-container-logs'
+      }),
+      environment: {
+        //USE_POSTGRES: 'true',
+        //DB_CONNECTION_STRING: dbConnectionString,
+        CONTENT_PATH: '/usr/src/data/contents',
+        SQLITE_FILE: '/usr/src/data/grepper.db'
+      },
+    });
+
+    volume.mountIn(crawlerContainer, {
+      containerPath: '/usr/src/data',
+      readOnly: false
+    });
+    volume.mountIn(grepperContainer, {
+      containerPath: '/usr/src/data',
+      readOnly: false
+    });
+
+    this.adminService = new ecs.FargateService(this, 'AdminService', {
+      cluster,
+      taskDefinition: adminTaskDefinition,
+      desiredCount: 1,
+      minHealthyPercent: 100,
+    });
+
+    this.adminService.addVolume(volume);
+
+    this.grepperService = new ecs.FargateService(this, 'GrepperService', {
+      cluster,
+      taskDefinition: grepperTaskDefinition,
+      desiredCount: 1,
+      minHealthyPercent: 100,
+    });
+
+    this.grepperService.addVolume(volume);
+  }
+
+  private deployLoadBalancer() {
+    const loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'CaribouALB', {
+      vpc: this.vpc,
+      internetFacing: true,
+    });
+
+    const adminListener = loadBalancer.addListener('AdminListener', {
+      port: 8080,
+      protocol: elbv2.ApplicationProtocol.HTTP
+    });
+
+    const adminTargetGroup = adminListener.addTargets('AdminTargettingGroup', {
+      port: 8080,
+      targets: [this.adminService],
+      protocol: elbv2.ApplicationProtocol.HTTP
+    });
+
+    const grepperListener = loadBalancer.addListener('GrepperListener', {
+      port: 4080,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+    });
+
+    const grepperTargetGroup = grepperListener.addTargets('GrepperTargettingGroup', {
+      port: 4080,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targets: [this.grepperService]
+    });
+
+    // Output the ALB DNS name
+    new cdk.CfnOutput(this, 'LoadBalancerDNS', {
+      value: loadBalancer.loadBalancerDnsName,
     });
   }
 }
