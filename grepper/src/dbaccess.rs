@@ -1,5 +1,7 @@
 use std::{env, fs, io::{Error, ErrorKind}};
 
+use native_tls::{TlsConnector};
+use postgres_native_tls::MakeTlsConnector;
 use rusqlite::{Connection, OpenFlags};
 use postgres::{Client, NoTls};
 use r2d2::ManageConnection;
@@ -51,7 +53,8 @@ pub fn get_sqlite_database_connection() -> std::io::Result<SQLiteConnection> {
 }
 
 pub struct PostgresConfig {
-    pub connection_string: String
+    pub connection_string: String,
+    pub use_ssl: bool
 }
 
 pub enum DbConfig {
@@ -99,8 +102,17 @@ impl ManageConnection for DbConfig
     fn connect(&self) -> Result<Box<dyn Repository>, Self::Error> {
         match self {
             Self::Postgres(config) => {
-                // TODO this could probably be better
-                let connection = Client::connect(&config.connection_string, NoTls).unwrap();
+                let connection;
+                if config.use_ssl {
+                    let mut builder = TlsConnector::builder();
+                    builder.danger_accept_invalid_certs(true);
+                    let connector = builder.build().unwrap();
+                    let connector = MakeTlsConnector::new(connector);
+                    connection = Client::connect(&config.connection_string, connector).unwrap();
+                } else {
+                    connection = Client::connect(&config.connection_string, NoTls).unwrap()
+                }
+                
                 Ok(Box::new(PostgresConnection {
                     client: connection
                 }))

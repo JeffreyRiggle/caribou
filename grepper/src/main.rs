@@ -20,7 +20,16 @@ mod result_repository;
 async fn main() -> std::io::Result<()> {
     let config = match env::var("USE_POSTGRES") {
         Ok(_) => {
-            DbConfig::Postgres(PostgresConfig { connection_string: env::var("DB_CONNECTION_STRING").expect("Failed to get postgres connection string") })
+            match env::var("DB_CONNECTION_STRING") {
+                Ok(connection_string) => {
+                    DbConfig::Postgres(PostgresConfig { connection_string: connection_string, use_ssl: env::var("USE_SSL_DB").is_ok() })
+                },
+                Err(_) => {
+                    let connection_string = format!("host='{}' port=5432 user='{}' password='{}'", env::var("DB_HOST").unwrap(), env::var("DB_USER").unwrap(), env::var("DB_PASSWORD").unwrap()).to_string();
+                    println!("Attempting to connect with {:?}", connection_string);
+                    DbConfig::Postgres(PostgresConfig { connection_string: connection_string, use_ssl: env::var("USE_SSL_DB").is_ok() })
+                }
+            }
         },
         Err(_) => {
             DbConfig::Sqlite()

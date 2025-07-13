@@ -27,6 +27,7 @@ services:
       - CRAWLER_ENDPOINT=http://crawler-pg:5001
       - USE_POSTGRES=true
       - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
+      - USE_SSL_DB=TRUE
     profiles:
       - postgres-backed
   crawler:
@@ -85,6 +86,7 @@ services:
     environment:
       - USE_POSTGRES=true
       - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
+      - USE_SSL_DB=TRUE
     profiles:
       - postgres-backed
   db:

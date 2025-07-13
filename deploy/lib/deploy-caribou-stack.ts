@@ -30,7 +30,7 @@ export class DeployStack extends cdk.Stack {
     this.buildCrawlerContainer();
     this.buildGrepperContainer();
     this.buildVPC();
-    // this.deployPostgres();
+    this.deployPostgres();
     this.deployApps();
     this.deployLoadBalancer();
   }
@@ -146,15 +146,12 @@ export class DeployStack extends cdk.Stack {
       vpc: this.vpc
     });
 
-    //cluster.node.addDependency(this.dbServer);
+    cluster.node.addDependency(this.dbServer);
 
     cluster.addCapacity('DefaultAutoScalingGroupCapacity', {
       instanceType: new ec2.InstanceType("t3.medium"),
       machineImage: ecs.EcsOptimizedImage.amazonLinux()
     });
-
-    //const dbDetails = this.dbSecret.secretValue.toJSON();
-    //const dbConnectionString = `host='${dbDetails.host}' port=5432 user='${dbDetails.username}' password='${dbDetails.password}'`;
 
     const adminTaskDefinition = new ecs.FargateTaskDefinition(this, 'CaribouTaskDef', {
       memoryLimitMiB: 4096,
@@ -181,11 +178,15 @@ export class DeployStack extends cdk.Stack {
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'admin-container-logs'
       }),
+      secrets: {
+        DB_HOST: ecs.Secret.fromSecretsManager(this.dbSecret, 'host'),
+        DB_USER: ecs.Secret.fromSecretsManager(this.dbSecret, 'username'),
+        DB_PASSWORD: ecs.Secret.fromSecretsManager(this.dbSecret, 'password')
+      },
       environment: {
-        // USE_POSTGRES: 'true',
-        // DB_CONNECTION_STRING: dbConnectionString,
-        CRAWLER_ENDPOINT: 'http://127.0.0.1:5001',
-        SQLITE_FILE: '/usr/src/data/grepper.db'
+        USE_POSTGRES: 'true',
+        USE_SSL_DB: 'true',
+        CRAWLER_ENDPOINT: 'http://127.0.0.1:5001'
       },
     });
 
@@ -201,11 +202,14 @@ export class DeployStack extends cdk.Stack {
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'crawler-container-logs'
       }),
+      secrets: {
+        DB_HOST: ecs.Secret.fromSecretsManager(this.dbSecret, 'host'),
+        DB_USER: ecs.Secret.fromSecretsManager(this.dbSecret, 'username'),
+        DB_PASSWORD: ecs.Secret.fromSecretsManager(this.dbSecret, 'password')
+      },
       environment: {
-        //USE_POSTGRES: 'true',
-        //DB_CONNECTION_STRING: dbConnectionString,
+        USE_POSTGRES: 'true',
         CONTENT_PATH: '/usr/src/data/contents',
-        SQLITE_FILE: '/usr/src/data/grepper.db'
       },
     });
 
@@ -216,11 +220,15 @@ export class DeployStack extends cdk.Stack {
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'grepper-container-logs'
       }),
+      secrets: {
+        DB_HOST: ecs.Secret.fromSecretsManager(this.dbSecret, 'host'),
+        DB_USER: ecs.Secret.fromSecretsManager(this.dbSecret, 'username'),
+        DB_PASSWORD: ecs.Secret.fromSecretsManager(this.dbSecret, 'password')
+      },
       environment: {
-        //USE_POSTGRES: 'true',
-        //DB_CONNECTION_STRING: dbConnectionString,
+        USE_POSTGRES: 'true',
+        USE_SSL_DB: 'true',
         CONTENT_PATH: '/usr/src/data/contents',
-        SQLITE_FILE: '/usr/src/data/grepper.db'
       },
     });
 
@@ -240,6 +248,7 @@ export class DeployStack extends cdk.Stack {
       minHealthyPercent: 100,
     });
 
+    this.dbServer.connections.allowFrom(this.adminService, ec2.Port.tcp(5432));
     this.adminService.addVolume(volume);
 
     this.grepperService = new ecs.FargateService(this, 'GrepperService', {
@@ -249,6 +258,7 @@ export class DeployStack extends cdk.Stack {
       minHealthyPercent: 100,
     });
 
+    this.dbServer.connections.allowFrom(this.grepperService, ec2.Port.tcp(5432));
     this.grepperService.addVolume(volume);
   }
 

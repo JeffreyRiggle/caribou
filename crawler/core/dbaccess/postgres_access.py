@@ -11,7 +11,17 @@ class PostgresDBAccess:
         self.lock = threading.Lock()
 
     def setup(self):
-        self.connection = psycopg2.connect(environ['DB_CONNECTION_STRING'])
+        connection_string = ''
+        if 'DB_CONNECTION_STRING' in environ:
+            connection_string = environ['DB_CONNECTION_STRING']
+        else:
+            connection_string = self.build_connection_string()
+    
+        print(f"Attempting to connect with {connection_string}")
+        self.connection = psycopg2.connect(connection_string)
+
+    def build_connection_string(self):
+        return f"host='{environ['DB_HOST']}' port=5432 user='{environ['DB_USER']}' password='{environ['DB_PASSWORD']}'"
 
     def run_migrations(self):
         migrations_dir = "../db/postgres/migrations"
