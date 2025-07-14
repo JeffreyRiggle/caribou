@@ -82,7 +82,7 @@ class Page:
             self.description = ''
             return
 
-        self.description = meta_tag.get('content')
+        self.description = meta_tag.get('content') or ''
 
     def get_favicons(self):
         favicons = self.interactive_content.select('link[rel="icon"]')
