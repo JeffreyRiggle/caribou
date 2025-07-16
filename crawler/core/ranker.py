@@ -1,16 +1,18 @@
 from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.helpers import get_domain, is_absolute_url
+from core.storage.file_access import FileAccess
 from bs4 import BeautifulSoup
 
 class Ranker:
-    def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess):
+    def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess, storage: FileAccess):
         self.tolerance = 0.001
         self.damping = .85
         self.page_references = dict()
         self.rankings = dict()
         self.pages = []
         self.dbaccess = dbaccess
+        self.storage = storage
 
     def rank(self):
         self.build_graph()
@@ -19,7 +21,7 @@ class Ranker:
     def build_graph(self):
         self.pages = self.dbaccess.get_processed_pages()
         for page in self.pages:
-            with open(page[1]) as file_handle:
+            with self.storage.read(page[1]) as file_handle:
                 content = BeautifulSoup(file_handle.read(), features='html.parser')
                 links = list(filter(lambda x: x is not None, list(set(map(lambda el: get_link(el, page[0]), content.select('a'))))))
                 self.page_references[page[0]] = links

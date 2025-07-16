@@ -70,6 +70,7 @@ services:
       - "./db_test:/usr/src/data"
     environment:
       - SQLITE_FILE=/usr/src/data/grepper.db
+      - CONTENT_PATH=/usr/src/data/contents
     profiles:
       - sqlite-backed
   grepper-pg:
@@ -87,6 +88,7 @@ services:
       - USE_POSTGRES=true
       - DB_CONNECTION_STRING=host='db' port=5432 dbname='caribou' user='caribou_admin' password='itsasecret'
       - USE_SSL_DB=TRUE
+      - CONTENT_PATH=/usr/src/data/contents
     profiles:
       - postgres-backed
   db:

@@ -3,6 +3,7 @@ from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.policy import PolicyManager
 from core.ranker import Ranker
+from core.storage.file_access import FileAccess
 from jobs.job import Job
 from jobs.job_respository_sqlite import JobRepositorySQLite
 from jobs.job_repository_postgres import JobRepositoryPostgres
@@ -16,6 +17,7 @@ executor = ThreadPoolExecutor(1)
 is_postgres = 'USE_POSTGRES' in os.environ
 db = None
 contents_path = os.environ['CONTENT_PATH'] if 'CONTENT_PATH' in os.environ else "../contents"
+storage = FileAccess(contents_path)
 if is_postgres:
     db = PostgresDBAccess()
 else:
@@ -64,14 +66,14 @@ def run_job(job: Job):
     try:
         job.start()
         job_repo.update_job(job)
-        crawl = Crawler(db, policy_manager, job.start_time, contents_path)
+        crawl = Crawler(db, policy_manager, storage, job.start_time)
         crawl.load()
         crawl.crawl()
 
-        ranker = Ranker(db)
+        ranker = Ranker(db, storage)
         ranker.rank()
     except Exception as e:
-        app.logger.error("Failed to run job: %s", e)
+        app.logger.exception("Failed to run job:", e)
         job.fail()
         job_repo.update_job(job)
         return

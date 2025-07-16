@@ -1,17 +1,18 @@
 from core.asset_repo import AssetRespositoy
 from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
-from core.helpers import domain_to_full_url, get_domain, write_file
+from core.helpers import domain_to_full_url, get_domain
 from core.link import Link
 from core.policy import PolicyManager
 from core.page import Page
 from core.status import ResourceStatus
+from core.storage.file_access import FileAccess
 import concurrent.futures
 import time
 from uuid import uuid4
 
 class Crawler:
-    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, start_time: float, contents_path: str = '../contents'):
+    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, storage: FileAccess, start_time: float):
         self.db = db
         self.policy_manager = policy_manager
         self.processed = set()
@@ -22,7 +23,7 @@ class Crawler:
         self.pending_edges = []
         self.pending_favicons = []
         self.start_time = start_time
-        self.contents_path = contents_path
+        self.storage = storage
 
     def load(self):
         start_pages = self.policy_manager.get_crawl_pages()
@@ -35,7 +36,7 @@ class Crawler:
             if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
                 start_pages.append(pending_page)
          
-        self.pending_links = list(map(lambda p: Link(domain_to_full_url(p), self.asset_respository, self.policy_manager, self.contents_path), start_pages))
+        self.pending_links = list(map(lambda p: Link(self.storage, domain_to_full_url(p), self.asset_respository, self.policy_manager), start_pages))
 
     def crawl(self):
         while len(self.pending_links) > 0:
@@ -151,10 +152,10 @@ class Crawler:
                 if url == None or self.asset_processed(url):
                     continue
 
-                dir_path = f"{self.contents_path}/{get_domain(page.url)}/javascript"
+                dir_path = f"{get_domain(page.url)}/javascript"
                 file_id = str(uuid4())
                 file_name = f"{file_id}.js"
-                write_file(dir_path, file_name, content)
+                self.storage.write(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'javascript', 'headers': "" })
                 self.processed.add(url)
 
@@ -167,10 +168,10 @@ class Crawler:
                 if url == None or self.asset_processed(url):
                     continue
 
-                dir_path = f"{self.contents_path}/{get_domain(page.url)}/css"
+                dir_path = f"{get_domain(page.url)}/css"
                 file_id = str(uuid4())
                 file_name = f"{file_id}.css"
-                write_file(dir_path, file_name, content)
+                self.storage.write(dir_path, file_name, content)
                 self.pending_resouce_entries.append({ 'url': url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': content, 'description': '', 'title': '', 'contentType': 'css', 'headers': "" })
                 self.processed.add(url)
 

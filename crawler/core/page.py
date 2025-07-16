@@ -2,6 +2,7 @@ from core.asset_repo import AssetRespositoy
 from core.favicon import Favicon
 from core.helpers import is_absolute_url, get_domain
 from core.image import ImageAsset
+from core.storage.file_access import FileAccess
 import concurrent.futures
 import urllib.request
 from urllib.error import HTTPError
@@ -11,8 +12,9 @@ import gzip
 import time
 from typing import List
 
+
 class Page:
-    def __init__(self, url: str, asset_respository: AssetRespositoy, contents_path: str):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, storage: FileAccess):
         self.url = url
         self.asset_respository = asset_respository
         self.failed = False
@@ -26,7 +28,7 @@ class Page:
         self.css_assets = []
         self.headers = ''
         self.favicons: List[Favicon] = []
-        self.contents_path = contents_path
+        self.storage = storage
 
     def load(self):
         return self.intialize_from_result(self.get_content(self.url))
@@ -201,5 +203,5 @@ class Page:
 
     def process_image(self, el: Tag):
         domain = get_domain(self.url)
-        return ImageAsset(domain, el.get('src'), el.get('alt'), el.get('title'), self.contents_path)
+        return ImageAsset(self.storage, domain, el.get('src'), el.get('alt'), el.get('title'))
 

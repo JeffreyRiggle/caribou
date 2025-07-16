@@ -1,20 +1,22 @@
-from core.helpers import write_file, is_absolute_url
+from core.helpers import is_absolute_url
+from core.storage.file_access import FileAccess
 import urllib.request
 import brotli
 import mimetypes
 from uuid import uuid4
 
+
 class ImageAsset:
-    def __init__(self, domain: str, url: str, description: str, title: str, contents_path: str):
+    def __init__(self, storage: FileAccess, domain: str, url: str, description: str, title: str):
         self.domain = domain
         self.url = url
         self.description = description
         self.title = title
         self.headers = ''
-        self.contents_path = contents_path
+        self.storage = storage
     
     def download(self):
-        dir_path = f"{self.contents_path}/{self.domain}/image"
+        dir_path = f"{self.domain}/image"
         file_id = str(uuid4())
         res = self.get_content()
 
@@ -22,7 +24,7 @@ class ImageAsset:
             return None
 
         file_name = f"{file_id}{res[1]}"
-        write_file(dir_path, file_name, res[0])
+        self.storage.write(dir_path, file_name, res[0])
         return f"{dir_path}/{file_name}"
 
     def get_content(self):

@@ -1,12 +1,13 @@
 from core.asset_repo import AssetRespositoy
 from core.audio_asset import AudioAsset
 from core.font import FontAsset
-from core.helpers import get_domain, write_file, is_absolute_url
+from core.helpers import get_domain, is_absolute_url
 from core.image import ImageAsset
 from core.json_asset import JsonAsset
 from core.page import Page
 from core.policy import PolicyManager
 from core.status import ResourceStatus
+from core.storage.file_access import FileAccess
 from core.xml_asset import XmlAsset
 import urllib.request
 from urllib.error import HTTPError
@@ -17,8 +18,9 @@ import mimetypes
 import time
 from uuid import uuid4
 
+
 class Link:
-    def __init__(self, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager, contents_path: str):
+    def __init__(self, storage: FileAccess, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
         self.url = url
         self.asset_respository = asset_respository
         self.policy_manager = policy_manager
@@ -30,17 +32,17 @@ class Link:
         self.content = None
         self.headers = ''
         self.total_time = 0
-        self.contents_path = contents_path
+        self.storage = storage
 
     def load(self):
         self.loaded = True
         res = self.get_content(self.url)
         if self.is_page():
-            page = Page(self.url, self.asset_respository, self.contents_path)
+            page = Page(self.url, self.asset_respository, self.storage)
             page.intialize_from_result(res)
             self.result = page
         elif self.is_image():
-            self.result = ImageAsset(get_domain(self.url), self.url, '', '', self.contents_path)
+            self.result = ImageAsset(self.storage, get_domain(self.url), self.url, '', '')
         elif self.is_xml():
             self.result = XmlAsset(self.url, self.content)
         elif self.is_json():
@@ -58,10 +60,10 @@ class Link:
         if self.should_download() == False:
             return None
 
-        dir_path = f"{self.contents_path}/{get_domain(self.url)}/{self.get_dowload_folder()}"
+        dir_path = f"{get_domain(self.url)}/{self.get_dowload_folder()}"
         file_id = str(uuid4())
         file_name = f"{file_id}{self.get_extension()}"
-        write_file(dir_path, file_name, self.content)
+        self.storage.write(dir_path, file_name, self.content)
         text = ''
         description = ''
         title = ''
@@ -225,10 +227,10 @@ class Link:
             return None
 
         if is_absolute_url(link):
-            return Link(link, self.asset_respository, self.policy_manager, self.contents_path)
+            return Link(self.storage, link, self.asset_respository, self.policy_manager)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Link(f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager, self.contents_path)
+        return Link(self.storage, f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)
