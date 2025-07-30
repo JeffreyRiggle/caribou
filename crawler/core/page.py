@@ -3,6 +3,7 @@ from core.favicon import Favicon
 from core.helpers import is_absolute_url, get_domain
 from core.image import ImageAsset
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 import concurrent.futures
 import urllib.request
 from urllib.error import HTTPError
@@ -14,7 +15,7 @@ from typing import List
 
 
 class Page:
-    def __init__(self, url: str, asset_respository: AssetRespositoy, storage: FileAccess):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, storage: FileAccess | S3Access):
         self.url = url
         self.asset_respository = asset_respository
         self.failed = False

@@ -13,6 +13,7 @@ import { Credentials, DatabaseSecret } from 'aws-cdk-lib/aws-rds';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { Size } from 'aws-cdk-lib';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 export class DeployStack extends cdk.Stack {
   private vpc: ec2.Vpc;
@@ -23,6 +24,7 @@ export class DeployStack extends cdk.Stack {
   private dbServer: rds.DatabaseInstance;
   private adminService: ecs.FargateService;
   private grepperService: ecs.FargateService;
+  private bucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -30,6 +32,7 @@ export class DeployStack extends cdk.Stack {
     this.buildCrawlerContainer();
     this.buildGrepperContainer();
     this.buildVPC();
+    this.buildBucket();
     this.deployPostgres();
     this.deployApps();
     this.deployLoadBalancer();
@@ -62,6 +65,15 @@ export class DeployStack extends cdk.Stack {
   private buildVPC() {
     this.vpc = new ec2.Vpc(this, 'CaribouAdminVPC', {
        ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16')
+    });
+  }
+
+  private buildBucket() {
+    this.bucket = new s3.Bucket(this, 'CaribouStorage', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true
     });
   }
 
@@ -147,6 +159,7 @@ export class DeployStack extends cdk.Stack {
     });
 
     cluster.node.addDependency(this.dbServer);
+    cluster.node.addDependency(this.bucket);
 
     cluster.addCapacity('DefaultAutoScalingGroupCapacity', {
       instanceType: new ec2.InstanceType("t3.medium"),
@@ -209,7 +222,7 @@ export class DeployStack extends cdk.Stack {
       },
       environment: {
         USE_POSTGRES: 'true',
-        CONTENT_PATH: '/usr/src/data/contents',
+        S3_BUCKET: this.bucket.bucketName
       },
     });
 
@@ -229,6 +242,7 @@ export class DeployStack extends cdk.Stack {
         USE_POSTGRES: 'true',
         USE_SSL_DB: 'true',
         CONTENT_PATH: '/usr/src/data/contents',
+        S3_BUCKET: this.bucket.bucketName
       },
     });
 
@@ -247,6 +261,7 @@ export class DeployStack extends cdk.Stack {
       desiredCount: 1,
       minHealthyPercent: 100,
     });
+    this.bucket.grantReadWrite(this.adminService.taskDefinition.taskRole);
 
     this.dbServer.connections.allowFrom(this.adminService, ec2.Port.tcp(5432));
     this.adminService.addVolume(volume);
@@ -257,6 +272,7 @@ export class DeployStack extends cdk.Stack {
       desiredCount: 1,
       minHealthyPercent: 100,
     });
+    this.bucket.grantRead(this.grepperService.taskDefinition.taskRole);
 
     this.dbServer.connections.allowFrom(this.grepperService, ec2.Port.tcp(5432));
     this.grepperService.addVolume(volume);

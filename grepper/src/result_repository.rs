@@ -1,8 +1,7 @@
-use std::env;
-use std::fs;
 use base64::prelude::*;
 use rusqlite::params;
-use crate::{dbaccess::{PostgresConnection, SQLiteConnection}, models::{AssetResult, DBAsset, GraphResult, GraphResultReponse, PageAssets}};
+use crate::models::AssetData;
+use crate::{dbaccess::{PostgresConnection, SQLiteConnection}, models::{DBAsset, GraphResult, GraphResultReponse, PageAssets}};
 
 use super::models::{ResultsResponse, ResultData};
 
@@ -115,7 +114,6 @@ impl ResultRepository for SQLiteConnection {
     }
 
     fn get_assets(&mut self, url: String) -> PageAssets {
-        let root_path = env::var("CONTENT_PATH").unwrap_or("../contents".to_string());
         let mut stmt = self.connection.prepare("SELECT url, path, contentType from links JOIN resources ON links.targetUrl = resources.url WHERE links.sourceUrl = ?1  AND resources.contentType != 'html'").unwrap();
         let rows = stmt.query_map(params![url], |row| {
             Ok(DBAsset {
@@ -129,14 +127,11 @@ impl ResultRepository for SQLiteConnection {
         let mut resulting_assets = Vec::new();
         for row in rows {
             let resulting_row = row.unwrap();
-            let target_path = format!("{root_path}/{}", resulting_row.path);
-            let metadata = fs::metadata(target_path).unwrap();
-            let file_size = metadata.len();
 
-            resulting_assets.push(AssetResult {
+            resulting_assets.push(AssetData {
                 id: BASE64_STANDARD.encode(resulting_row.url.as_str()).replace("/", "%2F"),
                 url: resulting_row.url,
-                bytes: file_size,
+                file: resulting_row.path,
                 content_type: resulting_row.content_type
             })
         }
@@ -277,7 +272,6 @@ SELECT url, title, summary, pageRank FROM res limit 10";
     }
 
     fn get_assets(&mut self, url: String) -> PageAssets {
-        let root_path = env::var("CONTENT_PATH").unwrap_or("../contents".to_string());
         let mut resulting_assets = Vec::new();
         for row in self.client.query("SELECT url, path, contentType from links JOIN resources ON links.targetUrl = resources.url WHERE links.sourceUrl = $1  AND resources.contentType != 'html'", &[&url]).unwrap() {
             let resulting_row = DBAsset {
@@ -285,14 +279,11 @@ SELECT url, title, summary, pageRank FROM res limit 10";
                 path: row.get(1),
                 content_type: row.get(2)
             };
-            let target_path = format!("{root_path}/{}", resulting_row.path);
-            let metadata = fs::metadata(target_path).unwrap();
-            let file_size = metadata.len();
 
-            resulting_assets.push(AssetResult {
+            resulting_assets.push(AssetData {
                 id: BASE64_STANDARD.encode(resulting_row.url.as_str()).replace("/", "%2F"),
                 url: resulting_row.url,
-                bytes: file_size,
+                file: resulting_row.path,
                 content_type: resulting_row.content_type
             })
         }

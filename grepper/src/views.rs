@@ -6,7 +6,7 @@ use r2d2::Pool;
 use tera::{Context, Tera};
 use lazy_static::lazy_static;
 
-use crate::{asset_processor::process_asset, dbaccess::DbConfig, models::QueryRequest};
+use crate::{asset_processor::process_asset, dbaccess::DbConfig, file_access::{FileAccess, FileAccessProvider}, models::{AssetResult, QueryRequest}};
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -41,17 +41,28 @@ async fn get_page() -> HttpResponse {
 }
 
 #[get("/page-details/{base64_url}")]
-async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> HttpResponse {
-    let context= web::block(move || {
-        let mut context = Context::new();
+async fn get_page_details(pool: web::Data<Pool<DbConfig>>, file_access: web::Data<FileAccessProvider>, base64_url: web::Path<String>) -> HttpResponse {
+    let target_url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap()).unwrap();
+    let target_clone = target_url.clone();
+    let result= web::block(move || {
         let mut repository = pool.get().expect("Couldn't get connection from pool");
-        let target_url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap()).unwrap();
-        let results = repository.get_assets(target_url.clone());
-        context.insert("assets", &results.assets);
-        context.insert("targetUrl", &target_url);
-        context
+        repository.get_assets(target_clone)
     }).await.unwrap();
-
+    
+    let mut context = Context::new();
+    let mut assets = Vec::new();
+    let mut file_access_mut = file_access.get_ref().clone();
+    for asset in result.assets {
+        let bytes = file_access_mut.get_file_size(asset.file).await;
+        assets.push(AssetResult {
+            id: asset.id,
+            url: asset.url,
+            bytes: bytes,
+            content_type: asset.content_type
+        });
+    }
+    context.insert("assets", &assets);
+    context.insert("targetUrl", &target_url);
     let page = match TEMPLATES.render("page-details.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {
@@ -65,19 +76,21 @@ async fn get_page_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path
        .body(page)
 }
 
+// TODO keeo moving things to use FileAccessProvider
 #[get("/asset-details/{base64_url}")]
-async fn get_asset_details(pool: web::Data<Pool<DbConfig>>, base64_url: web::Path<String>) -> HttpResponse {
+async fn get_asset_details(pool: web::Data<Pool<DbConfig>>, file_access: web::Data<FileAccessProvider>, base64_url: web::Path<String>) -> HttpResponse {
     let url = String::from_utf8(BASE64_STANDARD.decode(base64_url.as_str().replace("%2F", "/")).unwrap()).unwrap();
-    let context = web::block(move || {
-        let mut context = Context::new();
+    let move_url = url.clone();
+    let page_details = web::block(move || {
         let mut repository = pool.get().expect("Couldn't get connection from pool");
-        let page_details = repository.get_page_data(url.clone());
-        let asset_details = process_asset(page_details).unwrap();
-        context.insert("assetDetails", &asset_details);
-        context.insert("targetUrl", &url);
-        context
+        repository.get_page_data(move_url)
     }).await.unwrap();
-
+    
+    let mut context = Context::new();
+    let asset_details = process_asset(page_details, file_access.get_ref().clone()).await.unwrap();
+    context.insert("assetDetails", &asset_details);
+    context.insert("targetUrl", &url);
+    
     let page = match TEMPLATES.render("asset-details.html", &context) {
         Ok(p) => p.to_string(),
         Err(e) => {

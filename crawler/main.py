@@ -4,8 +4,10 @@ from core.crawler import Crawler
 from core.ranker import Ranker
 from core.policy import PolicyManager
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 import time
 import sys
+
 
 start_time = time.time()
 db = None
@@ -14,7 +16,13 @@ if '--postgres' in sys.argv:
 else:
     db = SQLiteDBAccess()
 db.setup()
-storage = FileAccess()
+
+storage = None
+s3_bucket = sys.argv["--s3bucket"]
+if s3_bucket:
+    storage = S3Access(s3_bucket)
+else:
+    storage = FileAccess()
 
 policy_manager = PolicyManager(db)
 crawl_pages = policy_manager.get_crawl_pages()

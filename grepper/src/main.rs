@@ -4,6 +4,8 @@ use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use dbaccess::{DbConfig, PostgresConfig};
 
+use crate::file_access::{FileAccessProvider, LocalFileAccess, S3Access};
+
 mod asset_processor;
 mod views;
 mod models;
@@ -15,6 +17,7 @@ mod css_parser;
 mod javascript_parser;
 mod dbaccess;
 mod result_repository;
+mod file_access;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,7 +29,6 @@ async fn main() -> std::io::Result<()> {
                 },
                 Err(_) => {
                     let connection_string = format!("host='{}' port=5432 user='{}' password='{}'", env::var("DB_HOST").unwrap(), env::var("DB_USER").unwrap(), env::var("DB_PASSWORD").unwrap()).to_string();
-                    println!("Attempting to connect with {:?}", connection_string);
                     DbConfig::Postgres(PostgresConfig { connection_string: connection_string, use_ssl: env::var("USE_SSL_DB").is_ok() })
                 }
             }
@@ -45,18 +47,33 @@ async fn main() -> std::io::Result<()> {
         Err(_) => "127.0.0.1"
     };
 
-    println!("Starting app on address {:?}", address);
-
+    
     let static_dir = match env::var("STATIC_DIR") {
         Ok(dir) => dir,
         Err(_) => "./static".to_string()
     };
-
+    
     println!("Loading static assets from {:?}", static_dir);
-
+    
+    let file_provider = match env::var("S3_BUCKET") {
+        Ok(bucket) => {
+            let config = aws_config::load_from_env().await;
+            let client = aws_sdk_s3::Client::new(&config);
+            FileAccessProvider::S3(S3Access { bucket: bucket, client: client })
+        },
+        Err(_) => {
+            FileAccessProvider::Local(LocalFileAccess {
+                root_path: env::var("CONTENT_PATH").unwrap_or("../contents".to_string())
+            })
+        }
+    };
+    
+    println!("Starting app on address {:?}", address);
+    
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(file_provider.clone()))
             .service(fs::Files::new("/static", static_dir.as_str()).show_files_listing())
             .service(views::get_page)
             .service(views::query_data)

@@ -8,6 +8,7 @@ from core.page import Page
 from core.policy import PolicyManager
 from core.status import ResourceStatus
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 from core.xml_asset import XmlAsset
 import urllib.request
 from urllib.error import HTTPError
@@ -20,7 +21,7 @@ from uuid import uuid4
 
 
 class Link:
-    def __init__(self, storage: FileAccess, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
+    def __init__(self, storage: FileAccess | S3Access, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
         self.url = url
         self.asset_respository = asset_respository
         self.policy_manager = policy_manager

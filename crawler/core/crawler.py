@@ -7,12 +7,14 @@ from core.policy import PolicyManager
 from core.page import Page
 from core.status import ResourceStatus
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 import concurrent.futures
 import time
 from uuid import uuid4
 
+
 class Crawler:
-    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, storage: FileAccess, start_time: float):
+    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, storage: FileAccess | S3Access, start_time: float):
         self.db = db
         self.policy_manager = policy_manager
         self.processed = set()

@@ -4,6 +4,7 @@ from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.policy import PolicyManager
 from core.ranker import Ranker
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 from jobs.job import Job
 from jobs.job_respository_sqlite import JobRepositorySQLite
 from jobs.job_repository_postgres import JobRepositoryPostgres
@@ -16,13 +17,19 @@ executor = ThreadPoolExecutor(1)
 
 is_postgres = 'USE_POSTGRES' in os.environ
 db = None
-contents_path = os.environ['CONTENT_PATH'] if 'CONTENT_PATH' in os.environ else "../contents"
-storage = FileAccess(contents_path)
 if is_postgres:
     db = PostgresDBAccess()
 else:
     has_file_set = 'SQLITE_FILE' in os.environ
     db = SQLiteDBAccess(os.environ['SQLITE_FILE'] if has_file_set else "../grepper.db")
+
+storage = None
+s3_bucket = os.environ["S3_BUCKET"] if "S3_BUCKET" in os.environ else None
+if s3_bucket:
+    storage = S3Access(s3_bucket)
+else:
+    contents_path = os.environ['CONTENT_PATH'] if 'CONTENT_PATH' in os.environ else "../contents"
+    storage = FileAccess(contents_path)
 
 db.setup()
 db.run_migrations()

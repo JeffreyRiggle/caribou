@@ -17,7 +17,6 @@ class PostgresDBAccess:
         else:
             connection_string = self.build_connection_string()
     
-        print(f"Attempting to connect with {connection_string}")
         self.connection = psycopg2.connect(connection_string)
 
     def build_connection_string(self):

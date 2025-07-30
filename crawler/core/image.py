@@ -1,5 +1,6 @@
 from core.helpers import is_absolute_url
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 import urllib.request
 import brotli
 import mimetypes
@@ -7,7 +8,7 @@ from uuid import uuid4
 
 
 class ImageAsset:
-    def __init__(self, storage: FileAccess, domain: str, url: str, description: str, title: str):
+    def __init__(self, storage: FileAccess | S3Access, domain: str, url: str, description: str, title: str):
         self.domain = domain
         self.url = url
         self.description = description

@@ -8,7 +8,7 @@ RUN cargo install --path .
 
 FROM --platform=linux/amd64 debian:bookworm-slim
 
-RUN apt-get update && apt install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/cargo/bin/grepper /usr/local/bin/grepper
 COPY --from=builder /usr/src /usr/src

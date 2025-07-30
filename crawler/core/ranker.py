@@ -2,10 +2,11 @@ from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
 from core.helpers import get_domain, is_absolute_url
 from core.storage.file_access import FileAccess
+from core.storage.s3_access import S3Access
 from bs4 import BeautifulSoup
 
 class Ranker:
-    def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess, storage: FileAccess):
+    def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess, storage: FileAccess | S3Access):
         self.tolerance = 0.001
         self.damping = .85
         self.page_references = dict()

@@ -36,6 +36,13 @@ pub struct GraphResultReponse {
     pub results: Vec<GraphResult>
 }
 
+pub struct AssetData {
+    pub id: String,
+    pub url: String,
+    pub file: String,
+    pub content_type: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct AssetResult {
     pub id: String,
@@ -45,8 +52,12 @@ pub struct AssetResult {
     pub content_type: String,
 }
 
-#[derive(Debug, Serialize)]
 pub struct PageAssets {
+    pub assets: Vec<AssetData>
+}
+
+#[derive(Debug, Serialize)]
+pub struct PageAssetResult {
     pub assets: Vec<AssetResult>
 }
 
