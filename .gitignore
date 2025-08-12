@@ -11,3 +11,6 @@ crawler/contents/**
 
 # test area for volume sharing
 db_test
+
+# Environment files
+.env

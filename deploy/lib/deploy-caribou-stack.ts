@@ -11,9 +11,11 @@ import { createHash } from 'crypto';
 import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { Credentials, DatabaseSecret } from 'aws-cdk-lib/aws-rds';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
-import { Size } from 'aws-cdk-lib';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: './.env'});
 
 export class DeployStack extends cdk.Stack {
   private vpc: ec2.Vpc;
@@ -173,16 +175,6 @@ export class DeployStack extends cdk.Stack {
     const grepperTaskDefinition = new ecs.FargateTaskDefinition(this, 'GrepperTaskDef', {
       memoryLimitMiB: 512
     });
-    const volume = new ecs.ServiceManagedVolume(this, 'CaribouFiles', {
-      name: 'CaribouFiles',
-      managedEBSVolume: {
-        size: Size.gibibytes(15),
-        volumeType: ec2.EbsDeviceVolumeType.GP3,
-        fileSystemType: ecs.FileSystemType.XFS
-      },
-    });
-    adminTaskDefinition.addVolume(volume);
-    grepperTaskDefinition.addVolume(volume);
 
     const adminContainer = adminTaskDefinition.addContainer('AdminContainer', {
       image: ecs.ContainerImage.fromDockerImageAsset(this.adminImage),
@@ -201,11 +193,6 @@ export class DeployStack extends cdk.Stack {
         USE_SSL_DB: 'true',
         CRAWLER_ENDPOINT: 'http://127.0.0.1:5001'
       },
-    });
-
-    volume.mountIn(adminContainer, {
-      containerPath: '/usr/src/data',
-      readOnly: false
     });
 
     const crawlerContainer = adminTaskDefinition.addContainer('CrawlerContainer', {
@@ -246,15 +233,6 @@ export class DeployStack extends cdk.Stack {
       },
     });
 
-    volume.mountIn(crawlerContainer, {
-      containerPath: '/usr/src/data',
-      readOnly: false
-    });
-    volume.mountIn(grepperContainer, {
-      containerPath: '/usr/src/data',
-      readOnly: false
-    });
-
     this.adminService = new ecs.FargateService(this, 'AdminService', {
       cluster,
       taskDefinition: adminTaskDefinition,
@@ -264,7 +242,6 @@ export class DeployStack extends cdk.Stack {
     this.bucket.grantReadWrite(this.adminService.taskDefinition.taskRole);
 
     this.dbServer.connections.allowFrom(this.adminService, ec2.Port.tcp(5432));
-    this.adminService.addVolume(volume);
 
     this.grepperService = new ecs.FargateService(this, 'GrepperService', {
       cluster,
@@ -275,40 +252,67 @@ export class DeployStack extends cdk.Stack {
     this.bucket.grantRead(this.grepperService.taskDefinition.taskRole);
 
     this.dbServer.connections.allowFrom(this.grepperService, ec2.Port.tcp(5432));
-    this.grepperService.addVolume(volume);
   }
 
   private deployLoadBalancer() {
-    const loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'CaribouALB', {
+    const publicLoadBalancer = new elbv2.ApplicationLoadBalancer(this, 'GrepperALB', {
       vpc: this.vpc,
       internetFacing: true,
     });
 
-    const adminListener = loadBalancer.addListener('AdminListener', {
-      port: 8080,
-      protocol: elbv2.ApplicationProtocol.HTTP
+    const privateSecurityGroup = new ec2.SecurityGroup(this, 'AdminAccessGroup', {
+        vpc: this.vpc,
+        securityGroupName: 'AdminAccessSecurityGroup'
+    });
+  
+    privateSecurityGroup.addIngressRule(
+      ec2.Peer.ipv4(process.env.ADMIN_IP_ADDRESS as string),
+      ec2.Port.tcp(80),
+      'Allow Admin user access'
+    );
+
+    const immutableSg = ec2.SecurityGroup.fromSecurityGroupId(
+      this,
+      'ImmutableSG',
+      privateSecurityGroup.securityGroupId,
+      { mutable: false }
+    );
+  
+    const privateLoadBalancer = new elbv2.ApplicationLoadBalancer(this, 'CaribouALB', {
+      vpc: this.vpc,
+      internetFacing: true,
+      securityGroup: immutableSg,
     });
 
-    const adminTargetGroup = adminListener.addTargets('AdminTargettingGroup', {
+    const adminListener = privateLoadBalancer.addListener('AdminListener', {
+      port: 80,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+    });
+
+    adminListener.addTargets('AdminTargettingGroup', {
       port: 8080,
       targets: [this.adminService],
       protocol: elbv2.ApplicationProtocol.HTTP
     });
 
-    const grepperListener = loadBalancer.addListener('GrepperListener', {
-      port: 4080,
+    const grepperListener = publicLoadBalancer.addListener('GrepperListener', {
+      port: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
     });
 
-    const grepperTargetGroup = grepperListener.addTargets('GrepperTargettingGroup', {
+    grepperListener.addTargets('GrepperTargettingGroup', {
       port: 4080,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targets: [this.grepperService]
     });
 
     // Output the ALB DNS name
-    new cdk.CfnOutput(this, 'LoadBalancerDNS', {
-      value: loadBalancer.loadBalancerDnsName,
+    new cdk.CfnOutput(this, 'Public DNS', {
+      value: publicLoadBalancer.loadBalancerDnsName,
+    });
+
+    new cdk.CfnOutput(this, 'Private DNS', {
+      value: privateLoadBalancer.loadBalancerDnsName,
     });
   }
 }
