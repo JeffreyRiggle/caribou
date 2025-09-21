@@ -1,4 +1,5 @@
 from core.transactions import DBTransaction
+from core.logger import Logger
 from os import listdir, environ
 from os.path import isfile, join
 import re
@@ -7,8 +8,9 @@ import threading
 import time
 
 class PostgresDBAccess:
-    def __init__(self):
+    def __init__(self, logger: Logger):
         self.lock = threading.Lock()
+        self.logger = logger
 
     def setup(self):
         connection_string = ''
@@ -55,7 +57,7 @@ class PostgresDBAccess:
                 age = age_match.group(1)
                 expires = time.time() + (int(age) * 1000)
             except:
-                print(f"Failed to get expire time from {header}")
+                self.logger.error(f"Failed to get expire time from {header}")
                 expires = None
 
             break
@@ -66,11 +68,11 @@ class PostgresDBAccess:
             'path': path,
             'contentType': contentType,
             'time': time.time(),
-            'title': title,
-            'summary': summary,
-            'description': description,
+            'title': self.clean_text(title),
+            'summary': self.clean_text(summary),
+            'description': self.clean_text(description),
             'status': status,
-            'headers': headers,
+            'headers': self.clean_text(headers),
             'expires': expires
         }
         cursor.execute("""
@@ -90,6 +92,16 @@ class PostgresDBAccess:
 
         if transaction == None:
             cursor.connection.commit()
+
+    def clean_text(self, text: str | bytes) -> str:
+        if text == None:
+            return ""
+
+        if isinstance(text, bytes):
+            return text.decode("utf-8", errors="replace").replace(
+                "\x00", "\ufffd"
+            )
+        return text.replace("\x00", "\ufffd")
 
     def get_resource_last_edit(self, url: str):
         cursor = self.connection.cursor()
@@ -160,7 +172,7 @@ class PostgresDBAccess:
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
         if domain == None:
-            print(f"Invalid domain {domain} provided not adding to domains")
+            self.logger.log(f"Invalid domain {domain} provided not adding to domains")
             return
 
         cursor = self.connection.cursor()

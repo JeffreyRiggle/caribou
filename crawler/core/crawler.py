@@ -8,13 +8,14 @@ from core.page import Page
 from core.status import ResourceStatus
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
+from core.logger import Logger
 import concurrent.futures
 import time
 from uuid import uuid4
 
 
 class Crawler:
-    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, storage: FileAccess | S3Access, start_time: float):
+    def __init__(self, db: SQLiteDBAccess | PostgresDBAccess, policy_manager: PolicyManager, storage: FileAccess | S3Access, start_time: float, logger: Logger):
         self.db = db
         self.policy_manager = policy_manager
         self.processed = set()
@@ -26,19 +27,20 @@ class Crawler:
         self.pending_favicons = []
         self.start_time = start_time
         self.storage = storage
+        self.logger = logger
 
     def load(self):
         start_pages = self.policy_manager.get_crawl_pages()
 
         needs_status_pages = self.policy_manager.get_needs_status_pages()
         rate_limited_pages = self.policy_manager.get_rate_limited_pages()
-        print(f"Starting crawler with {len(needs_status_pages)} needs status pages and {len(rate_limited_pages)} rate limited pages")
+        self.logger.log(f"Starting crawler with {len(needs_status_pages)} needs status pages and {len(rate_limited_pages)} rate limited pages")
         
         for pending_page in [*needs_status_pages, *rate_limited_pages]:
             if pending_page != None and (self.policy_manager.should_crawl_url(pending_page) or self.policy_manager.should_download_url(pending_page)):
                 start_pages.append(pending_page)
          
-        self.pending_links = list(map(lambda p: Link(self.storage, domain_to_full_url(p), self.asset_respository, self.policy_manager), start_pages))
+        self.pending_links = list(map(lambda p: Link(self.storage, domain_to_full_url(p), self.asset_respository, self.policy_manager, self.logger), start_pages))
 
     def crawl(self):
         while len(self.pending_links) > 0:

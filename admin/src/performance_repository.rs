@@ -127,7 +127,6 @@ fn get_max_resource_sqlite(connection: &mut SQLiteConnection, resource: &str) ->
 
 fn get_max_resource_postgres(connection: &mut PostgresConnection, resource: &str) -> Result<PerformancePageResult, Error> {
     let row = connection.client.query_one(format!("SELECT max({}) as maxBytes, url from metadata group by url order by maxBytes desc limit 1", resource).as_str(), &[]).unwrap();
-    println!("Got row {:?}", row);
     let bytes_value: f64 = row.get(0);
     Ok(PerformancePageResult {
         bytes: bytes_value.clone(),

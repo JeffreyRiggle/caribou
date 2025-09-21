@@ -11,15 +11,15 @@ actix-web = "4.5.1"
 base64 = "0.22.1"
 lazy_static = "1.4.0"
 rusqlite = { version = "0.33.0", features = ["bundled"] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.225", features = ["derive"] }
 tera = "1.19.1"
 derive_more = { version = "1", features = ["full"] }
 select = "0.6.0"
 cssparser = "0.34.0"
-swc_common = "3.0.0"
-swc_ecma_ast = "3.0.0"
-swc_ecma_parser = "4.0.0"
-swc_ecma_visit = "3.0.0"
+swc_common = "14.0.4"
+swc_ecma_ast = "15.0.0"
+swc_ecma_parser = "24.0.1"
+swc_ecma_visit = "15.0.0"
 postgres = "0.19.10"
 r2d2 = "0.8.10"
 postgres-native-tls = "0.5.1"

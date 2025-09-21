@@ -5,16 +5,17 @@ from core.ranker import Ranker
 from core.policy import PolicyManager
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
+from core.logger import Logger
 import time
 import sys
 
-
+logger = Logger()
 start_time = time.time()
 db = None
 if '--postgres' in sys.argv:
-    db = PostgresDBAccess()
+    db = PostgresDBAccess(logger)
 else:
-    db = SQLiteDBAccess()
+    db = SQLiteDBAccess(logger)
 db.setup()
 
 storage = None
@@ -33,10 +34,10 @@ if (len(crawl_pages) < 1):
     for crawl_domain in crawl_domains:
         policy_manager.add_crawl_domain(crawl_domain)
 
-crawl = Crawler(db, policy_manager, start_time, storage)
+crawl = Crawler(db, policy_manager, start_time, storage, logger)
 crawl.load()
 crawl.crawl()
 
-ranker = Ranker(db, storage)
+ranker = Ranker(db, storage, logger)
 ranker.rank()
-print(f"Operation finished in {time.time() - start_time}")
+logger.log(f"Operation finished in {time.time() - start_time}")

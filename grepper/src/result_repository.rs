@@ -169,8 +169,8 @@ WITH res as (
 	on resources.url = favicon.documenturl
 	WHERE Status = 'Processed'
 	AND contentType = 'html' 
-	AND (summary LIKE $1 OR description LIKE $1)
-	ORDER BY pageRank desc
+	AND (summary ILIKE $1 OR description ILIKE $1)
+	ORDER BY rank.pagerank desc
 )
 SELECT url, title, summary, description, favicon FROM res";
 
@@ -239,10 +239,10 @@ WITH res as (
 	ON rank.url = resources.url 
 	WHERE Status = 'Processed' 
 	AND contentType = 'html' 
-	AND (summary LIKE $1 OR description LIKE $1)
-	ORDER BY pageRank desc
+	AND (summary ILIKE $1 OR description ILIKE $1)
+	ORDER BY rank.pagerank desc
 ) 
-SELECT url, title, summary, pageRank FROM res limit 10";
+SELECT url, title, summary, pagerank FROM res limit 10";
 
         for domain_result in self.client.query(query_string, &[&format!("%{}%", query)]).unwrap() {
             let dresult = GraphResult {

@@ -5,23 +5,43 @@ from core.policy import PolicyManager
 from core.ranker import Ranker
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
+from core.logger import Logger
 from jobs.job import Job
 from jobs.job_respository_sqlite import JobRepositorySQLite
 from jobs.job_repository_postgres import JobRepositoryPostgres
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, jsonify
+from logging.config import dictConfig
 import os
 import typing
 
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
+
+app = Flask(__name__)
+logger = Logger(app.logger)
 executor = ThreadPoolExecutor(1)
 
 is_postgres = 'USE_POSTGRES' in os.environ
 db = None
 if is_postgres:
-    db = PostgresDBAccess()
+    db = PostgresDBAccess(logger)
 else:
     has_file_set = 'SQLITE_FILE' in os.environ
-    db = SQLiteDBAccess(os.environ['SQLITE_FILE'] if has_file_set else "../grepper.db")
+    db = SQLiteDBAccess(logger, os.environ['SQLITE_FILE'] if has_file_set else "../grepper.db")
 
 storage = None
 s3_bucket = os.environ["S3_BUCKET"] if "S3_BUCKET" in os.environ else None
@@ -41,8 +61,6 @@ if is_postgres:
     job_repo = JobRepositoryPostgres(db)
 else:
     job_repo = JobRepositorySQLite(db)
-
-app = Flask(__name__)
 
 @app.get("/jobs")
 def get_jobs():
@@ -73,11 +91,11 @@ def run_job(job: Job):
     try:
         job.start()
         job_repo.update_job(job)
-        crawl = Crawler(db, policy_manager, storage, job.start_time)
+        crawl = Crawler(db, policy_manager, storage, job.start_time, logger)
         crawl.load()
         crawl.crawl()
 
-        ranker = Ranker(db, storage)
+        ranker = Ranker(db, storage, logger)
         ranker.rank()
     except Exception as e:
         app.logger.exception("Failed to run job:", e)

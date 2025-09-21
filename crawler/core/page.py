@@ -4,6 +4,7 @@ from core.helpers import is_absolute_url, get_domain
 from core.image import ImageAsset
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
+from core.logger import Logger
 import concurrent.futures
 import urllib.request
 from urllib.error import HTTPError
@@ -15,7 +16,7 @@ from typing import List
 
 
 class Page:
-    def __init__(self, url: str, asset_respository: AssetRespositoy, storage: FileAccess | S3Access):
+    def __init__(self, url: str, asset_respository: AssetRespositoy, storage: FileAccess | S3Access, logger: Logger):
         self.url = url
         self.asset_respository = asset_respository
         self.failed = False
@@ -30,6 +31,7 @@ class Page:
         self.headers = ''
         self.favicons: List[Favicon] = []
         self.storage = storage
+        self.logger = logger
 
     def load(self):
         return self.intialize_from_result(self.get_content(self.url))
@@ -188,11 +190,11 @@ class Page:
             if httpEx.code == 429:
                 self.rate_limited = True
 
-            print(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.logger.error(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
             self.failed = True
             return None
         except Exception as ex:
-            print(f"Failed to load {url} {ex}")
+            self.logger.error(f"Failed to load {url} {ex}")
             return None 
 
     def get_downloadable_assets(self):
@@ -204,5 +206,5 @@ class Page:
 
     def process_image(self, el: Tag):
         domain = get_domain(self.url)
-        return ImageAsset(self.storage, domain, el.get('src'), el.get('alt'), el.get('title'))
+        return ImageAsset(self.storage, domain, el.get('src'), el.get('alt'), el.get('title'), self.logger)
 

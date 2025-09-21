@@ -1,20 +1,21 @@
 from core.helpers import is_absolute_url
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
+from core.logger import Logger
 import urllib.request
 import brotli
 import mimetypes
 from uuid import uuid4
 
-
 class ImageAsset:
-    def __init__(self, storage: FileAccess | S3Access, domain: str, url: str, description: str, title: str):
+    def __init__(self, storage: FileAccess | S3Access, domain: str, url: str, description: str, title: str, logger: Logger):
         self.domain = domain
         self.url = url
         self.description = description
         self.title = title
         self.headers = ''
         self.storage = storage
+        self.logger = logger
     
     def download(self):
         dir_path = f"{self.domain}/image"
@@ -49,5 +50,5 @@ class ImageAsset:
                 
                 return (response.read(), extension)
         except Exception as ex:
-            print(f"Failed to load {target_url} {ex}")
+            self.logger.error(f"Failed to load {target_url} {ex}")
             return None 

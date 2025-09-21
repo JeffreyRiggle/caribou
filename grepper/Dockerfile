@@ -6,9 +6,10 @@ COPY ./db /usr/src/db
 
 RUN cargo install --path .
 
-FROM --platform=linux/amd64 debian:bookworm-slim
+FROM --platform=linux/amd64 debian:trixie-slim
 
 RUN apt-get update && apt install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt install -y libc6
 
 COPY --from=builder /usr/local/cargo/bin/grepper /usr/local/bin/grepper
 COPY --from=builder /usr/src /usr/src

@@ -1,4 +1,5 @@
 from core.transactions import DBTransaction
+from core.logger import Logger
 from os import listdir
 from os.path import isfile, join
 import re
@@ -7,12 +8,13 @@ import threading
 import time
 
 class SQLiteDBAccess:
-    def __init__(self, db_file: str = "../grepper.db"):
+    def __init__(self, logger: Logger, db_file: str = "../grepper.db"):
         self.db_file = db_file
         self.lock = threading.Lock()
+        self.logger = logger
 
     def setup(self):
-        print(f"Setting up database at path {self.db_file}")
+        self.logger.log(f"Setting up database at path {self.db_file}")
         should_initialize = isfile(self.db_file) == False
         self.connection = sqlite3.connect(self.db_file, check_same_thread=False)
 
@@ -55,7 +57,7 @@ class SQLiteDBAccess:
                     age = age_match.group(1)
                     expires = time.time() + (int(age) * 1000)
                 except:
-                    print(f"Failed to get expire time from {header}")
+                    self.logger.error(f"Failed to get expire time from {header}")
                     expires = None
 
                 break
@@ -124,7 +126,7 @@ class SQLiteDBAccess:
 
     def add_domain(self, domain: str, status: str, transaction: DBTransaction | None=None):
         if domain == None:
-            print(f"Invalid domain {domain} provided not adding to domains")
+            self.logger.log(f"Invalid domain {domain} provided not adding to domains")
             return
 
         with self.lock:

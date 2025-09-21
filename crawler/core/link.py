@@ -10,6 +10,7 @@ from core.status import ResourceStatus
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
 from core.xml_asset import XmlAsset
+from core.logger import Logger
 import urllib.request
 from urllib.error import HTTPError
 import brotli
@@ -21,7 +22,7 @@ from uuid import uuid4
 
 
 class Link:
-    def __init__(self, storage: FileAccess | S3Access, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager):
+    def __init__(self, storage: FileAccess | S3Access, url: str, asset_respository: AssetRespositoy, policy_manager: PolicyManager, logger: Logger):
         self.url = url
         self.asset_respository = asset_respository
         self.policy_manager = policy_manager
@@ -34,16 +35,17 @@ class Link:
         self.headers = ''
         self.total_time = 0
         self.storage = storage
+        self.logger = logger
 
     def load(self):
         self.loaded = True
         res = self.get_content(self.url)
         if self.is_page():
-            page = Page(self.url, self.asset_respository, self.storage)
+            page = Page(self.url, self.asset_respository, self.storage, self.logger)
             page.intialize_from_result(res)
             self.result = page
         elif self.is_image():
-            self.result = ImageAsset(self.storage, get_domain(self.url), self.url, '', '')
+            self.result = ImageAsset(self.storage, get_domain(self.url), self.url, '', '', self.logger)
         elif self.is_xml():
             self.result = XmlAsset(self.url, self.content)
         elif self.is_json():
@@ -53,7 +55,7 @@ class Link:
         elif self.is_font():
             self.result = FontAsset(self.url, self.content)
         elif self.failed != True:
-            print(f"Unable to process link for content type {self.content_type}")
+            self.logger.log(f"Unable to process link for content type {self.content_type}")
         
         return self.total_time
 
@@ -88,7 +90,7 @@ class Link:
         elif self.is_font():
             return self.policy_manager.should_download_asset('font')
         
-        print("Not downloading ", self.url)
+        self.logger.log("Not downloading ", self.url)
         return False
 
     def get_dowload_folder(self):
@@ -204,11 +206,11 @@ class Link:
             if httpEx.code == 429:
                 self.rate_limited = True
 
-            print(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.logger.error(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
             self.failed = True
             return None
         except Exception as ex:
-            print(f"Failed to load {url} {ex}")
+            self.logger.error(f"Failed to load {url} {ex}")
             self.failed = True
             return None
         
@@ -228,10 +230,10 @@ class Link:
             return None
 
         if is_absolute_url(link):
-            return Link(self.storage, link, self.asset_respository, self.policy_manager)
+            return Link(self.storage, link, self.asset_respository, self.policy_manager, self.logger)
 
         # Do not include self references
         if link.startswith("#"):
             return None
 
-        return Link(self.storage, f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager)
+        return Link(self.storage, f"https://{get_domain(self.url)}{link}", self.asset_respository, self.policy_manager, self.logger)
