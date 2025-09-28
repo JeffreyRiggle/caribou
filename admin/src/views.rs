@@ -199,3 +199,18 @@ async fn start_job() -> impl Responder {
     Redirect::to("../jobs").see_other()
 }
 
+#[post("view/execute-rank-job")]
+async fn start_rank_job() -> impl Responder { 
+    let job_execute_endpoint = format!("{}/execute-rank", get_crawler_endpoint());
+    println!("Executing job via: {:?}", job_execute_endpoint);
+    match proxy_post::<JobResponse>(&job_execute_endpoint.as_str()).await {
+        Ok(job) => {
+            println!("Created rank job: {job:#?}")
+        },
+        Err(e) => {
+            println!("Failed to create rank job: {}", e)
+        }
+    }
+    Redirect::to("../jobs").see_other()
+}
+

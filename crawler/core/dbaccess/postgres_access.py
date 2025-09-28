@@ -203,6 +203,19 @@ class PostgresDBAccess:
 
         if transaction == None:
             cursor.connection.commit()
+    
+    def get_html_links(self, sourceUrl: str):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+        with targets as (
+	        select targetUrl from links
+	        where sourceUrl = %(sourceUrl)s
+        )
+        SELECT targetUrl, contentType FROM targets
+        JOIN resources
+        ON url = targetUrl
+        where contentType = 'html'""", { 'sourceUrl': sourceUrl })
+        return cursor.fetchall()
 
     def add_link(self, sourceUrl: str, targetUrl: str, transaction: DBTransaction | None):
         cursor = self.connection.cursor()

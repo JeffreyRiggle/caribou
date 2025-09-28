@@ -78,6 +78,13 @@ def execute_job():
     executor.submit(run_job, job)
     return jsonify(job.to_dict()), 201
 
+@app.post("/execute-rank")
+def execute_rank_job():
+    job = Job()
+    job_repo.add_job(job)
+    executor.submit(run_rank_job, job)
+    return jsonify(job.to_dict()), 201
+
 @app.get("/status/<job_id>")
 def get_job_status(job_id):
     job = job_repo.get_job(job_id)
@@ -94,6 +101,22 @@ def run_job(job: Job):
         crawl = Crawler(db, policy_manager, storage, job.start_time, logger)
         crawl.load()
         crawl.crawl()
+
+        ranker = Ranker(db, storage, logger)
+        ranker.rank()
+    except Exception as e:
+        app.logger.exception("Failed to run job:", e)
+        job.fail()
+        job_repo.update_job(job)
+        return
+
+    job.complete()
+    job_repo.update_job(job)
+
+def run_rank_job(job: Job):
+    try:
+        job.start()
+        job_repo.update_job(job)
 
         ranker = Ranker(db, storage, logger)
         ranker.rank()

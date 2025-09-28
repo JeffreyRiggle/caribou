@@ -151,6 +151,19 @@ class SQLiteDBAccess:
             if transaction == None:
                 cursor.connection.commit()
 
+    def get_html_links(self, sourceUrl: str):
+        with self.lock:
+            cursor = self.connection.cursor()
+            return cursor.execute("""
+            with targets as (
+	            select targetUrl from links
+	            where sourceUrl = ?
+            )
+            SELECT targetUrl, contentType FROM targets
+            JOIN resources
+            ON url = targetUrl
+            where contentType = 'html'""", (sourceUrl,))
+    
     def add_link(self, sourceUrl: str, targetUrl: str, transaction: DBTransaction | None):
         with self.lock:
             cursor = self.connection.cursor()

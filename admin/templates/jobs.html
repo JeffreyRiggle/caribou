@@ -37,6 +37,7 @@
 		<main>
 			<h1>Jobs</h1>
             <button hx-post="/view/execute-job" hx-target="body">Start Job</button>
+			<button hx-post="/view/execute-rank-job" hx-target="body">Start Rank only Job</button>
 			<h2>Jobs Status</h2>
 			<ul>
 				{% for job in jobs %}

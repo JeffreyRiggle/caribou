@@ -31,21 +31,17 @@ class Ranker:
         # Populate a dictionary of back references
         for page in processed_pages:
             page_url = page[0]
-            page_file = page[1]
-            
-            with self.storage.read(page_file) as file_handle:
-                # Do I still need to do this? I think I have an edge graph now
-                content = BeautifulSoup(file_handle.read(), features='html.parser')
-                links = list(filter(lambda x: x is not None, list(set(map(lambda el: get_link(el, page_url), content.select('a'))))))
-                forward_link_map[page_url] = links
-                
-                if page_url not in self.pages:
-                    self.pages.append(page_url)
 
-                # We need to make sure that we add in dangling references
-                for forward_link in links:
-                    if forward_link not in self.pages:
-                        self.pages.append(forward_link)
+            links = self.dbaccess.get_html_links(page_url)
+            forward_link_map[page_url] = list(map(lambda l: l[0], links))
+                
+            if page_url not in self.pages:
+                self.pages.append(page_url)
+
+            # We need to make sure that we add in dangling references
+            for forward_link in links:
+                if forward_link not in self.pages:
+                    self.pages.append(forward_link)
         
         # Initialize edge matrix
         total_nodes = len(self.pages)
@@ -165,20 +161,3 @@ class Ranker:
             result.append(vector_a[i] + vector_b[i])
 
         return result
-
-# TODO refactor page to not have basically the same logic
-def get_link(el, sourceUrl):
-    link = el.get('href')
-
-    if link == None:
-        return None
-
-    if is_absolute_url(link):
-        return link 
-
-    # Do not include self references
-    if link.startswith("#"):
-        return None
-
-    return f'https://{get_domain(sourceUrl)}{link}'
-

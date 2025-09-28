@@ -69,6 +69,7 @@ async fn main() -> std::io::Result<()> {
             .service(views::add_domain)
             .service(views::get_jobs_page)
             .service(views::start_job)
+            .service(views::start_rank_job)
     })
     .bind((address, 8080))?
     .run()
