@@ -208,7 +208,7 @@ class Crawler:
         links = link.get_links()
         for child_link in links:
             if child_link != None:
-                self.pending_edges.append({ 'sourceUrl': link.url, 'targetUrl': link.url })
+                self.pending_edges.append({ 'sourceUrl': link.url, 'targetUrl': child_link.url })
 
         return (failed, network_time, links)
 

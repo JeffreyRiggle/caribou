@@ -1,17 +1,15 @@
 from core.dbaccess.postgres_access import PostgresDBAccess
 from core.dbaccess.sqlite_access import SQLiteDBAccess
-from core.helpers import get_domain, is_absolute_url
 from core.storage.file_access import FileAccess
 from core.storage.s3_access import S3Access
 from core.logger import Logger
-from bs4 import BeautifulSoup
 import time
 
 class Ranker:
     def __init__(self, dbaccess: SQLiteDBAccess | PostgresDBAccess, storage: FileAccess | S3Access, logger: Logger):
-        self.tolerance = 1.0e-6
+        self.tolerance = 1.0e-4
         self.damping = .85
-        self.max_iterations = 50
+        self.max_iterations = 100
         self.page_references = dict()
         # Create 2d matrix with rows being outbound edges and columns being nodes (A)
         self.edge_matrix = []
@@ -33,7 +31,8 @@ class Ranker:
             page_url = page[0]
 
             links = self.dbaccess.get_html_links(page_url)
-            forward_link_map[page_url] = list(map(lambda l: l[0], links))
+            # Build forward map but filter out self links
+            forward_link_map[page_url] = list(filter(lambda l : l != page_url, list(map(lambda l: l[0], links))))
                 
             if page_url not in self.pages:
                 self.pages.append(page_url)
@@ -104,7 +103,7 @@ class Ranker:
             # check delta
             delta = 0
             for i in range(node_size):
-                delta += new_rank[i] - end_rank[i]
+                delta += abs(new_rank[i] - end_rank[i])
             end_rank = new_rank
             
             # Check for convergence
