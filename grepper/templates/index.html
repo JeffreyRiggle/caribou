@@ -89,6 +89,16 @@
 				  .inspect-button:hover, .see-links:hover {
 					box-shadow: 0 0 5px #93d18a; 
 				  }
+
+				  .graph-link {
+					display: none;
+				  }
+
+				  @media screen and (min-width: 600px) {
+					.graph-link {
+						display: unset;
+					}
+				  }
 				</style>
 		</head>
 		</body>
@@ -101,6 +111,7 @@
 							   hx-target="main"
 							   hx-swap="innerHtml"
 							   autofocus>
+						<a href="/graph" class="graph-link">Try Visual View</a>
 				</header>
 				<main></main>
 		</body>
