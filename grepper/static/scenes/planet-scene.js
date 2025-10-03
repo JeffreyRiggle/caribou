@@ -46,7 +46,7 @@ export class PlanetScene {
         let currY = minY;
         let maxSizeInRow = 0;
         let maxYInRow = 0;
-        return assets.map(a => {
+        return assets.filter(a => a.contentType && a.contentType !== 'unknown').map(a => {
             const size = Math.max(minSize, (a.bytes / maxRelativeSize) * maxSize);
             const targetY = currY + (Math.random() * 20);
             const region = new AssetRegion(a, currX, targetY, size, this.handleAssetInfo, this.planetType);

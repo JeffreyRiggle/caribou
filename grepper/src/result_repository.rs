@@ -59,11 +59,11 @@ impl ResultRepository for SQLiteConnection {
             }
         };
 
-        let mut stmt = self.connection.prepare("SELECT sourceUrl, targetUrl FROM links WHERE sourceUrl=?1").unwrap();
+        let mut stmt = self.connection.prepare("SELECT targetUrl FROM links WHERE sourceUrl=?1").unwrap();
         let mut link_rows = stmt.query(params![row.url.clone()]).unwrap();
         let mut target_links = Vec::new(); 
         while let Some(row) = link_rows.next().unwrap() {
-            target_links.push(row.get(1).unwrap());
+            target_links.push(row.get(0).unwrap());
         }
 
         GraphResult {
@@ -90,11 +90,17 @@ impl ResultRepository for SQLiteConnection {
         let mut result = Vec::new();
         for domain_result in rows {
             let dresult = domain_result.unwrap();
-            let mut stmt = self.connection.prepare("SELECT sourceUrl, targetUrl FROM links WHERE sourceUrl=?1").unwrap();
+            let mut stmt = self.connection.prepare("
+SELECT l.targetUrl
+FROM links l
+JOIN resources r
+ON l.targetUrl = r.url
+WHERE l.sourceUrl = ?1 AND r.contentType = 'html'            
+").unwrap();
             let mut link_rows = stmt.query(params![dresult.url.clone()]).unwrap();
             let mut target_links = Vec::new(); 
             while let Some(row) = link_rows.next().unwrap() {
-                match row.get(1) {
+                match row.get(0) {
                     Ok(link) => target_links.push(link),
                     _ => println!("Failed to process link row")
                 };
@@ -254,7 +260,13 @@ SELECT url, title, summary, pagerank FROM res limit 10";
             };
 
             let mut target_links = Vec::new();
-            for link in self.client.query("SELECT targetUrl FROM links WHERE sourceUrl=$1", &[&dresult.url]).unwrap() {
+            for link in self.client.query("
+SELECT l.targetUrl
+FROM links l
+JOIN resources r
+ON l.targetUrl = r.url
+WHERE l.sourceUrl = $1 AND r.contentType = 'html'
+", &[&dresult.url]).unwrap() {
                 target_links.push(link.get(0));
             }
             result.push(GraphResult {
