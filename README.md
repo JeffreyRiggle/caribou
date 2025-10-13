@@ -1,6 +1,9 @@
 # caribou
 Caribou is largely a prototype. This project is an attempt to better understand how to build an internet index and how to layer a primative search engine on top of that.
 
+## In the wild
+If you want to see the end result of this project see [caribou](http://caribou.ilusr.com)
+
 ## Applications
 This covers loosely the applications in this repository.
 
