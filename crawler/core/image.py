@@ -50,5 +50,5 @@ class ImageAsset:
                 
                 return (response.read(), extension)
         except Exception as ex:
-            self.logger.error(f"Failed to load {target_url} {ex}")
+            self.logger.debug(f"Failed to load {target_url} {ex}")
             return None 

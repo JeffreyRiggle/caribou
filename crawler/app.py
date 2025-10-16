@@ -14,6 +14,7 @@ from flask import Flask, jsonify
 from logging.config import dictConfig
 import os
 import typing
+import traceback
 
 dictConfig({
     'version': 1,
@@ -96,6 +97,7 @@ def get_job_status(job_id):
 
 def run_job(job: Job):
     try:
+        app.logger.info(f"Starting job: {job.id}")
         job.start()
         job_repo.update_job(job)
         crawl = Crawler(db, policy_manager, storage, job.start_time, logger)
@@ -105,7 +107,7 @@ def run_job(job: Job):
         ranker = Ranker(db, storage, logger)
         ranker.rank()
     except Exception as e:
-        app.logger.exception("Failed to run job:", e)
+        app.logger.error(f"Failed to run job: {job.id}: {e}, {traceback.format_exc()}")
         job.fail()
         job_repo.update_job(job)
         return
@@ -121,7 +123,7 @@ def run_rank_job(job: Job):
         ranker = Ranker(db, storage, logger)
         ranker.rank()
     except Exception as e:
-        app.logger.exception("Failed to run job:", e)
+        app.logger.error(f"Failed to run ranking job {job.id}, {traceback.format_exc()}")
         job.fail()
         job_repo.update_job(job)
         return
