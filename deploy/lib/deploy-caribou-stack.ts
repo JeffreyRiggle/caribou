@@ -197,7 +197,6 @@ export class DeployStack extends cdk.Stack {
 
     const crawlerContainer = adminTaskDefinition.addContainer('CrawlerContainer', {
       image: ecs.ContainerImage.fromDockerImageAsset(this.crawlerImage),
-      memoryLimitMiB: 1024,
       portMappings: [{ containerPort: 5001 }],
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'crawler-container-logs'
@@ -215,7 +214,6 @@ export class DeployStack extends cdk.Stack {
 
     const grepperContainer = grepperTaskDefinition.addContainer('GrepperContainer', {
       image: ecs.ContainerImage.fromDockerImageAsset(this.grepperImage),
-      memoryLimitMiB: 512,
       portMappings: [{ containerPort: 4080 }],
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'grepper-container-logs'

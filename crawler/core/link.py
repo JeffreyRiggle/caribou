@@ -79,6 +79,9 @@ class Link:
         return { 'url': self.url, 'file': f"{dir_path}/{file_name}", 'status': ResourceStatus.Processed.value, 'text': text, 'description': description, 'title': title, 'contentType': self.get_content_type(), 'headers': self.headers }
 
     def should_download(self):
+        if self.url == None:
+            self.logger.log(f"Not downloading none link")
+            return False
         if self.is_page():
             return True
         elif self.is_image():
@@ -90,7 +93,7 @@ class Link:
         elif self.is_font():
             return self.policy_manager.should_download_asset('font')
         
-        self.logger.log("Not downloading ", self.url)
+        self.logger.log(f"Not downloading {self.url}")
         return False
 
     def get_dowload_folder(self):
@@ -206,11 +209,11 @@ class Link:
             if httpEx.code == 429:
                 self.rate_limited = True
 
-            self.logger.error(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.logger.debug(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
             self.failed = True
             return None
         except Exception as ex:
-            self.logger.error(f"Failed to load {url} {ex}")
+            self.logger.debug(f"Failed to load {url} {ex}")
             self.failed = True
             return None
         

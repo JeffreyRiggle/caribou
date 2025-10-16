@@ -54,7 +54,7 @@ class Ranker:
                 self.edge_matrix[row][col] = 1
 
         end_time = time.perf_counter()
-        self.logger.log(f"Building graph took: {(end_time-start_time):.6f} seconds")
+        self.logger.log(f"Building graph of {total_nodes} nodes took: {(end_time-start_time):.6f} seconds")
     
     # Very simple Page rank algorithm that does not
     # consider dangling references and makes minimal use
@@ -112,8 +112,6 @@ class Ranker:
         
         end_time = time.perf_counter()
         self.logger.log(f"Computing page rank took: {(end_time-start_time):.6f} seconds")
-        self.logger.log("Final Result")
-        self.logger.log(end_rank)
         
         with self.dbaccess.build_transaction() as transaction:
             for i in range(node_size):

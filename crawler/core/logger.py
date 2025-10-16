@@ -13,3 +13,9 @@ class Logger:
             self.logger.error(message)
         else:
             print(message)
+
+    def debug(self, message):
+        if self.logger != None:
+            self.logger.debug(message)
+        else:
+            print(message)

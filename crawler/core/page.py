@@ -93,6 +93,9 @@ class Page:
         favicons = self.interactive_content.select('link[rel="icon"]')
         for favicon in favicons:
             icon_ref = favicon.get('href')
+            if icon_ref == None:
+                continue
+
             if is_absolute_url(icon_ref) == False:
                 icon_ref = f"https://{get_domain(self.url)}{icon_ref}"
 
@@ -190,11 +193,11 @@ class Page:
             if httpEx.code == 429:
                 self.rate_limited = True
 
-            self.logger.error(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
+            self.logger.debug(f"Failed to load {url}, with status code {httpEx.code} and error {httpEx}")
             self.failed = True
             return None
         except Exception as ex:
-            self.logger.error(f"Failed to load {url} {ex}")
+            self.logger.debug(f"Failed to load {url} {ex}")
             return None 
 
     def get_downloadable_assets(self):

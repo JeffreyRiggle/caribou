@@ -43,9 +43,8 @@ class Crawler:
         self.pending_links = list(map(lambda p: Link(self.storage, domain_to_full_url(p), self.asset_respository, self.policy_manager, self.logger), start_pages))
 
     def crawl(self):
+        relevant_children = []
         while len(self.pending_links) > 0:
-            relevant_children = []
-
             # Traverse the links by cleaning them as we go.
             # Interating all links causes memory to pile up like crazy
             pop_size = 10 if len(self.pending_links) > 10 else len(self.pending_links)
@@ -94,7 +93,9 @@ class Crawler:
                 self.pending_edges.clear()
                 self.pending_favicons.clear()
 
-            self.pending_links = relevant_children
+        self.pending_links = relevant_children
+        if len(self.pending_links):
+            self.crawl()
 
     def process_link(self, link: Link, relevant_children: list[Link]):
         download_links = []
@@ -111,8 +112,8 @@ class Crawler:
                 return None
         
         links = load_link_result[2]
-        for link in links:
-            self.process_child_link(link, download_links, relevant_children)
+        for related_link in links:
+            self.process_child_link(related_link, download_links, relevant_children)
 
         self.pending_performance_traces.append({ 'url': link.url, 'appTime': time.time() - pg_start - network_time, 'networkTime': network_time })
 
@@ -153,7 +154,7 @@ class Crawler:
                 content = js_asset[1]
 
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
-                if url == None or self.asset_processed(url):
+                if url == None or self.asset_processed(url) or page.url == None:
                     continue
 
                 dir_path = f"{get_domain(page.url)}/javascript"
@@ -169,7 +170,7 @@ class Crawler:
                 content = css_asset[1]
 
                 self.pending_edges.append({ 'sourceUrl': page.url, 'targetUrl': url })
-                if url == None or self.asset_processed(url):
+                if url == None or self.asset_processed(url) or page.url == None:
                     continue
 
                 dir_path = f"{get_domain(page.url)}/css"
