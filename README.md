@@ -1,4 +1,5 @@
 # caribou
+![logo](./logo.png)
 Caribou is largely a prototype. This project is an attempt to better understand how to build an internet index and how to layer a primative search engine on top of that.
 
 ## In the wild

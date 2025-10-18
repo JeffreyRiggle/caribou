@@ -1,3 +1,9 @@
+{% if results | length == 0 %}
+<div class="no-content">
+    <p><strong>No results Found</strong></p>
+    <img src="./static/img/not_found.png" width="75%" height="75%">
+</div>
+{% else %}
 <div id="results">
 	<ul>
 		{% for result in results %}
@@ -13,3 +19,4 @@
 	</ul>
 </div>
 <div id="page-details"></div>
+{% endif %}
